@@ -1,0 +1,2 @@
+# TraceAI-Control
+Raport trasabilitate
