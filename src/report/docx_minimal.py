@@ -1,13 +1,14 @@
 """
-Minimal DOCX report generator for TraceAI Control.
+Narrative DOCX report generator for TraceAI Control.
 
 Faza 5 scope:
 - generate a narrative DOCX from TraceabilityCase;
 - do not read operational source files directly;
-- mark missing sections explicitly.
+- mark missing sections explicitly;
+- move the report structure closer to docs/RAPORT_DOCX_MODEL.md.
 
 The implementation builds a valid DOCX package using only the Python standard
-library so the first report engine step has no external runtime dependency.
+library so the report engine has no external runtime dependency.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from __future__ import annotations
 import argparse
 import html
 import zipfile
+from datetime import date
 from pathlib import Path
 from typing import Iterable
 
@@ -56,9 +58,23 @@ CORE_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </cp:coreProperties>
 """
 
+SOURCE_LABELS = {
+    "wms": "WMS",
+    "production": "PRD",
+    "nomenclator": "nomenclator",
+    "stock": "stoc la moment",
+}
+
+CASE_TYPE_LABELS = {
+    "FINISHED_PRODUCT": "produs finit",
+    "RAW_MATERIAL": "materie primă",
+    "WMS_ONLY_PRODUCT": "produs fără flux de producție identificat",
+    "UNKNOWN": "necunoscut / date insuficiente",
+}
+
 
 def generate_minimal_docx_report(traceability_case: TraceabilityCase, output_path: str | Path) -> Path:
-    """Generate a minimal narrative DOCX from TraceabilityCase."""
+    """Generate a narrative DOCX from TraceabilityCase."""
 
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -76,27 +92,98 @@ def generate_minimal_docx_report(traceability_case: TraceabilityCase, output_pat
 
 
 def build_document_xml(traceability_case: TraceabilityCase) -> str:
-    """Build WordprocessingML for the minimal report."""
+    """Build WordprocessingML for the narrative report."""
 
     body_parts: list[str] = []
-    body_parts.append(paragraph("Raport de trasabilitate", style="Title"))
-    body_parts.append(paragraph("Generat din TraceabilityCase. Document narativ minimal pentru audit."))
+    body_parts.extend(build_report_header(traceability_case))
+    body_parts.extend(build_executive_summary(traceability_case))
+    body_parts.extend(build_case_identification(traceability_case))
+    body_parts.extend(build_sources_section(traceability_case))
+    body_parts.extend(build_case_type_interpretation(traceability_case))
+    body_parts.extend(build_evidence_section(traceability_case))
+    body_parts.extend(build_observations_section(traceability_case))
+    body_parts.extend(build_missing_data_section(traceability_case))
+    body_parts.extend(build_preliminary_conclusion(traceability_case))
+    body_parts.extend(build_operational_recommendation(traceability_case))
+    body_parts.extend(build_audit_documents_section())
+    body_parts.extend(build_signatures_section())
 
+    return wrap_document("".join(body_parts))
+
+
+def build_report_header(traceability_case: TraceabilityCase) -> list[str]:
     subject = traceability_case.subject
-    body_parts.append(paragraph("1. Subiectul raportului", style="Heading1"))
-    body_parts.extend(
-        bullet_list(
+    return [
+        paragraph("RAPORT DE TRASABILITATE", style="Title"),
+        paragraph(f"Articol verificat: {value_or_missing(subject.code)}"),
+        paragraph(f"Lot verificat: {value_or_missing(subject.lot)}"),
+        paragraph("Produs: FARA DATE IDENTIFICATE în TraceabilityCase minimal."),
+        paragraph(f"Data generării: {date.today().isoformat()}"),
+        paragraph("Caracter document: Preliminar / uz intern / audit"),
+        paragraph(f"Surse utilizate: {format_used_sources(traceability_case)}"),
+    ]
+
+
+def build_executive_summary(traceability_case: TraceabilityCase) -> list[str]:
+    subject = traceability_case.subject
+    case_label = CASE_TYPE_LABELS.get(subject.case_type, subject.case_type)
+    selected_count = traceability_case.sections.get("selected_record_count")
+    return [
+        paragraph("1. Rezumat executiv", style="Heading1"),
+        paragraph(
+            "Raportul prezintă verificarea de trasabilitate pentru articolul "
+            f"{value_or_missing(subject.code)}, lot {value_or_missing(subject.lot)}. "
+            f"Tipul de caz detectat este {value_or_missing(case_label)}. "
+            f"Numărul de înregistrări selectate în etapa Core este {value_or_missing(selected_count)}."
+        ),
+        paragraph(
+            "Documentul este generat din TraceabilityCase și are caracter preliminar. "
+            "Secțiunile pentru care TraceabilityCase nu conține încă detalii sunt marcate explicit."
+        ),
+    ]
+
+
+def build_case_identification(traceability_case: TraceabilityCase) -> list[str]:
+    subject = traceability_case.subject
+    return [
+        paragraph("2. Identificarea cazului", style="Heading1"),
+        *bullet_list(
             [
                 f"Cod articol/produs: {value_or_missing(subject.code)}",
                 f"Lot: {value_or_missing(subject.lot)}",
                 f"Tip caz detectat: {value_or_missing(subject.case_type)}",
+                f"Status validare Core: {value_or_missing(traceability_case.sections.get('core_validation_status'))}",
             ]
-        )
-    )
+        ),
+    ]
 
-    body_parts.append(paragraph("2. Dovezi folosite", style="Heading1"))
+
+def build_sources_section(traceability_case: TraceabilityCase) -> list[str]:
+    sources = sorted({item.source_key for item in traceability_case.evidence})
+    if sources:
+        source_items = [f"{SOURCE_LABELS.get(source, source)} ({source})" for source in sources]
+    else:
+        source_items = ["FARA DATE IDENTIFICATE în dovezile TraceabilityCase."]
+
+    return [
+        paragraph("3. Surse utilizate", style="Heading1"),
+        paragraph("Sursele sunt preluate indirect prin TraceabilityCase, nu prin citirea directă a fișierelor operaționale."),
+        *bullet_list(source_items),
+    ]
+
+
+def build_case_type_interpretation(traceability_case: TraceabilityCase) -> list[str]:
+    subject = traceability_case.subject
+    return [
+        paragraph("4. Interpretarea tipului de caz", style="Heading1"),
+        paragraph(case_type_narrative(subject.code, subject.lot, subject.case_type)),
+    ]
+
+
+def build_evidence_section(traceability_case: TraceabilityCase) -> list[str]:
+    paragraphs = [paragraph("5. Dovezi folosite", style="Heading1")]
     if traceability_case.evidence:
-        body_parts.extend(
+        paragraphs.extend(
             bullet_list(
                 [
                     format_evidence(item.source_key, item.source_name, item.sheet_name, item.row_number, item.message)
@@ -105,36 +192,158 @@ def build_document_xml(traceability_case: TraceabilityCase) -> str:
             )
         )
     else:
-        body_parts.append(paragraph("FARA DATE IDENTIFICATE"))
+        paragraphs.append(paragraph("FARA DATE IDENTIFICATE"))
+    return paragraphs
 
-    body_parts.append(paragraph("3. Observații", style="Heading1"))
+
+def build_observations_section(traceability_case: TraceabilityCase) -> list[str]:
+    paragraphs = [paragraph("6. Observații tehnice", style="Heading1")]
     if traceability_case.observations:
-        body_parts.extend(bullet_list(traceability_case.observations))
+        paragraphs.extend(bullet_list(traceability_case.observations))
     else:
-        body_parts.append(paragraph("Nu există observații suplimentare."))
+        paragraphs.append(paragraph("Nu există observații suplimentare în TraceabilityCase."))
 
-    body_parts.append(paragraph("4. Secțiuni tehnice", style="Heading1"))
     if traceability_case.sections:
-        body_parts.extend(
-            bullet_list(
-                [f"{key}: {value_or_missing(value)}" for key, value in traceability_case.sections.items()]
-            )
+        paragraphs.append(paragraph("Metadate tehnice disponibile", style="Heading2"))
+        paragraphs.extend(
+            bullet_list([f"{key}: {value_or_missing(value)}" for key, value in traceability_case.sections.items()])
         )
-    else:
-        body_parts.append(paragraph("FARA DATE IDENTIFICATE"))
+    return paragraphs
 
-    body_parts.append(paragraph("5. Secțiuni fără date", style="Heading1"))
-    body_parts.extend(
-        bullet_list(
+
+def build_missing_data_section(traceability_case: TraceabilityCase) -> list[str]:
+    case_type = traceability_case.subject.case_type
+    missing_items = missing_data_messages(case_type)
+    return [
+        paragraph("7. Secțiuni fără date", style="Heading1"),
+        paragraph("Secțiunile de mai jos nu sunt lăsate goale; lipsa datelor este marcată explicit."),
+        *bullet_list(missing_items),
+    ]
+
+
+def build_preliminary_conclusion(traceability_case: TraceabilityCase) -> list[str]:
+    subject = traceability_case.subject
+    return [
+        paragraph("8. Concluzie preliminară", style="Heading1"),
+        paragraph(preliminary_conclusion(subject.code, subject.lot, subject.case_type, bool(traceability_case.evidence))),
+    ]
+
+
+def build_operational_recommendation(traceability_case: TraceabilityCase) -> list[str]:
+    case_type = traceability_case.subject.case_type
+    recommendation = {
+        "FINISHED_PRODUCT": "Verificați manual comenzile de producție, documentele WMS și documentele de livrare asociate lotului.",
+        "RAW_MATERIAL": "Verificați manual recepția WMS, consumurile în producție și eventualele livrări către terți.",
+        "WMS_ONLY_PRODUCT": "Verificați manual documentele WMS de recepție/livrare și confirmați lipsa fluxului PRD.",
+        "UNKNOWN": "Completați sau corectați sursele operaționale înainte de utilizarea raportului în audit.",
+    }.get(case_type, "Verificați manual sursele operaționale relevante înainte de audit.")
+
+    return [
+        paragraph("9. Recomandare operațională", style="Heading1"),
+        paragraph(recommendation),
+    ]
+
+
+def build_audit_documents_section() -> list[str]:
+    return [
+        paragraph("10. Documente de pregătit pentru audit", style="Heading1"),
+        *bullet_list(
             [
-                "Trasabilitate amonte detaliată: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
-                "Trasabilitate aval detaliată: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
-                "Bilanț stoc detaliat: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+                "Documente WMS: Numar comanda, Document intrare, Document comanda, unde există.",
+                "Rapoarte de producție PRD aferente codului și lotului verificat, unde există.",
+                "Extras nomenclator pentru articolul verificat.",
+                "Situația stocului la momentul verificării.",
             ]
+        ),
+    ]
+
+
+def build_signatures_section() -> list[str]:
+    return [
+        paragraph("11. Semnături", style="Heading1"),
+        paragraph("Întocmit de: ______________________________"),
+        paragraph("Verificat de: ______________________________"),
+        paragraph("Luare la cunoștință: ________________________"),
+    ]
+
+
+def case_type_narrative(code: str, lot: str, case_type: str) -> str:
+    code_text = value_or_missing(code)
+    lot_text = value_or_missing(lot)
+    if case_type == "FINISHED_PRODUCT":
+        return (
+            f"Pentru articolul {code_text}, lot {lot_text}, au fost identificate indicii de producție. "
+            "Cazul este tratat ca produs finit, iar raportul trebuie completat ulterior cu producție, aval și amonte detaliat."
         )
+    if case_type == "RAW_MATERIAL":
+        return (
+            f"Pentru articolul {code_text}, lot {lot_text}, clasificarea indică materie primă. "
+            "Raportul trebuie completat ulterior cu recepții, consumuri și produse finite rezultate."
+        )
+    if case_type == "WMS_ONLY_PRODUCT":
+        return (
+            f"Pentru articolul {code_text}, lot {lot_text}, nu au fost identificate înregistrări de producție relevante. "
+            "Trasabilitatea este tratată ca WMS-only și se bazează pe datele WMS disponibile în TraceabilityCase."
+        )
+    return (
+        f"Pentru articolul {code_text}, lot {lot_text}, datele disponibile nu sunt suficiente pentru o încadrare operațională completă."
     )
 
-    return wrap_document("".join(body_parts))
+
+def preliminary_conclusion(code: str, lot: str, case_type: str, has_evidence: bool) -> str:
+    code_text = value_or_missing(code)
+    lot_text = value_or_missing(lot)
+    if not has_evidence:
+        return (
+            f"Pentru articolul {code_text}, lot {lot_text}, TraceabilityCase nu conține dovezi suficiente. "
+            "Concluzia preliminară este că verificarea trebuie reluată după completarea datelor."
+        )
+    if case_type == "UNKNOWN":
+        return (
+            f"Pentru articolul {code_text}, lot {lot_text}, există unele date, dar ele nu permit încă stabilirea tipului de caz."
+        )
+    return (
+        f"Pentru articolul {code_text}, lot {lot_text}, raportul a identificat un caz de tip {case_type}. "
+        "Concluzia este preliminară și trebuie confirmată prin verificarea documentelor operaționale suport."
+    )
+
+
+def missing_data_messages(case_type: str) -> list[str]:
+    common = [
+        "Denumire produs: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+        "Numar comanda / Document intrare / Document comanda: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+        "Stoc la moment detaliat: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+    ]
+    if case_type == "FINISHED_PRODUCT":
+        return common + [
+            "Situația numerică utilizată în verificare: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "AVAL produs finit: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "AMONTE materii prime alimentare: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "AMONTE ambalaje: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "AMONTE materiale auxiliare / gaz: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+        ]
+    if case_type == "RAW_MATERIAL":
+        return common + [
+            "Recepția lotului: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Consumuri în producție: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Produse finite rezultate: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Livrări directe către terți: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+        ]
+    if case_type == "WMS_ONLY_PRODUCT":
+        return common + [
+            "Recepția lotului: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Livrarea lotului: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Bilanț recepționat-livrat-stoc: FARA DATE IDENTIFICATE în TraceabilityCase minimal.",
+            "Flux PRD: Nu au fost identificate înregistrări PRD pentru acest articol și lot.",
+        ]
+    return common + ["Încadrarea cazului: FARA DATE SUFICIENTE pentru interpretare completă."]
+
+
+def format_used_sources(traceability_case: TraceabilityCase) -> str:
+    sources = sorted({item.source_key for item in traceability_case.evidence})
+    if not sources:
+        return "FARA DATE IDENTIFICATE"
+    return ", ".join(SOURCE_LABELS.get(source, source) for source in sources)
 
 
 def paragraph(text: object, style: str | None = None) -> str:
@@ -191,7 +400,7 @@ def wrap_document(body_xml: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Genereaza raport DOCX minimal din TraceabilityCase."
+        description="Genereaza raport DOCX narativ din TraceabilityCase."
     )
     parser.add_argument("source_directory", help="Folderul cu sursele oficiale.")
     parser.add_argument("--code", required=True, help="Cod articol/produs cautat.")
