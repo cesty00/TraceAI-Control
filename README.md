@@ -40,6 +40,7 @@ Verificare build Windows: script PowerShell integrat
 Pregătire installer Inno Setup: script .iss + build PowerShell integrate
 Checklist validare Windows: integrat
 Șablon rezultat validare Windows: integrat
+Task GitHub validare Windows reală: #37 deschis
 Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
 ```
 
@@ -304,6 +305,13 @@ installer/windows/VALIDATION_CHECKLIST.md
 
 ```text
 installer/windows/VALIDATION_RESULT_TEMPLATE.md
+```
+
+Taskul deschis pentru validarea reală Windows este:
+
+```text
+#37 — Validate Windows build and installer on a real Windows machine
+https://github.com/cesty00/TraceAI-Control/issues/37
 ```
 
 Checklistul acoperă test suite, build executabil, verificare artefact, smoke test, generare DOCX, build installer, instalare, test aplicație instalată, dezinstalare și verdict final.
