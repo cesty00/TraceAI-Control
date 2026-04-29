@@ -36,6 +36,7 @@ Funcție UI de orchestrare: integrată și testată
 CLI/UI shell minimal peste orchestrator: integrat și testat
 UI vizual minimal peste orchestrator: integrat și testat
 Pregătire installer Windows: script PyInstaller + documentație integrate
+Verificare build Windows: script PowerShell integrat
 Installer Windows complet: nu este finalizat încă
 ```
 
@@ -253,6 +254,7 @@ Fișiere:
 ```text
 installer/windows/README.md
 installer/windows/build_windows.ps1
+installer/windows/verify_windows_build.ps1
 ```
 
 Build local pe Windows, din rădăcina repo-ului:
@@ -261,13 +263,21 @@ Build local pe Windows, din rădăcina repo-ului:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
 ```
 
+Verificare build după generarea executabilului:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
+```
+
 Output așteptat:
 
 ```text
 dist/TraceAI-Control/TraceAI-Control.exe
 ```
 
-Scriptul rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
+Scriptul de build rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
+
+Scriptul de verificare confirmă existența executabilului și afișează pașii manuali de smoke test. Nu pornește automat UI-ul și nu apelează engine-ul.
 
 Limitări curente installer:
 
