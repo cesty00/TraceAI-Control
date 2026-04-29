@@ -28,12 +28,13 @@ Faza 6.2 — CLI/UI shell minimal peste orchestrator: implementat tehnic + testa
 Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat + documentat
 Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație integrate
 Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare înainte de build
+Faza 7.2 — Verificare build Windows: script PowerShell + documentație integrate
 Installer Windows complet: NU este finalizat încă
 ```
 
 ## Decizie principală
 
-UI-ul vizual există doar ca strat peste orchestrator. Installerul nu introduce logică de business.
+UI-ul vizual există doar ca strat peste orchestrator. Installerul și verificarea buildului nu introduc logică de business.
 
 Ordinea proiectului este:
 
@@ -54,6 +55,7 @@ CLI/UI shell minimal
 UI vizual minimal
 Pregătire installer Windows
 Rafinare script Windows build
+Verificare build Windows
 Installer Windows complet
 ```
 
@@ -78,6 +80,7 @@ Installer Windows complet
 17. UI-ul vizual minimal apelează doar orchestratorul și nu conține logică de business.
 18. Scriptul Windows build pornește de la UI-ul vizual minimal și nu schimbă engine-ul.
 19. Scriptul Windows build folosește entry point explicit `src\ui\visual.py` și verifică existența lui înainte de build.
+20. Scriptul de verificare Windows build verifică doar artefactul rezultat și nu pornește automat UI-ul / engine-ul.
 
 ## Structura repo la checkpoint
 
@@ -91,6 +94,7 @@ TraceAI-Control/
     windows/
       README.md
       build_windows.ps1
+      verify_windows_build.ps1
   src/
     core/
     rules/
@@ -123,12 +127,13 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Script Windows build rafinat
+## Build și verificare Windows integrate
 
 Implementare:
 
 ```text
 installer/windows/build_windows.ps1
+installer/windows/verify_windows_build.ps1
 ```
 
 Documentație:
@@ -150,6 +155,12 @@ Build fără teste, doar dacă testele au fost deja rulate separat:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
 ```
 
+Verificare build după generarea executabilului:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
+```
+
 Entry point PyInstaller:
 
 ```text
@@ -162,7 +173,7 @@ Output așteptat:
 dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
-Scriptul:
+Scriptul de build:
 
 ```text
 setează repo root
@@ -174,6 +185,18 @@ construiește executabilul cu PyInstaller folosind entry point explicit
 verifică existența executabilului rezultat
 ```
 
+Scriptul de verificare:
+
+```text
+verifică existența folderului dist\TraceAI-Control
+verifică existența executabilului dist\TraceAI-Control\TraceAI-Control.exe
+verifică faptul că executabilul nu este gol
+afișează path-ul și dimensiunea executabilului
+afișează pașii manuali de smoke test
+nu pornește automat UI-ul
+nu apelează engine-ul
+```
+
 Limitări installer curente:
 
 ```text
@@ -181,7 +204,7 @@ nu există încă MSI/NSIS/Inno Setup
 nu există semnare executabil
 nu există icon final
 nu există pipeline CI Windows
-nu există verificare automată pe Windows
+nu există verificare automată pe Windows prin CI
 ```
 
 ## Testare curentă
@@ -209,7 +232,7 @@ installer Windows complet
 Următorul pas corect este:
 
 ```text
-pregătirea unui installer complet MSI/NSIS/Inno Setup sau adăugarea unei verificări automate/documentate pentru build Windows
+pregătirea installerului complet MSI/NSIS/Inno Setup peste executabilul PyInstaller existent
 ```
 
 Primul cod permis:
@@ -233,5 +256,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu pregătirea installerului complet MSI/NSIS/Inno Setup sau verificarea automată/documentată a buildului Windows.
+Continuăm de la CHECKPOINT.md cu pregătirea installerului complet MSI/NSIS/Inno Setup peste executabilul PyInstaller existent.
 ```
