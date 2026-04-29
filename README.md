@@ -41,6 +41,7 @@ Pregătire installer Inno Setup: script .iss + build PowerShell integrate
 Checklist validare Windows: integrat
 Șablon rezultat validare Windows: integrat
 Task GitHub validare Windows reală: #37 deschis
+GitHub Actions Windows installer artifact: workflow integrat
 Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
 ```
 
@@ -120,6 +121,7 @@ src/ui/
 samples/
 tests/
 installer/windows/
+.github/workflows/
 ```
 
 `TraceabilityCase` conține:
@@ -251,6 +253,7 @@ Pregătirea pentru executabil și installer Windows este în:
 
 ```text
 installer/windows/
+.github/workflows/windows-installer.yml
 ```
 
 Fișiere:
@@ -263,6 +266,7 @@ installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
 installer/windows/VALIDATION_CHECKLIST.md
 installer/windows/VALIDATION_RESULT_TEMPLATE.md
+.github/workflows/windows-installer.yml
 ```
 
 Build executabil PyInstaller:
@@ -283,13 +287,31 @@ Build installer Inno Setup:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
 ```
 
+Build installer prin GitHub Actions:
+
+```text
+Actions -> Build Windows Installer -> Run workflow
+```
+
+Artifact descărcabil după rularea workflow-ului:
+
+```text
+TraceAI-Control-Windows-Installer
+```
+
+Conține:
+
+```text
+TraceAI-Control-Setup.exe
+```
+
 Output executabil așteptat:
 
 ```text
 dist/TraceAI-Control/TraceAI-Control.exe
 ```
 
-Output installer așteptat:
+Output installer local așteptat:
 
 ```text
 installer/windows/output/TraceAI-Control-Setup.exe
@@ -324,12 +346,13 @@ Scriptul de verificare confirmă existența executabilului și afișează pașii
 
 Scriptul Inno Setup împachetează conținutul din `dist/TraceAI-Control` și creează un installer Windows cu shortcut în Start Menu și opțional pe Desktop.
 
+Workflow-ul GitHub Actions construiește installerul pe `windows-latest`, încarcă `TraceAI-Control-Windows-Installer` ca artifact și nu marchează validarea reală ca finalizată.
+
 Limitări curente installer:
 
 ```text
 nu există încă semnare executabil
 nu există icon final
-nu există pipeline CI Windows
 nu există validare reală finalizată pe o mașină Windows
 ```
 
