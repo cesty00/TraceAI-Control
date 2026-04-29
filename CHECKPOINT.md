@@ -20,7 +20,7 @@ Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare implementate
-Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale
+Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -239,7 +239,7 @@ Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rân
 
 ## Report Engine DOCX narativ implementat
 
-Faza 5 este implementată tehnic v1 narativ cu tabele Word reale:
+Faza 5 este implementată tehnic v1 narativ cu tabele Word reale și șablon profesional minimal:
 
 ```text
 TraceabilityCase -> docx_minimal
@@ -249,6 +249,7 @@ DOCX-ul include în prezent:
 
 ```text
 antet raport
+secțiune metadate raport
 rezumat executiv
 identificarea cazului
 surse utilizate
@@ -271,8 +272,20 @@ header de tabel
 rânduri de valori
 rând separat cu contextul sursă
 mesaj explicit pentru tabele goale
-stil TableGrid
+stil TraceAITable
 borduri simple
+```
+
+Șablonul DOCX profesional minimal include:
+
+```text
+word/styles.xml
+word/header1.xml
+word/footer1.xml
+relații Word pentru styles/header/footer
+headerReference / footerReference în sectPr
+secțiune Metadate raport
+stil de tabel TraceAITable
 ```
 
 Reguli respectate:
@@ -286,21 +299,21 @@ Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, DOCX-ul le afișează ca tabele Word reale, iar tabelele principale sunt populate controlat din rândurile selectate de Core.
+TraceabilityCase are structurile de tabele, DOCX-ul le afișează ca tabele Word reale, iar raportul are șablon profesional minimal cu stiluri, antet, subsol și metadate.
 
 Nu există încă:
 
 ```text
 trasabilitate amonte/aval calculată
 bilanțuri detaliate
-șablon vizual profesional complet cu branding / antet / subsol
+branding complet / logo / paginare avansată / cuprins automat
 UI
 installer
 ```
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele Word reale:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele Word reale și șablon profesional minimal:
 
 ```text
 python -m pytest -q
@@ -314,40 +327,30 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-alegerea următorului pas între bilanț preliminar și șablon DOCX profesional
+bilanț preliminar pe tabelele deja populate, fără conversii automate de unități
 ```
 
-Primul cod permis, dacă se continuă pe raport:
-
-```text
-src/report/docx_minimal.py
-```
-
-Primul cod permis, dacă se continuă pe logică operațională:
+Primul cod permis:
 
 ```text
 src/rules/traceability_case.py
 ```
 
-Primul obiectiv tehnic posibil pentru raport:
+Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unui șablon vizual profesional minimal:
-- antet/subsol
-- secțiune metadate raport
-- stiluri mai clare pentru titluri și tabele
-```
-
-Primul obiectiv tehnic posibil pentru logică operațională:
-
-```text
-bilanț preliminar pe tabelele deja populate, fără conversii automate de unități
+adăugarea unei secțiuni de bilanț preliminar în TraceabilityCase, pe baza tabelelor deja populate:
+- totaluri doar pe valori numerice clare
+- grupare pe UM, fără conversii automate
+- mesaje explicite când bilanțul nu poate fi calculat
+- fără trasabilitate amonte/aval dedusă automat
 ```
 
 Regulă importantă:
 
 ```text
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
+Bilanțul preliminar trebuie să fie conservator și să nu convertească unități de măsură automat.
 ```
 
 ## Fraza de reluare recomandată
@@ -355,5 +358,5 @@ DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu alegerea între bilanț preliminar și șablon DOCX profesional minimal.
+Continuăm de la CHECKPOINT.md cu bilanț preliminar pe tabelele deja populate.
 ```
