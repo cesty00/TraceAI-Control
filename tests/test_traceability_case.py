@@ -188,3 +188,31 @@ def test_alisol_priority_over_raw_material_hint() -> None:
 
     assert traceability_case["report_tables"]["auxiliaries_gas"]["rows"]
     assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
+
+
+def test_wms_delivery_rows_are_mapped_to_finished_goods_deliveries() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "wms",
+                "trasabilitate_wms.csv",
+                {"cod": "DS0001", "lot": "L001", "document comanda": "CMD-OUT-1", "client": "Client test", "cantitate": "7"},
+            ),
+            make_table(
+                "wms",
+                "trasabilitate_wms.csv",
+                {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "furnizor": "Furnizor test", "cantitate": "10"},
+            ),
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    delivery_rows = traceability_case["report_tables"]["finished_goods_deliveries"]["rows"]
+    receipt_rows = traceability_case["report_tables"]["wms_receipts"]["rows"]
+
+    assert delivery_rows[0]["values"]["document comanda"] == "CMD-OUT-1"
+    assert delivery_rows[0]["values"]["client"] == "Client test"
+    assert delivery_rows[0]["source_key"] == "wms"
+    assert receipt_rows[0]["values"]["document intrare"] == "NIR-1"
+    assert receipt_rows[0]["source_key"] == "wms"

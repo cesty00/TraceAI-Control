@@ -20,6 +20,7 @@ from .run_traceability_case import run_traceability_case
 from .traceability_case import (
     ALISOL_AUXILIARY_OBSERVATION,
     ALISOL_HINT,
+    FINISHED_GOODS_DELIVERY_HINTS,
     PACKAGING_HINTS,
     PACKAGING_ROLE,
     RAW_MATERIAL_HINTS,
@@ -36,6 +37,7 @@ from .traceability_case import (
     build_report_tables_from_rules_result,
     build_traceability_case,
     is_alisol_auxiliary_record,
+    is_finished_goods_delivery_record,
     is_packaging_record,
     is_raw_material_record,
     normalized_record_text,
@@ -48,6 +50,7 @@ from .traceability_case import (
 __all__ = [
     "ALISOL_AUXILIARY_OBSERVATION",
     "ALISOL_HINT",
+    "FINISHED_GOODS_DELIVERY_HINTS",
     "PACKAGING_HINTS",
     "PACKAGING_ROLE",
     "RAW_MATERIAL_HINTS",
@@ -74,6 +77,7 @@ __all__ = [
     "detect_case_type",
     "detect_case_type_from_dataset",
     "is_alisol_auxiliary_record",
+    "is_finished_goods_delivery_record",
     "is_packaging_record",
     "is_raw_material_record",
     "normalized_record_text",
