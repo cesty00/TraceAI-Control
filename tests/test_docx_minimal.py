@@ -4,9 +4,11 @@ from pathlib import Path
 from src.report.docx_minimal import generate_minimal_docx_report
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT, CASE_WMS_ONLY_PRODUCT
 from src.rules.traceability_case import (
+    TraceabilityBalanceLine,
     TraceabilityCase,
     TraceabilityCaseEvidence,
     TraceabilityCaseSubject,
+    TraceabilityPreliminaryBalance,
     TraceabilityReportTable,
     TraceabilityReportTables,
     TraceabilityTableRow,
@@ -66,6 +68,9 @@ def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path)
     assert "Surse utilizate" in document_xml
     assert "Interpretarea tipului de caz" in document_xml
     assert "Tabele operaționale din TraceabilityCase" in document_xml
+    assert "Bilanț preliminar" in document_xml
+    assert "Linii bilanț preliminar" in document_xml
+    assert "Nu există linii de bilanț preliminar calculate" in document_xml
     assert "Producția lotului" in document_xml
     assert "Nu au fost identificate date detaliate de producție" in document_xml
     assert "Concluzie preliminară" in document_xml
@@ -158,3 +163,41 @@ def test_generate_minimal_docx_report_renders_table_rows_from_traceability_case(
     assert "10" in document_xml
     assert "Sursă: production / rapoarte productie.csv" in document_xml
     assert "Nu au fost identificate livrări produs finit" in document_xml
+
+
+def test_generate_minimal_docx_report_renders_preliminary_balance_lines(tmp_path: Path) -> None:
+    traceability_case = TraceabilityCase(
+        subject=TraceabilityCaseSubject("DS0001", "L001", CASE_FINISHED_PRODUCT),
+        preliminary_balance=TraceabilityPreliminaryBalance(
+            messages=[
+                "Bilanț preliminar calculat doar din TraceabilityCase.report_tables.",
+                "Unitățile de măsură sunt grupate separat; nu se fac conversii automate.",
+            ],
+            lines=[
+                TraceabilityBalanceLine(
+                    table_key="production",
+                    table_title="Producția lotului",
+                    quantity_column="Cantitate",
+                    unit="kg",
+                    total="12.5",
+                    source_row_count=2,
+                    skipped_row_count=1,
+                    message="Total preliminar pe UM, fără conversie automată.",
+                )
+            ],
+        ),
+    )
+
+    output = generate_minimal_docx_report(traceability_case, tmp_path / "raport_bilant.docx")
+    document_xml = read_document_xml(output)
+
+    assert "Bilanț preliminar" in document_xml
+    assert "Mesaje bilanț" in document_xml
+    assert "Linii bilanț preliminar" in document_xml
+    assert "Bilanț preliminar calculat doar din TraceabilityCase.report_tables" in document_xml
+    assert "Unitățile de măsură sunt grupate separat" in document_xml
+    assert "Producția lotului" in document_xml
+    assert "Cantitate" in document_xml
+    assert "kg" in document_xml
+    assert "12.5" in document_xml
+    assert "Total preliminar pe UM" in document_xml
