@@ -30,6 +30,7 @@ Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație in
 Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare înainte de build
 Faza 7.2 — Verificare build Windows: script PowerShell + documentație integrate
 Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + documentație integrate
+Faza 7.4 — Checklist validare Windows: integrat
 Installer Windows complet: pregătit tehnic, dar NEVALIDAT încă pe Windows real
 ```
 
@@ -58,6 +59,7 @@ Pregătire installer Windows
 Rafinare script Windows build
 Verificare build Windows
 Pregătire installer Inno Setup
+Checklist validare Windows
 Validare reală Windows
 Icon / semnare / CI Windows
 ```
@@ -85,6 +87,7 @@ Icon / semnare / CI Windows
 19. Scriptul Windows build folosește entry point explicit `src\ui\visual.py` și verifică existența lui înainte de build.
 20. Scriptul de verificare Windows build verifică doar artefactul rezultat și nu pornește automat UI-ul / engine-ul.
 21. Scriptul Inno Setup împachetează executabilul PyInstaller existent și nu introduce logică de business.
+22. Checklistul de validare Windows definește pașii reali de acceptare fără workaround-uri în UI sau installer.
 
 ## Structura repo la checkpoint
 
@@ -98,6 +101,7 @@ TraceAI-Control/
     windows/
       README.md
       TraceAI-Control.iss
+      VALIDATION_CHECKLIST.md
       build_inno_setup.ps1
       build_windows.ps1
       verify_windows_build.ps1
@@ -133,7 +137,7 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Build, verificare și installer Windows integrate
+## Build, verificare, installer și checklist Windows integrate
 
 Implementare:
 
@@ -142,6 +146,7 @@ installer/windows/build_windows.ps1
 installer/windows/verify_windows_build.ps1
 installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
+installer/windows/VALIDATION_CHECKLIST.md
 ```
 
 Documentație:
@@ -175,6 +180,12 @@ Build installer Inno Setup:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
 ```
 
+Checklist validare Windows:
+
+```text
+installer/windows/VALIDATION_CHECKLIST.md
+```
+
 Entry point PyInstaller:
 
 ```text
@@ -193,37 +204,19 @@ Output installer așteptat:
 installer\windows\output\TraceAI-Control-Setup.exe
 ```
 
-Scriptul de build PyInstaller:
+Checklistul acoperă:
 
 ```text
-setează repo root
-verifică existența entry point-ului src\ui\visual.py
-rulează testele cu python -m pytest -q, dacă nu este folosit -SkipTests
-verifică PyInstaller
-curăță build/dist vechi
-construiește executabilul cu PyInstaller folosind entry point explicit
-verifică existența executabilului rezultat
-```
-
-Scriptul de verificare:
-
-```text
-verifică existența folderului dist\TraceAI-Control
-verifică existența executabilului dist\TraceAI-Control\TraceAI-Control.exe
-verifică faptul că executabilul nu este gol
-afișează path-ul și dimensiunea executabilului
-afișează pașii manuali de smoke test
-nu pornește automat UI-ul
-nu apelează engine-ul
-```
-
-Scriptul Inno Setup:
-
-```text
-instalează conținutul din dist\TraceAI-Control
-creează shortcut în Start Menu
-poate crea shortcut pe Desktop
-poate lansa aplicația după instalare
+test suite
+build executabil PyInstaller
+verificare artefact build
+smoke test executabil direct
+generare raport DOCX din executabil direct
+build installer Inno Setup
+instalare aplicație
+smoke test aplicație instalată
+dezinstalare
+verdict final ACCEPTAT / RESPINS
 ```
 
 Limitări installer curente:
@@ -232,7 +225,7 @@ Limitări installer curente:
 nu există încă semnare executabil
 nu există icon final
 nu există pipeline CI Windows
-nu există validare reală pe o mașină Windows
+nu există validare reală finalizată pe o mașină Windows
 ```
 
 ## Testare curentă
@@ -263,13 +256,14 @@ pipeline CI Windows
 Următorul pas corect este:
 
 ```text
-validarea reală pe Windows a fluxului build_windows.ps1 -> verify_windows_build.ps1 -> build_inno_setup.ps1
+rularea checklistului de validare pe o mașină Windows reală și marcarea rezultatului ACCEPTAT / RESPINS
 ```
 
-Primul cod permis:
+Primul cod permis după validare:
 
 ```text
-installer/windows/
+installer/windows/VALIDATION_CHECKLIST.md
+installer/windows/README.md
 README.md
 CHECKPOINT.md
 ```
@@ -287,5 +281,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu validarea reală pe Windows a fluxului build_windows.ps1 -> verify_windows_build.ps1 -> build_inno_setup.ps1.
+Continuăm de la CHECKPOINT.md cu rularea checklistului de validare pe o mașină Windows reală și marcarea rezultatului ACCEPTAT / RESPINS.
 ```
