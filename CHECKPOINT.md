@@ -19,7 +19,7 @@ Faza 0 — Documentație și arhitectură inițială: finalizată
 Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
-Faza 4 — TraceabilityCase: contract + report_tables + populare inițială + regula ALISOL implementate
+Faza 4 — TraceabilityCase: contract + report_tables + populare inițială + reguli clasificare implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + randare tabele
 Faza 6 — UI profesional simplu: NU a început încă
 ```
@@ -222,12 +222,15 @@ rânduri production selectate -> report_tables.production
 rânduri wms selectate -> report_tables.wms_receipts
 rânduri stock selectate -> report_tables.stock
 rânduri care conțin ALISOL -> report_tables.auxiliaries_gas
+rânduri cu indicii explicite de materie primă -> report_tables.raw_materials
+rânduri cu indicii explicite de ambalaj -> report_tables.packaging
 ```
 
-Regulă ALISOL implementată:
+Reguli de clasificare implementate:
 
 ```text
 ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară.
+Materiile prime și ambalajele sunt clasificate doar pe indicii explicite, fără deducții de trasabilitate.
 ```
 
 Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rânduri.
@@ -269,14 +272,13 @@ Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, DOCX-ul le afișează, primele tabele sunt populate controlat din rândurile selectate de Core, iar ALISOL este clasificat explicit ca auxiliar / gaz tehnologic.
+TraceabilityCase are structurile de tabele, DOCX-ul le afișează, primele tabele sunt populate controlat din rândurile selectate de Core, iar ALISOL / materiile prime / ambalajele au reguli explicite de clasificare.
 
 Nu există încă:
 
 ```text
 trasabilitate amonte/aval calculată
 bilanțuri detaliate
-clasificare generală controlată materii prime / ambalaje
 populare livrări produs finit
 șablon vizual profesional
 UI
@@ -289,7 +291,7 @@ Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Re
 
 ```text
 python -m pytest -q
-27 passed
+29 passed
 ```
 
 ## Următorul pas la reluare
@@ -299,7 +301,7 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-clasificarea controlată a rândurilor în materii prime / ambalaje
+popularea livrărilor produs finit din rânduri WMS relevante
 ```
 
 Primul cod permis:
@@ -311,10 +313,9 @@ src/rules/traceability_case.py
 Primul obiectiv tehnic următor:
 
 ```text
-adăugarea unor reguli explicite și prudente pentru:
-- materii prime alimentare -> report_tables.raw_materials
-- ambalaje -> report_tables.packaging
-- păstrarea regulii ALISOL în auxiliaries_gas, niciodată raw_materials
+adăugarea unei reguli prudente pentru:
+- rânduri WMS cu indicii explicite de livrare / document comanda -> report_tables.finished_goods_deliveries
+- păstrarea recepțiilor WMS în report_tables.wms_receipts când nu există indicii de livrare
 ```
 
 Regulă importantă:
@@ -328,5 +329,5 @@ TraceabilityCase poate fi extins din rezultatul Core/Rules, dar DOCX rămâne ge
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu clasificarea controlată a rândurilor în materii prime / ambalaje.
+Continuăm de la CHECKPOINT.md cu popularea livrărilor produs finit din rânduri WMS relevante.
 ```
