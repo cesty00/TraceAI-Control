@@ -33,12 +33,13 @@ Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + d
 Faza 7.4 — Checklist validare Windows: integrat
 Faza 7.5 — Șablon rezultat validare Windows: integrat
 Faza 7.6 — Issue GitHub validare Windows reală: #37 deschis și documentat
+Faza 7.7 — GitHub Actions Windows installer artifact: workflow integrat
 Installer Windows complet: pregătit tehnic, dar NEVALIDAT încă pe Windows real
 ```
 
 ## Decizie principală
 
-UI-ul vizual există doar ca strat peste orchestrator. Installerul, verificarea buildului și documentele de validare nu introduc logică de business.
+UI-ul vizual există doar ca strat peste orchestrator. Installerul, verificarea buildului, workflow-ul GitHub Actions și documentele de validare nu introduc logică de business.
 
 Ordinea proiectului este:
 
@@ -64,8 +65,9 @@ Pregătire installer Inno Setup
 Checklist validare Windows
 Șablon rezultat validare Windows
 Issue GitHub validare Windows reală
+Workflow GitHub Actions pentru artifact installer
 Validare reală Windows
-Icon / semnare / CI Windows
+Icon / semnare
 ```
 
 ## Reguli critice validate
@@ -94,6 +96,7 @@ Icon / semnare / CI Windows
 22. Checklistul de validare Windows definește pașii reali de acceptare fără workaround-uri în UI sau installer.
 23. Șablonul rezultatului de validare documentează verdictul ACCEPTED / REJECTED fără a marca validarea ca efectuată.
 24. Issue-ul #37 urmărește validarea reală Windows fără a marca validarea ca finalizată.
+25. Workflow-ul GitHub Actions construiește artifactul installer pe runner Windows și nu marchează validarea reală ca finalizată.
 
 ## Structura repo la checkpoint
 
@@ -101,6 +104,9 @@ Icon / semnare / CI Windows
 TraceAI-Control/
   README.md
   CHECKPOINT.md
+  .github/
+    workflows/
+      windows-installer.yml
   docs/
     UI_ENGINE_CONTRACT.md
   installer/
@@ -144,7 +150,7 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Build, verificare, installer și validare Windows integrate
+## Build, verificare, installer, workflow și validare Windows integrate
 
 Implementare:
 
@@ -155,6 +161,7 @@ installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
 installer/windows/VALIDATION_CHECKLIST.md
 installer/windows/VALIDATION_RESULT_TEMPLATE.md
+.github/workflows/windows-installer.yml
 ```
 
 Documentație:
@@ -171,25 +178,37 @@ Issue tracking validare reală:
 https://github.com/cesty00/TraceAI-Control/issues/37
 ```
 
-Build executabil PyInstaller:
+Build installer prin GitHub Actions:
+
+```text
+Actions -> Build Windows Installer -> Run workflow
+```
+
+Artifact descărcabil după workflow:
+
+```text
+TraceAI-Control-Windows-Installer
+```
+
+Conține:
+
+```text
+TraceAI-Control-Setup.exe
+```
+
+Build executabil PyInstaller local:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
 ```
 
-Build fără teste, doar dacă testele au fost deja rulate separat:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
-```
-
-Verificare build după generarea executabilului:
+Verificare build local:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
 ```
 
-Build installer Inno Setup:
+Build installer Inno Setup local:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
@@ -219,7 +238,7 @@ Output executabil așteptat:
 dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
-Output installer așteptat:
+Output installer local așteptat:
 
 ```text
 installer\windows\output\TraceAI-Control-Setup.exe
@@ -230,7 +249,6 @@ Limitări installer curente:
 ```text
 nu există încă semnare executabil
 nu există icon final
-nu există pipeline CI Windows
 nu există validare reală finalizată pe o mașină Windows
 issue-ul #37 este deschis pentru validarea reală
 ```
@@ -255,7 +273,6 @@ branding complet / logo / paginare avansată / cuprins automat
 validare reală installer Windows
 semnare executabil
 icon final
-pipeline CI Windows
 ```
 
 ## Următorul pas la reluare
@@ -263,7 +280,7 @@ pipeline CI Windows
 Următorul pas corect este:
 
 ```text
-rularea issue-ului #37 pe o mașină Windows reală și completarea șablonului de rezultat cu ACCEPTED / REJECTED
+rularea workflow-ului GitHub Actions Build Windows Installer, descărcarea artifactului TraceAI-Control-Windows-Installer și testarea lui pe mașina Windows reală
 ```
 
 Primul cod permis după validare:
@@ -288,5 +305,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu issue-ul #37: validare reală Windows și completarea șablonului de rezultat cu ACCEPTED / REJECTED.
+Continuăm de la CHECKPOINT.md cu rularea workflow-ului Build Windows Installer, descărcarea artifactului și validarea pe Windows real.
 ```
