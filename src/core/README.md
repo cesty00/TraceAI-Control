@@ -82,6 +82,20 @@ Utilizare:
 python -m src.core.record_selection "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output selected_records.json
 ```
 
+## `run_pipeline.py`
+
+Rulează într-un singur flux pașii Core Engine Faza 2:
+
+```text
+source_inventory -> normalized_dataset -> dataset_validation -> record_selection
+```
+
+Utilizare:
+
+```bash
+python -m src.core.run_pipeline "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output core_pipeline.json
+```
+
 ## Limită intenționată
 
 Core Engine, în această etapă, nu calculează trasabilitate, nu clasifică tipuri de caz, nu construiește `TraceabilityCase` și nu generează DOCX.
