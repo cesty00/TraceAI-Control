@@ -29,7 +29,8 @@ Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat +
 Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație integrate
 Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare înainte de build
 Faza 7.2 — Verificare build Windows: script PowerShell + documentație integrate
-Installer Windows complet: NU este finalizat încă
+Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + documentație integrate
+Installer Windows complet: pregătit tehnic, dar NEVALIDAT încă pe Windows real
 ```
 
 ## Decizie principală
@@ -56,7 +57,9 @@ UI vizual minimal
 Pregătire installer Windows
 Rafinare script Windows build
 Verificare build Windows
-Installer Windows complet
+Pregătire installer Inno Setup
+Validare reală Windows
+Icon / semnare / CI Windows
 ```
 
 ## Reguli critice validate
@@ -81,6 +84,7 @@ Installer Windows complet
 18. Scriptul Windows build pornește de la UI-ul vizual minimal și nu schimbă engine-ul.
 19. Scriptul Windows build folosește entry point explicit `src\ui\visual.py` și verifică existența lui înainte de build.
 20. Scriptul de verificare Windows build verifică doar artefactul rezultat și nu pornește automat UI-ul / engine-ul.
+21. Scriptul Inno Setup împachetează executabilul PyInstaller existent și nu introduce logică de business.
 
 ## Structura repo la checkpoint
 
@@ -93,6 +97,8 @@ TraceAI-Control/
   installer/
     windows/
       README.md
+      TraceAI-Control.iss
+      build_inno_setup.ps1
       build_windows.ps1
       verify_windows_build.ps1
   src/
@@ -127,13 +133,15 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Build și verificare Windows integrate
+## Build, verificare și installer Windows integrate
 
 Implementare:
 
 ```text
 installer/windows/build_windows.ps1
 installer/windows/verify_windows_build.ps1
+installer/windows/TraceAI-Control.iss
+installer/windows/build_inno_setup.ps1
 ```
 
 Documentație:
@@ -143,7 +151,7 @@ installer/windows/README.md
 README.md
 ```
 
-Build local pe Windows:
+Build executabil PyInstaller:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
@@ -161,19 +169,31 @@ Verificare build după generarea executabilului:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
 ```
 
+Build installer Inno Setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
+```
+
 Entry point PyInstaller:
 
 ```text
 src\ui\visual.py
 ```
 
-Output așteptat:
+Output executabil așteptat:
 
 ```text
 dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
-Scriptul de build:
+Output installer așteptat:
+
+```text
+installer\windows\output\TraceAI-Control-Setup.exe
+```
+
+Scriptul de build PyInstaller:
 
 ```text
 setează repo root
@@ -197,14 +217,22 @@ nu pornește automat UI-ul
 nu apelează engine-ul
 ```
 
+Scriptul Inno Setup:
+
+```text
+instalează conținutul din dist\TraceAI-Control
+creează shortcut în Start Menu
+poate crea shortcut pe Desktop
+poate lansa aplicația după instalare
+```
+
 Limitări installer curente:
 
 ```text
-nu există încă MSI/NSIS/Inno Setup
-nu există semnare executabil
+nu există încă semnare executabil
 nu există icon final
 nu există pipeline CI Windows
-nu există verificare automată pe Windows prin CI
+nu există validare reală pe o mașină Windows
 ```
 
 ## Testare curentă
@@ -224,7 +252,10 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-installer Windows complet
+validare reală installer Windows
+semnare executabil
+icon final
+pipeline CI Windows
 ```
 
 ## Următorul pas la reluare
@@ -232,7 +263,7 @@ installer Windows complet
 Următorul pas corect este:
 
 ```text
-pregătirea installerului complet MSI/NSIS/Inno Setup peste executabilul PyInstaller existent
+validarea reală pe Windows a fluxului build_windows.ps1 -> verify_windows_build.ps1 -> build_inno_setup.ps1
 ```
 
 Primul cod permis:
@@ -256,5 +287,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu pregătirea installerului complet MSI/NSIS/Inno Setup peste executabilul PyInstaller existent.
+Continuăm de la CHECKPOINT.md cu validarea reală pe Windows a fluxului build_windows.ps1 -> verify_windows_build.ps1 -> build_inno_setup.ps1.
 ```
