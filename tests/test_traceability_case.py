@@ -1,11 +1,16 @@
+from src.core.dataset_validation import ValidationReport
 from src.core.normalized_dataset import NormalizedColumn, NormalizedDataSet, NormalizedRow, NormalizedTable
 from src.core.record_selection import select_records_by_code_lot
 from src.core.run_pipeline import CorePipelineResult
 from src.core.source_inventory import InventoryReport
-from src.core.dataset_validation import ValidationReport
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT, detect_case_type
 from src.rules.run_rules_pipeline import RulesPipelineResult
-from src.rules.traceability_case import build_traceability_case, traceability_case_to_dict
+from src.rules.traceability_case import (
+    build_empty_report_tables,
+    build_traceability_case,
+    report_tables_as_list,
+    traceability_case_to_dict,
+)
 
 
 def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
@@ -45,3 +50,23 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
     assert traceability_case["evidence"]
     assert traceability_case["sections"]["core_validation_status"] == "VALID"
     assert traceability_case["sections"]["selected_record_count"] == 1
+    assert traceability_case["report_tables"]["production"]["title"] == "Producția lotului"
+    assert traceability_case["report_tables"]["stock"]["empty_message"]
+
+
+def test_build_empty_report_tables_contains_expected_sections_in_display_order() -> None:
+    tables = report_tables_as_list(build_empty_report_tables())
+
+    assert [table.key for table in tables] == [
+        "production",
+        "finished_goods_deliveries",
+        "raw_materials",
+        "packaging",
+        "auxiliaries_gas",
+        "wms_receipts",
+        "prd_consumptions",
+        "stock",
+    ]
+    assert all(table.columns for table in tables)
+    assert all(table.empty_message for table in tables)
+    assert all(table.rows == [] for table in tables)
