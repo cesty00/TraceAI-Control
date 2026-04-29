@@ -78,12 +78,15 @@ Popularea controlată existentă:
 - rândurile `wms` selectate de Core sunt mapate în tabelul `wms_receipts`;
 - rândurile `stock` selectate de Core sunt mapate în tabelul `stock`;
 - rândurile care conțin `ALISOL` sunt mapate în tabelul `auxiliaries_gas`;
+- rândurile cu indicii explicite de materie primă sunt mapate în `raw_materials`;
+- rândurile cu indicii explicite de ambalaj sunt mapate în `packaging`;
 - tabelele rămase nepopulate păstrează mesajele explicite de lipsă date.
 
-Regulă critică:
+Reguli critice:
 
 ```text
 ALISOL este auxiliar / gaz tehnologic și nu se clasifică drept materie primă alimentară.
+Clasificarea materii prime / ambalaje se face doar pe indicii explicite, fără deducții de trasabilitate.
 ```
 
 Această populare este o mapare de rânduri selectate și nu calculează încă trasabilitate amonte/aval.
