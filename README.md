@@ -38,6 +38,7 @@ UI vizual minimal peste orchestrator: integrat și testat
 Pregătire installer Windows: script PyInstaller + documentație integrate
 Verificare build Windows: script PowerShell integrat
 Pregătire installer Inno Setup: script .iss + build PowerShell integrate
+Checklist validare Windows: integrat
 Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
 ```
 
@@ -258,6 +259,7 @@ installer/windows/build_windows.ps1
 installer/windows/verify_windows_build.ps1
 installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
+installer/windows/VALIDATION_CHECKLIST.md
 ```
 
 Build executabil PyInstaller:
@@ -290,6 +292,14 @@ Output installer așteptat:
 installer/windows/output/TraceAI-Control-Setup.exe
 ```
 
+Checklistul de validare Windows este în:
+
+```text
+installer/windows/VALIDATION_CHECKLIST.md
+```
+
+Checklistul acoperă test suite, build executabil, verificare artefact, smoke test, generare DOCX, build installer, instalare, test aplicație instalată, dezinstalare și verdict final.
+
 Scriptul de build rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
 
 Scriptul de verificare confirmă existența executabilului și afișează pașii manuali de smoke test. Nu pornește automat UI-ul și nu apelează engine-ul.
@@ -302,7 +312,7 @@ Limitări curente installer:
 nu există încă semnare executabil
 nu există icon final
 nu există pipeline CI Windows
-nu există validare reală pe o mașină Windows
+nu există validare reală finalizată pe o mașină Windows
 ```
 
 ## Testare
