@@ -1,12 +1,12 @@
 param(
-    [string]$AppName = "TraceAI-Control"
+    [string]$AppName = 'TraceAI-Control'
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
-Write-Host "TraceAI Control — Windows build verification" -ForegroundColor Cyan
+Write-Host 'TraceAI Control - Windows build verification' -ForegroundColor Cyan
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 Set-Location $RepoRoot
 
 $ExePath = Join-Path $RepoRoot "dist\$AppName\$AppName.exe"
@@ -25,18 +25,18 @@ if ($ExecutableInfo.Length -le 0) {
     throw "Executable is empty: $ExePath"
 }
 
-Write-Host "Build artifact found." -ForegroundColor Green
+Write-Host 'Build artifact found.' -ForegroundColor Green
 Write-Host "Executable: $ExePath" -ForegroundColor Green
 Write-Host "Size bytes: $($ExecutableInfo.Length)" -ForegroundColor Green
 
-Write-Host "Manual smoke test:" -ForegroundColor Cyan
-Write-Host "1. Start the executable:" -ForegroundColor Cyan
+Write-Host 'Manual smoke test:' -ForegroundColor Cyan
+Write-Host '1. Start the executable:' -ForegroundColor Cyan
 Write-Host "   .\dist\$AppName\$AppName.exe"
-Write-Host "2. Confirm the visual form opens."
-Write-Host "3. Select the official source folder."
-Write-Host "4. Enter code and lot."
-Write-Host "5. Select output DOCX path."
-Write-Host "6. Generate the report."
-Write-Host "7. Confirm the DOCX file is created."
+Write-Host '2. Confirm the visual form opens.'
+Write-Host '3. Select the official source folder.'
+Write-Host '4. Enter code and lot.'
+Write-Host '5. Select output DOCX path.'
+Write-Host '6. Generate the report.'
+Write-Host '7. Confirm the DOCX file is created.'
 
-Write-Host "Verification completed." -ForegroundColor Green
+Write-Host 'Verification completed.' -ForegroundColor Green
