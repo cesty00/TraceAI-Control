@@ -37,7 +37,8 @@ CLI/UI shell minimal peste orchestrator: integrat și testat
 UI vizual minimal peste orchestrator: integrat și testat
 Pregătire installer Windows: script PyInstaller + documentație integrate
 Verificare build Windows: script PowerShell integrat
-Installer Windows complet: nu este finalizat încă
+Pregătire installer Inno Setup: script .iss + build PowerShell integrate
+Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
 ```
 
 ## Surse oficiale
@@ -243,7 +244,7 @@ src/ui/README.md
 
 ## Pregătire installer Windows
 
-Pregătirea pentru executabil Windows este în:
+Pregătirea pentru executabil și installer Windows este în:
 
 ```text
 installer/windows/
@@ -255,9 +256,11 @@ Fișiere:
 installer/windows/README.md
 installer/windows/build_windows.ps1
 installer/windows/verify_windows_build.ps1
+installer/windows/TraceAI-Control.iss
+installer/windows/build_inno_setup.ps1
 ```
 
-Build local pe Windows, din rădăcina repo-ului:
+Build executabil PyInstaller:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
@@ -269,23 +272,37 @@ Verificare build după generarea executabilului:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
 ```
 
-Output așteptat:
+Build installer Inno Setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
+```
+
+Output executabil așteptat:
 
 ```text
 dist/TraceAI-Control/TraceAI-Control.exe
+```
+
+Output installer așteptat:
+
+```text
+installer/windows/output/TraceAI-Control-Setup.exe
 ```
 
 Scriptul de build rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
 
 Scriptul de verificare confirmă existența executabilului și afișează pașii manuali de smoke test. Nu pornește automat UI-ul și nu apelează engine-ul.
 
+Scriptul Inno Setup împachetează conținutul din `dist/TraceAI-Control` și creează un installer Windows cu shortcut în Start Menu și opțional pe Desktop.
+
 Limitări curente installer:
 
 ```text
-nu există încă MSI/NSIS/Inno Setup
-nu există semnare executabil
+nu există încă semnare executabil
 nu există icon final
 nu există pipeline CI Windows
+nu există validare reală pe o mașină Windows
 ```
 
 ## Testare
@@ -325,7 +342,7 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-installer Windows complet
+validare reală installer Windows
 ```
 
 ## Checkpoint
