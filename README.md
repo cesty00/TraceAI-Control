@@ -35,7 +35,8 @@ Contract UI -> engine: integrat
 Funcție UI de orchestrare: integrată și testată
 CLI/UI shell minimal peste orchestrator: integrat și testat
 UI vizual minimal peste orchestrator: integrat și testat
-Installer Windows: nu a început încă
+Pregătire installer Windows: script PyInstaller + documentație integrate
+Installer Windows complet: nu este finalizat încă
 ```
 
 ## Surse oficiale
@@ -113,6 +114,7 @@ src/report/
 src/ui/
 samples/
 tests/
+installer/windows/
 ```
 
 `TraceabilityCase` conține:
@@ -238,6 +240,44 @@ docs/UI_ENGINE_CONTRACT.md
 src/ui/README.md
 ```
 
+## Pregătire installer Windows
+
+Pregătirea pentru executabil Windows este în:
+
+```text
+installer/windows/
+```
+
+Fișiere:
+
+```text
+installer/windows/README.md
+installer/windows/build_windows.ps1
+```
+
+Build local pe Windows, din rădăcina repo-ului:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
+```
+
+Output așteptat:
+
+```text
+dist/TraceAI-Control/TraceAI-Control.exe
+```
+
+Scriptul rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
+
+Limitări curente installer:
+
+```text
+nu există încă MSI/NSIS/Inno Setup
+nu există semnare executabil
+nu există icon final
+nu există pipeline CI Windows
+```
+
 ## Testare
 
 Rulare test suite:
@@ -275,7 +315,7 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-installer
+installer Windows complet
 ```
 
 ## Checkpoint
