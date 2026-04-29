@@ -10,7 +10,7 @@ Proiectul a fost repornit curat în repo-ul:
 cesty00/TraceAI-Control
 ```
 
-Repo-ul nu mai conține variante vechi, patch-uri FAST, PP-03 sau OperatorView.
+Repo-ul păstrează doar direcția curentă pentru modulul de trasabilitate și raportul DOCX auditabil.
 
 Stadiul curent este:
 
@@ -72,10 +72,8 @@ Nu se folosesc:
 
 ```text
 WME / fișă magazie
-PP-03
-OperatorView
 patch-uri vechi
-fișiere debug
+fișiere auxiliare fără rol în fluxul curent
 ```
 
 Regulă documente:
