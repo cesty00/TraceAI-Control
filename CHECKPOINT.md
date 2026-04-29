@@ -18,7 +18,9 @@ Stadiul curent este:
 Faza 0 — Documentație și arhitectură inițială: finalizată
 Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
-Faza 3 — Rules Engine: NU a început încă
+Faza 3 — Rules Engine: implementată tehnic v1
+Faza 4 — TraceabilityCase: schelet + runner implementate
+Faza 5 — Report Engine DOCX: NU a început încă
 ```
 
 ## Decizie principală
@@ -95,7 +97,7 @@ WMS_ONLY_PRODUCT
 UNKNOWN
 ```
 
-Detectarea acestor tipuri aparține Fazei 3 — Rules Engine, nu Core Engine.
+Detectarea acestor tipuri aparține Rules Engine.
 
 ## Reguli critice validate
 
@@ -141,6 +143,10 @@ TraceAI-Control/
       record_selection.py
       run_pipeline.py
     rules/
+      case_type_detection.py
+      run_rules_pipeline.py
+      traceability_case.py
+      run_traceability_case.py
     report/
     ui/
   tests/
@@ -149,6 +155,10 @@ TraceAI-Control/
     test_dataset_validation.py
     test_record_selection.py
     test_run_pipeline.py
+    test_case_type_detection.py
+    test_run_rules_pipeline.py
+    test_traceability_case.py
+    test_run_traceability_case.py
   samples/
 ```
 
@@ -163,6 +173,7 @@ TraceAI-Control/
 - `docs/ROADMAP.md` — ordinea de dezvoltare.
 - `docs/STRUCTURA_REPO.md` — structura repo-ului.
 - `src/core/README.md` — utilizarea modulelor Core Engine.
+- `src/rules/README.md` — utilizarea modulelor Rules Engine și TraceabilityCase.
 
 ## Core Engine v1 implementat
 
@@ -180,11 +191,20 @@ Livrabile Core:
 - `record_selection.py` selectează rândurile pentru cod + lot;
 - `run_pipeline.py` orchestrează fluxul Core Faza 2.
 
-## Limită Core Engine
+## Rules Engine v1 implementat
 
-Core Engine nu calculează trasabilitate.
+Faza 3 a fost implementată tehnic în pași mici:
 
-Core Engine nu detectează:
+```text
+case_type_detection -> run_rules_pipeline
+```
+
+Livrabile Rules:
+
+- `case_type_detection.py` detectează `case_type` din rezultatul Core Engine;
+- `run_rules_pipeline.py` rulează Core Pipeline și adaugă detectarea `case_type`.
+
+Tipuri detectate:
 
 ```text
 FINISHED_PRODUCT
@@ -193,53 +213,83 @@ WMS_ONLY_PRODUCT
 UNKNOWN
 ```
 
-Core Engine nu aplică regula gazului, nu calculează bilanțuri, nu construiește `TraceabilityCase` și nu generează DOCX.
+## TraceabilityCase v1 implementat
+
+Faza 4 a început și are schelet funcțional:
+
+```text
+traceability_case -> run_traceability_case
+```
+
+Livrabile TraceabilityCase:
+
+- `traceability_case.py` definește contractul intern minimal;
+- `run_traceability_case.py` produce `TraceabilityCase` minimal din folderul de surse + cod + lot.
+
+Obiectul intern conține în prezent:
+
+```text
+subject: code, lot, case_type
+evidence: sursă, sheet, rând, mesaj
+observations: observații Rules Engine
+sections: metadate tehnice minimale Core Engine
+```
+
+## Limită curentă
+
+Aplicația nu generează încă DOCX.
+
+TraceabilityCase este încă minimal și nu conține încă secțiuni narative finale pentru raport.
+
+Nu există încă:
+
+```text
+Report Engine DOCX
+șablon DOCX generat automat
+UI
+installer
+```
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core Engine v1:
+Testele unitare existente acoperă modulele Core, Rules și TraceabilityCase v1:
 
 ```text
 python -m pytest -q
-13 passed
+21 passed
 ```
 
 ## Următorul pas la reluare
 
-La reluarea proiectului, NU se începe cu UI și NU se începe cu DOCX.
+La reluarea proiectului, NU se începe cu UI.
 
 Următorul pas corect este:
 
 ```text
-Faza 3 — Rules Engine
+Faza 5 — Report Engine DOCX minimal
 ```
 
 Primul cod permis:
 
 ```text
-src/rules/
+src/report/
 ```
 
-Primul obiectiv tehnic Faza 3:
+Primul obiectiv tehnic Faza 5:
 
 ```text
-detectarea case_type din NormalizedDataSet și record_selection:
-- FINISHED_PRODUCT
-- RAW_MATERIAL
-- WMS_ONLY_PRODUCT
-- UNKNOWN
+generarea unui DOCX narativ minimal din TraceabilityCase, cu secțiuni explicite:
+- subiectul raportului
+- tipul cazului
+- dovezi folosite
+- observații
+- secțiuni fără date marcate explicit
 ```
 
-Nu se generează TraceabilityCase complet încă.
-
-Primul livrabil tehnic Faza 3:
+Regulă importantă:
 
 ```text
-un modul care primește CorePipelineResult / NormalizedDataSet + cod + lot și produce un rezultat intern cu:
-- case_type detectat
-- sursele care au susținut detectarea
-- motivele deciziei
-- observații dacă datele sunt insuficiente
+DOCX se generează din TraceabilityCase, nu direct din fișierele sursă.
 ```
 
 ## Fraza de reluare recomandată
@@ -247,5 +297,5 @@ un modul care primește CorePipelineResult / NormalizedDataSet + cod + lot și p
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu Faza 3 — Rules Engine: detectarea case_type din rezultatul Core Engine.
+Continuăm de la CHECKPOINT.md cu Faza 5 — Report Engine DOCX minimal din TraceabilityCase.
 ```
