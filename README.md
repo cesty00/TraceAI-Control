@@ -1,8 +1,6 @@
 # TraceAI Control — Modul Trasabilitate
 
-## Scop
-
-TraceAI Control — Modul Trasabilitate este aplicația destinată generării unui raport DOCX auditabil pentru trasabilitatea unui articol și lot.
+TraceAI Control — Modul Trasabilitate generează un raport DOCX auditabil pentru trasabilitatea unui articol și lot.
 
 Utilizatorul introduce:
 
@@ -11,7 +9,31 @@ Cod articol
 Lot
 ```
 
-Aplicația analizează fișierele operaționale zilnice și generează un raport narativ, clar și verificabil.
+Livrabilul principal este:
+
+```text
+Raport DOCX de trasabilitate
+```
+
+Raportul este narativ, auditabil și construit din `TraceabilityCase`, nu prin citirea directă a fișierelor în Report Engine.
+
+## Status curent
+
+Stadiul tehnic curent:
+
+```text
+Core Engine v1: integrat
+Rules Engine v1: integrat
+TraceabilityCase + report_tables: integrat
+Bilanț preliminar conservator: integrat
+Report Engine DOCX cu tabele Word reale: integrat
+Șablon DOCX profesional minimal: integrat
+Randare bilanț preliminar în DOCX: integrată
+Flux E2E controlat DOCX: integrat
+Runner demonstrativ DOCX controlat: integrat, testat și documentat
+UI profesional simplu: nu a început încă
+Installer Windows: nu a început încă
+```
 
 ## Surse oficiale
 
@@ -38,7 +60,7 @@ fișiere debug
 
 ## Tipuri de cazuri suportate
 
-Aplicația trebuie să detecteze automat tipul cazului:
+Rules Engine detectează automat tipul cazului:
 
 ```text
 FINISHED_PRODUCT
@@ -46,29 +68,6 @@ RAW_MATERIAL
 WMS_ONLY_PRODUCT
 UNKNOWN
 ```
-
-## Livrabil principal
-
-Livrabilul principal este:
-
-```text
-Raport DOCX de trasabilitate
-```
-
-Excel-ul nu este obiectivul principal.
-
-## Stil raport
-
-Raportul trebuie să fie:
-
-```text
-narativ
-auditabil
-clar
-adaptat complexității cazului
-```
-
-Nu trebuie să fie un Excel copiat în Word.
 
 ## Reguli importante
 
@@ -78,10 +77,151 @@ Nu trebuie să fie un Excel copiat în Word.
 - GAZ ALIMENTAR ALISOL este material auxiliar / consumabil tehnologic.
 - Gazul nu este materie primă alimentară.
 - Unitățile de măsură se păstrează așa cum apar în surse.
-- Dacă nu există date într-o secțiune, raportul trebuie să spună explicit acest lucru.
+- Nu se fac conversii automate de unități de măsură.
+- Dacă nu există date într-o secțiune, raportul spune explicit acest lucru.
+- UI-ul nu conține logică de business.
 
-## Faza curentă
+## Arhitectură curentă
 
-Faza curentă este documentarea funcțională și arhitecturală.
+Fluxul tehnic curent este:
 
-Nu se dezvoltă cod până la acceptarea documentației de bază.
+```text
+Core Engine
+-> Rules Engine
+-> TraceabilityCase
+-> Report Engine DOCX
+```
+
+Module principale:
+
+```text
+src/core/
+src/rules/
+src/report/
+samples/
+tests/
+```
+
+`TraceabilityCase` conține:
+
+```text
+subject
+evidence
+observations
+sections
+report_tables
+preliminary_balance
+```
+
+## Raport DOCX
+
+Raportul DOCX include:
+
+```text
+antet raport
+secțiune metadate raport
+rezumat executiv
+identificarea cazului
+surse utilizate
+interpretarea tipului de caz
+dovezi folosite
+observații tehnice
+tabele operaționale din TraceabilityCase
+bilanț preliminar
+secțiuni fără date
+concluzie preliminară
+recomandare operațională
+documente de pregătit pentru audit
+semnături
+```
+
+DOCX-ul include tabele Word reale, stiluri, antet, subsol și o secțiune de bilanț preliminar.
+
+## Runner demonstrativ DOCX
+
+Runnerul demonstrativ generează un raport DOCX dintr-un dataset sintetic controlat.
+
+Fișier:
+
+```text
+samples/demo_docx_runner.py
+```
+
+Rulare:
+
+```bash
+python samples/demo_docx_runner.py --output samples/output/demo_traceability_report.docx
+```
+
+Output așteptat:
+
+```text
+samples/output/demo_traceability_report.docx
+```
+
+Documentația runnerului este în:
+
+```text
+samples/README.md
+```
+
+Limitări intenționate ale runnerului demonstrativ:
+
+```text
+nu folosește UI
+nu citește fișiere operaționale reale
+nu citește sursele oficiale CSV/XLSX
+nu schimbă Core Engine
+nu schimbă Rules Engine
+nu schimbă Report Engine
+nu deduce trasabilitate amonte/aval
+nu convertește automat unități de măsură
+```
+
+## Testare
+
+Rulare test suite:
+
+```bash
+python -m pytest -q
+```
+
+Status curent:
+
+```text
+36 passed
+```
+
+Testele acoperă:
+
+```text
+Core Engine
+Rules Engine
+TraceabilityCase
+bilanț preliminar conservator
+Report Engine DOCX
+flux E2E controlat
+runner demonstrativ DOCX
+```
+
+## Limitări curente
+
+Nu există încă:
+
+```text
+trasabilitate amonte/aval calculată
+bilanțuri detaliate / reconciliere operațională completă
+branding complet / logo / paginare avansată / cuprins automat
+UI
+installer
+```
+
+## Checkpoint
+
+Starea completă de lucru este păstrată în:
+
+```text
+CHECKPOINT.md
+```
+
+La reluarea proiectului, se continuă de la `CHECKPOINT.md`, nu de la presupuneri vechi.
