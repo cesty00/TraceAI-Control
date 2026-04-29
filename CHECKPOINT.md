@@ -1,6 +1,6 @@
 # CHECKPOINT — TraceAI Control Modul Trasabilitate
 
-Data checkpoint: 2026-04-28
+Data checkpoint: 2026-04-29
 
 ## Status general
 
@@ -17,7 +17,8 @@ Stadiul curent este:
 ```text
 Faza 0 — Documentație și arhitectură inițială: finalizată
 Faza 1 — Schelet repo: finalizată
-Faza 2 — Core Engine: NU a început încă
+Faza 2 — Core Engine: implementată tehnic v1
+Faza 3 — Rules Engine: NU a început încă
 ```
 
 ## Decizie principală
@@ -96,6 +97,8 @@ WMS_ONLY_PRODUCT
 UNKNOWN
 ```
 
+Detectarea acestor tipuri aparține Fazei 3 — Rules Engine, nu Core Engine.
+
 ## Reguli critice validate
 
 1. Gazul ALISOL este auxiliar / consumabil tehnologic.
@@ -134,10 +137,20 @@ TraceAI-Control/
     STRUCTURA_REPO.md
   src/
     core/
+      source_inventory.py
+      normalized_dataset.py
+      dataset_validation.py
+      record_selection.py
+      run_pipeline.py
     rules/
     report/
     ui/
   tests/
+    test_source_inventory.py
+    test_normalized_dataset.py
+    test_dataset_validation.py
+    test_record_selection.py
+    test_run_pipeline.py
   samples/
 ```
 
@@ -151,6 +164,47 @@ TraceAI-Control/
 - `docs/TRACEABILITY_CASE.md` — contractul obiectului intern TraceabilityCase.
 - `docs/ROADMAP.md` — ordinea de dezvoltare.
 - `docs/STRUCTURA_REPO.md` — structura repo-ului.
+- `src/core/README.md` — utilizarea modulelor Core Engine.
+
+## Core Engine v1 implementat
+
+Faza 2 a fost implementată tehnic în pași mici:
+
+```text
+source_inventory -> normalized_dataset -> dataset_validation -> record_selection -> run_pipeline
+```
+
+Livrabile Core:
+
+- `source_inventory.py` inventariază sursele oficiale;
+- `normalized_dataset.py` construiește `NormalizedDataSet`;
+- `dataset_validation.py` validează structural datasetul;
+- `record_selection.py` selectează rândurile pentru cod + lot;
+- `run_pipeline.py` orchestrează fluxul Core Faza 2.
+
+## Limită Core Engine
+
+Core Engine nu calculează trasabilitate.
+
+Core Engine nu detectează:
+
+```text
+FINISHED_PRODUCT
+RAW_MATERIAL
+WMS_ONLY_PRODUCT
+UNKNOWN
+```
+
+Core Engine nu aplică regula gazului, nu calculează bilanțuri, nu construiește `TraceabilityCase` și nu generează DOCX.
+
+## Testare curentă
+
+Testele unitare existente acoperă modulele Core Engine v1:
+
+```text
+python -m pytest -q
+13 passed
+```
 
 ## Următorul pas la reluare
 
@@ -159,36 +213,35 @@ La reluarea proiectului, NU se începe cu UI și NU se începe cu DOCX.
 Următorul pas corect este:
 
 ```text
-Faza 2 — Core Engine
+Faza 3 — Rules Engine
 ```
 
 Primul cod permis:
 
 ```text
-src/core/
+src/rules/
 ```
 
-Primul obiectiv tehnic:
+Primul obiectiv tehnic Faza 3:
 
 ```text
-citirea și inventarierea coloanelor din cele 4 surse:
-- trasabilitate_wms.csv
-- rapoarte productie.csv
-- nomenclator.xlsx
-- stoc la moment original.xlsx
+detectarea case_type din NormalizedDataSet și record_selection:
+- FINISHED_PRODUCT
+- RAW_MATERIAL
+- WMS_ONLY_PRODUCT
+- UNKNOWN
 ```
 
-Nu se calculează trasabilitate încă.
+Nu se generează TraceabilityCase complet încă.
 
-Primul livrabil tehnic la reluare:
+Primul livrabil tehnic Faza 3:
 
 ```text
-un modul care citește fișierele și produce un raport intern cu:
-- fișiere găsite
-- sheet-uri găsite pentru XLSX
-- coloane detectate
-- număr de rânduri
-- primele probleme de structură
+un modul care primește CorePipelineResult / NormalizedDataSet + cod + lot și produce un rezultat intern cu:
+- case_type detectat
+- sursele care au susținut detectarea
+- motivele deciziei
+- observații dacă datele sunt insuficiente
 ```
 
 ## Fraza de reluare recomandată
@@ -196,5 +249,5 @@ un modul care citește fișierele și produce un raport intern cu:
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu Faza 2 — Core Engine: citirea și inventarierea celor 4 surse.
+Continuăm de la CHECKPOINT.md cu Faza 3 — Rules Engine: detectarea case_type din rezultatul Core Engine.
 ```
