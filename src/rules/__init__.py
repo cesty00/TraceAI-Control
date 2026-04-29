@@ -16,6 +16,7 @@ from .run_rules_pipeline import (
     rules_pipeline_result_to_dict,
     run_rules_pipeline,
 )
+from .run_traceability_case import run_traceability_case
 from .traceability_case import (
     TraceabilityCase,
     TraceabilityCaseEvidence,
@@ -42,6 +43,7 @@ __all__ = [
     "detect_case_type_from_dataset",
     "rules_pipeline_result_to_dict",
     "run_rules_pipeline",
+    "run_traceability_case",
     "traceability_case_to_dict",
     "traceability_case_to_json",
 ]
