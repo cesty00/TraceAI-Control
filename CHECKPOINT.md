@@ -27,6 +27,7 @@ Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic + docum
 Faza 6.2 — CLI/UI shell minimal peste orchestrator: implementat tehnic + testat + documentat
 Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat + documentat
 Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație integrate
+Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare înainte de build
 Installer Windows complet: NU este finalizat încă
 ```
 
@@ -52,6 +53,7 @@ Funcție UI de orchestrare testabilă
 CLI/UI shell minimal
 UI vizual minimal
 Pregătire installer Windows
+Rafinare script Windows build
 Installer Windows complet
 ```
 
@@ -75,6 +77,7 @@ Installer Windows complet
 16. CLI/UI shell-ul minimal apelează doar orchestratorul și nu conține logică de business.
 17. UI-ul vizual minimal apelează doar orchestratorul și nu conține logică de business.
 18. Scriptul Windows build pornește de la UI-ul vizual minimal și nu schimbă engine-ul.
+19. Scriptul Windows build folosește entry point explicit `src\ui\visual.py` și verifică existența lui înainte de build.
 
 ## Structura repo la checkpoint
 
@@ -120,18 +123,18 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Pregătire installer Windows integrată
+## Script Windows build rafinat
 
 Implementare:
 
 ```text
-installer/windows/README.md
 installer/windows/build_windows.ps1
 ```
 
-Documentație suplimentară:
+Documentație:
 
 ```text
+installer/windows/README.md
 README.md
 ```
 
@@ -141,19 +144,33 @@ Build local pe Windows:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
 ```
 
+Build fără teste, doar dacă testele au fost deja rulate separat:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
+```
+
+Entry point PyInstaller:
+
+```text
+src\ui\visual.py
+```
+
 Output așteptat:
 
 ```text
-dist/TraceAI-Control/TraceAI-Control.exe
+dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
 Scriptul:
 
 ```text
-rulează testele cu python -m pytest -q
+setează repo root
+verifică existența entry point-ului src\ui\visual.py
+rulează testele cu python -m pytest -q, dacă nu este folosit -SkipTests
 verifică PyInstaller
 curăță build/dist vechi
-construiește executabilul cu PyInstaller
+construiește executabilul cu PyInstaller folosind entry point explicit
 verifică existența executabilului rezultat
 ```
 
@@ -192,7 +209,7 @@ installer Windows complet
 Următorul pas corect este:
 
 ```text
-validarea sau rafinarea scriptului Windows build, apoi pregătirea unui installer complet MSI/NSIS/Inno Setup
+pregătirea unui installer complet MSI/NSIS/Inno Setup sau adăugarea unei verificări automate/documentate pentru build Windows
 ```
 
 Primul cod permis:
@@ -216,5 +233,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu validarea/rafinarea scriptului Windows build și pregătirea installerului complet.
+Continuăm de la CHECKPOINT.md cu pregătirea installerului complet MSI/NSIS/Inno Setup sau verificarea automată/documentată a buildului Windows.
 ```
