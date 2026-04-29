@@ -1,13 +1,16 @@
 # UI — contract de implementare
 
-Acest folder este rezervat pentru viitorul UI profesional simplu.
+Acest folder conține straturile UI minimale pentru TraceAI Control.
 
-UI-ul vizual nu este implementat încă. În prezent există:
+În prezent există:
 
 ```text
 funcție de orchestrare testabilă
 CLI/UI shell minimal peste orchestrator
+UI vizual minimal peste orchestrator
 ```
+
+UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
 
 ## Rol permis
 
@@ -117,7 +120,40 @@ returnează cod 0 la succes
 returnează cod 1 la eroare
 ```
 
-CLI-ul nu citește direct sursele operaționale și nu conține logică de business.
+## UI vizual minimal
+
+Fișier:
+
+```text
+src/ui/visual.py
+```
+
+Rulare:
+
+```bash
+python -m src.ui.visual
+```
+
+UI-ul vizual minimal include:
+
+```text
+câmp folder surse oficiale
+câmp cod articol
+câmp lot
+câmp raport DOCX output
+buton generare raport DOCX
+mesaj succes / eroare
+```
+
+Funcții testabile:
+
+```text
+build_request_from_form_values()
+submit_visual_form_values()
+run_visual_app()
+```
+
+Testele nu pornesc fereastra grafică; verifică doar maparea câmpurilor și apelul către orchestrator prin handler injectat.
 
 ## Comportament controlat
 
@@ -164,6 +200,7 @@ Testele dedicate sunt în:
 ```text
 tests/test_ui_orchestrator.py
 tests/test_ui_cli.py
+tests/test_ui_visual.py
 ```
 
 Acestea verifică:
@@ -177,6 +214,9 @@ raportare câmpuri obligatorii lipsă
 maparea argumentelor CLI în UiGenerationRequest
 cod 0 la succes CLI
 cod 1 la eroare CLI
+maparea câmpurilor vizuale în UiGenerationRequest
+apelarea orchestratorului din formularul vizual
+propagarea rezultatului de succes/eroare în UI vizual
 ```
 
 ## Document contract
@@ -189,4 +229,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este documentarea în README principal și apoi, doar ulterior, un UI vizual simplu care apelează același orchestrator.
+Următorul pas UI permis este rafinarea strict vizuală a formularului sau pregătirea pentru installer, fără logică de business nouă.
