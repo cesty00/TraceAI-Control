@@ -25,6 +25,7 @@ python -m src.report.docx_minimal "cale/catre/folder/date" --code DS099903883 --
 Raportul include:
 
 - antet raport;
+- secțiune de metadate raport;
 - rezumat executiv;
 - identificarea cazului;
 - surse utilizate;
@@ -37,6 +38,17 @@ Raportul include:
 - recomandare operațională;
 - documente de pregătit pentru audit;
 - semnături.
+
+## Șablon DOCX profesional minimal
+
+Generatorul include acum piese DOCX dedicate pentru:
+
+- `word/styles.xml`;
+- `word/header1.xml`;
+- `word/footer1.xml`;
+- relații Word pentru stiluri, antet și subsol;
+- referințe de antet/subsol în `sectPr`;
+- stil de tabel `TraceAITable`.
 
 ## Tabele operaționale
 
@@ -68,4 +80,4 @@ Pentru fiecare tabel, raportul afișează ca tabel Word real:
 
 ## Limită intenționată
 
-Raportul folosește tabele WordprocessingML reale, dar nu are încă un șablon vizual profesional complet cu branding, stiluri avansate, antet/subsol sau paginare dedicată.
+Raportul are șablon profesional minimal cu stiluri, antet, subsol, metadate și tabele Word reale. Nu include încă branding complet, logo, paginare avansată, cuprins automat sau anexare de documente suport.

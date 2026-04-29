@@ -49,9 +49,18 @@ def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path)
         assert "[Content_Types].xml" in names
         assert "_rels/.rels" in names
         assert "word/document.xml" in names
+        assert "word/styles.xml" in names
+        assert "word/header1.xml" in names
+        assert "word/footer1.xml" in names
+        assert "word/_rels/document.xml.rels" in names
         document_xml = package.read("word/document.xml").decode("utf-8")
+        relationships_xml = package.read("word/_rels/document.xml.rels").decode("utf-8")
+        header_xml = package.read("word/header1.xml").decode("utf-8")
+        footer_xml = package.read("word/footer1.xml").decode("utf-8")
+        styles_xml = package.read("word/styles.xml").decode("utf-8")
 
     assert "RAPORT DE TRASABILITATE" in document_xml
+    assert "Metadate raport" in document_xml
     assert "Rezumat executiv" in document_xml
     assert "Identificarea cazului" in document_xml
     assert "Surse utilizate" in document_xml
@@ -68,8 +77,16 @@ def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path)
     assert CASE_FINISHED_PRODUCT in document_xml
     assert "FARA DATE IDENTIFICATE" in document_xml
     assert "<w:tbl>" in document_xml
-    assert "<w:tblStyle w:val=\"TableGrid\"/>" in document_xml
+    assert "<w:tblStyle w:val=\"TraceAITable\"/>" in document_xml
     assert "<w:gridSpan" in document_xml
+    assert "rIdHeader1" in document_xml
+    assert "rIdFooter1" in document_xml
+    assert "Target=\"styles.xml\"" in relationships_xml
+    assert "Target=\"header1.xml\"" in relationships_xml
+    assert "Target=\"footer1.xml\"" in relationships_xml
+    assert "TraceAI Control — Raport de trasabilitate" in header_xml
+    assert "Document generat din TraceabilityCase" in footer_xml
+    assert "TraceAITable" in styles_xml
 
 
 def test_generate_minimal_docx_report_contains_wms_only_narrative(tmp_path: Path) -> None:

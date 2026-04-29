@@ -28,6 +28,9 @@ CONTENT_TYPES_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>
+  <Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
   <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
   <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
 </Types>
@@ -42,7 +45,11 @@ ROOT_RELS_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 """
 
 DOCUMENT_RELS_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rIdHeader1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>
+  <Relationship Id="rIdFooter1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
+</Relationships>
 """
 
 APP_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -56,6 +63,28 @@ CORE_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <dc:title>Raport trasabilitate TraceAI Control</dc:title>
   <dc:creator>TraceAI Control</dc:creator>
 </cp:coreProperties>
+"""
+
+STYLES_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style>
+  <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="34"/><w:szCs w:val="34"/><w:color w:val="1F4E79"/></w:rPr></w:style>
+  <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="280" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/><w:color w:val="1F4E79"/></w:rPr></w:style>
+  <w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="180" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="2F75B5"/></w:rPr></w:style>
+  <w:style w:type="table" w:styleId="TraceAITable"><w:name w:val="TraceAI Table"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/><w:left w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/><w:right w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/></w:tblBorders></w:tblPr></w:style>
+</w:styles>
+"""
+
+HEADER_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="1F4E79"/></w:rPr><w:t>TraceAI Control — Raport de trasabilitate</w:t></w:r></w:p>
+</w:hdr>
+"""
+
+FOOTER_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p><w:r><w:t>Document generat din TraceabilityCase. Uz intern / audit.</w:t></w:r></w:p>
+</w:ftr>
 """
 
 SOURCE_LABELS = {
@@ -86,6 +115,9 @@ def generate_minimal_docx_report(traceability_case: TraceabilityCase, output_pat
         package.writestr("docProps/app.xml", APP_XML)
         package.writestr("docProps/core.xml", CORE_XML)
         package.writestr("word/_rels/document.xml.rels", DOCUMENT_RELS_XML)
+        package.writestr("word/styles.xml", STYLES_XML)
+        package.writestr("word/header1.xml", HEADER_XML)
+        package.writestr("word/footer1.xml", FOOTER_XML)
         package.writestr("word/document.xml", document_xml)
 
     return output
@@ -96,6 +128,7 @@ def build_document_xml(traceability_case: TraceabilityCase) -> str:
 
     body_parts: list[str] = []
     body_parts.extend(build_report_header(traceability_case))
+    body_parts.extend(build_report_metadata(traceability_case))
     body_parts.extend(build_executive_summary(traceability_case))
     body_parts.extend(build_case_identification(traceability_case))
     body_parts.extend(build_sources_section(traceability_case))
@@ -123,6 +156,33 @@ def build_report_header(traceability_case: TraceabilityCase) -> list[str]:
         paragraph("Caracter document: Preliminar / uz intern / audit"),
         paragraph(f"Surse utilizate: {format_used_sources(traceability_case)}"),
     ]
+
+
+def build_report_metadata(traceability_case: TraceabilityCase) -> list[str]:
+    """Build a compact professional metadata block."""
+
+    subject = traceability_case.subject
+    metadata_table = TraceabilityReportTable(
+        key="report_metadata",
+        title="Metadate raport",
+        columns=["Câmp", "Valoare"],
+        rows=[
+            metadata_row("Cod articol", subject.code),
+            metadata_row("Lot", subject.lot),
+            metadata_row("Tip caz", subject.case_type),
+            metadata_row("Status validare Core", traceability_case.sections.get("core_validation_status")),
+            metadata_row("Număr înregistrări selectate", traceability_case.sections.get("selected_record_count")),
+            metadata_row("Data generării", date.today().isoformat()),
+        ],
+        empty_message="Nu au fost identificate metadate raport.",
+    )
+    return [paragraph("0. Metadate raport", style="Heading1"), word_table(metadata_table)]
+
+
+def metadata_row(label: object, value: object) -> object:
+    from src.rules.traceability_case import TraceabilityTableRow
+
+    return TraceabilityTableRow(values={"Câmp": value_or_missing(label), "Valoare": value_or_missing(value)})
 
 
 def build_executive_summary(traceability_case: TraceabilityCase) -> list[str]:
@@ -250,15 +310,15 @@ def word_table(table: TraceabilityReportTable) -> str:
     return (
         "<w:tbl>"
         "<w:tblPr>"
-        "<w:tblStyle w:val=\"TableGrid\"/>"
+        "<w:tblStyle w:val=\"TraceAITable\"/>"
         "<w:tblW w:w=\"0\" w:type=\"auto\"/>"
         "<w:tblBorders>"
-        "<w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
-        "<w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
-        "<w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
-        "<w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
-        "<w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
-        "<w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
+        "<w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
+        "<w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
+        "<w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
+        "<w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
+        "<w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"BFBFBF\"/>"
         "</w:tblBorders>"
         "</w:tblPr>"
         f"{''.join(rows)}"
@@ -487,6 +547,8 @@ def wrap_document(body_xml: str) -> str:
   <w:body>
     {body_xml}
     <w:sectPr>
+      <w:headerReference w:type="default" r:id="rIdHeader1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
+      <w:footerReference w:type="default" r:id="rIdFooter1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
       <w:pgSz w:w="11906" w:h="16838"/>
       <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
     </w:sectPr>
