@@ -31,12 +31,13 @@ Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare în
 Faza 7.2 — Verificare build Windows: script PowerShell + documentație integrate
 Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + documentație integrate
 Faza 7.4 — Checklist validare Windows: integrat
+Faza 7.5 — Șablon rezultat validare Windows: integrat
 Installer Windows complet: pregătit tehnic, dar NEVALIDAT încă pe Windows real
 ```
 
 ## Decizie principală
 
-UI-ul vizual există doar ca strat peste orchestrator. Installerul și verificarea buildului nu introduc logică de business.
+UI-ul vizual există doar ca strat peste orchestrator. Installerul, verificarea buildului și documentele de validare nu introduc logică de business.
 
 Ordinea proiectului este:
 
@@ -60,6 +61,7 @@ Rafinare script Windows build
 Verificare build Windows
 Pregătire installer Inno Setup
 Checklist validare Windows
+Șablon rezultat validare Windows
 Validare reală Windows
 Icon / semnare / CI Windows
 ```
@@ -88,6 +90,7 @@ Icon / semnare / CI Windows
 20. Scriptul de verificare Windows build verifică doar artefactul rezultat și nu pornește automat UI-ul / engine-ul.
 21. Scriptul Inno Setup împachetează executabilul PyInstaller existent și nu introduce logică de business.
 22. Checklistul de validare Windows definește pașii reali de acceptare fără workaround-uri în UI sau installer.
+23. Șablonul rezultatului de validare documentează verdictul ACCEPTED / REJECTED fără a marca validarea ca efectuată.
 
 ## Structura repo la checkpoint
 
@@ -102,6 +105,7 @@ TraceAI-Control/
       README.md
       TraceAI-Control.iss
       VALIDATION_CHECKLIST.md
+      VALIDATION_RESULT_TEMPLATE.md
       build_inno_setup.ps1
       build_windows.ps1
       verify_windows_build.ps1
@@ -137,7 +141,7 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## Build, verificare, installer și checklist Windows integrate
+## Build, verificare, installer și validare Windows integrate
 
 Implementare:
 
@@ -147,6 +151,7 @@ installer/windows/verify_windows_build.ps1
 installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
 installer/windows/VALIDATION_CHECKLIST.md
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
 ```
 
 Documentație:
@@ -186,6 +191,12 @@ Checklist validare Windows:
 installer/windows/VALIDATION_CHECKLIST.md
 ```
 
+Șablon rezultat validare Windows:
+
+```text
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
+```
+
 Entry point PyInstaller:
 
 ```text
@@ -217,6 +228,17 @@ instalare aplicație
 smoke test aplicație instalată
 dezinstalare
 verdict final ACCEPTAT / RESPINS
+```
+
+Șablonul rezultatului include:
+
+```text
+mediu validare
+artefacte așteptate
+rezultate pe pași
+probleme găsite
+verdict final ACCEPTED / REJECTED
+reguli confirmate
 ```
 
 Limitări installer curente:
@@ -256,13 +278,13 @@ pipeline CI Windows
 Următorul pas corect este:
 
 ```text
-rularea checklistului de validare pe o mașină Windows reală și marcarea rezultatului ACCEPTAT / RESPINS
+rularea checklistului de validare pe o mașină Windows reală și completarea șablonului de rezultat cu ACCEPTED / REJECTED
 ```
 
 Primul cod permis după validare:
 
 ```text
-installer/windows/VALIDATION_CHECKLIST.md
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
 installer/windows/README.md
 README.md
 CHECKPOINT.md
@@ -281,5 +303,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu rularea checklistului de validare pe o mașină Windows reală și marcarea rezultatului ACCEPTAT / RESPINS.
+Continuăm de la CHECKPOINT.md cu rularea checklistului pe Windows real și completarea șablonului de rezultat cu ACCEPTED / REJECTED.
 ```
