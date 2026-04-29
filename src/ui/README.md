@@ -2,11 +2,16 @@
 
 Acest folder este rezervat pentru viitorul UI profesional simplu.
 
-UI-ul vizual nu este implementat încă. În prezent există doar funcția de orchestrare testabilă.
+UI-ul vizual nu este implementat încă. În prezent există:
+
+```text
+funcție de orchestrare testabilă
+CLI/UI shell minimal peste orchestrator
+```
 
 ## Rol permis
 
-UI-ul va fi doar strat de orchestrare:
+UI-ul este doar strat de orchestrare:
 
 ```text
 colectare source_directory
@@ -67,7 +72,7 @@ message
 error
 ```
 
-## Exemplu de utilizare
+## Exemplu de utilizare Python
 
 ```python
 from src.ui.orchestrator import UiGenerationRequest, generate_report_from_ui_request
@@ -86,6 +91,33 @@ if result.success:
 else:
     print(result.error)
 ```
+
+## CLI/UI shell minimal
+
+Fișier:
+
+```text
+src/ui/cli.py
+```
+
+Rulare:
+
+```bash
+python -m src.ui.cli "cale/catre/date" --code DS099903883 --lot 105.26 --output raport_trasabilitate.docx
+```
+
+CLI-ul minimal:
+
+```text
+parsează argumentele
+construiește UiGenerationRequest
+apelează generate_report_from_ui_request()
+afișează mesajul rezultatului
+returnează cod 0 la succes
+returnează cod 1 la eroare
+```
+
+CLI-ul nu citește direct sursele operaționale și nu conține logică de business.
 
 ## Comportament controlat
 
@@ -131,6 +163,7 @@ Testele dedicate sunt în:
 
 ```text
 tests/test_ui_orchestrator.py
+tests/test_ui_cli.py
 ```
 
 Acestea verifică:
@@ -141,6 +174,9 @@ validare câmpuri lipsă
 fără apel engine când inputul este invalid
 capturare eroare engine
 raportare câmpuri obligatorii lipsă
+maparea argumentelor CLI în UiGenerationRequest
+cod 0 la succes CLI
+cod 1 la eroare CLI
 ```
 
 ## Document contract
@@ -153,4 +189,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este un shell minimal peste orchestrator, fără UI vizual complex și fără logică de business.
+Următorul pas UI permis este documentarea în README principal și apoi, doar ulterior, un UI vizual simplu care apelează același orchestrator.
