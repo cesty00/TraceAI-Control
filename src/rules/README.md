@@ -52,6 +52,17 @@ Utilizare:
 python -m src.rules.run_rules_pipeline "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output rules_pipeline.json
 ```
 
+## `traceability_case.py`
+
+Definește scheletul obiectului intern `TraceabilityCase`, care va alimenta viitorul raport DOCX.
+
+În această etapă, obiectul conține:
+
+- subiectul cazului: cod, lot, `case_type`;
+- dovezi provenite din Rules Engine;
+- observații;
+- metadate tehnice minimale din Core Engine.
+
 ## Limită intenționată
 
-Rules Engine, în această etapă, nu calculează trasabilitate, nu aplică bilanțuri, nu construiește `TraceabilityCase` și nu generează DOCX.
+Rules Engine, în această etapă, nu calculează trasabilitate, nu aplică bilanțuri detaliate și nu generează DOCX.
