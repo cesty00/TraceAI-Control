@@ -7,6 +7,8 @@ from src.rules.case_type_detection import CASE_FINISHED_PRODUCT, detect_case_typ
 from src.rules.run_rules_pipeline import RulesPipelineResult
 from src.rules.traceability_case import (
     ALISOL_AUXILIARY_OBSERVATION,
+    PACKAGING_ROLE,
+    RAW_MATERIAL_ROLE,
     build_empty_report_tables,
     build_traceability_case,
     report_tables_as_list,
@@ -140,3 +142,49 @@ def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
     assert raw_material_rows == []
     assert production_rows == []
     assert ALISOL_AUXILIARY_OBSERVATION in traceability_case["observations"]
+
+
+def test_selected_rows_with_explicit_hints_are_classified_as_raw_materials_and_packaging() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "production",
+                "rapoarte productie.csv",
+                {"cod": "DS0001", "lot": "L001", "denumire": "Materie primă zahăr", "cantitate": "3", "um": "kg"},
+            ),
+            make_table(
+                "production",
+                "rapoarte productie.csv",
+                {"cod": "DS0001", "lot": "L001", "denumire": "Folie ambalaj", "cantitate": "4", "um": "buc"},
+            ),
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    raw_rows = traceability_case["report_tables"]["raw_materials"]["rows"]
+    packaging_rows = traceability_case["report_tables"]["packaging"]["rows"]
+    production_rows = traceability_case["report_tables"]["production"]["rows"]
+
+    assert raw_rows[0]["values"]["denumire"] == "Materie primă zahăr"
+    assert raw_rows[0]["values"]["Rol"] == RAW_MATERIAL_ROLE
+    assert packaging_rows[0]["values"]["denumire"] == "Folie ambalaj"
+    assert packaging_rows[0]["values"]["Rol"] == PACKAGING_ROLE
+    assert production_rows == []
+
+
+def test_alisol_priority_over_raw_material_hint() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "production",
+                "rapoarte productie.csv",
+                {"cod": "DS0001", "lot": "L001", "denumire": "ALISOL materie primă", "cantitate": "2", "um": "kg"},
+            )
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    assert traceability_case["report_tables"]["auxiliaries_gas"]["rows"]
+    assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
