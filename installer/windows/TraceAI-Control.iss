@@ -5,7 +5,7 @@
 #define MyAppSourceDir "..\\..\\dist\\TraceAI-Control"
 
 [Setup]
-AppId={{8A75D8DA-8F5A-4E54-8C4A-TRACEAICONTROL}}
+AppId={{8A75D8DA-8F5A-4E54-8C4A-2D1D7D130001}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
