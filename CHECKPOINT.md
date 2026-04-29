@@ -19,8 +19,8 @@ Faza 0 — Documentație și arhitectură inițială: finalizată
 Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
-Faza 4 — TraceabilityCase: schelet + runner implementate
-Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ
+Faza 4 — TraceabilityCase: contract + report_tables implementate
+Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + randare tabele
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -186,7 +186,7 @@ WMS_ONLY_PRODUCT
 UNKNOWN
 ```
 
-## TraceabilityCase v1 implementat
+## TraceabilityCase implementat
 
 ```text
 traceability_case -> run_traceability_case
@@ -199,11 +199,27 @@ subject: code, lot, case_type
 evidence: sursă, sheet, rând, mesaj
 observations: observații Rules Engine
 sections: metadate tehnice minimale Core Engine
+report_tables: tabele raportabile pentru DOCX
 ```
 
-## Report Engine DOCX narativ v1 implementat
+Tabele definite în `TraceabilityCase.report_tables`:
 
-Faza 5 este implementată tehnic v1 narativ:
+```text
+production
+finished_goods_deliveries
+raw_materials
+packaging
+auxiliaries_gas
+wms_receipts
+prd_consumptions
+stock
+```
+
+Tabelele au coloane definite și mesaj explicit când nu conțin rânduri.
+
+## Report Engine DOCX narativ implementat
+
+Faza 5 este implementată tehnic v1 narativ cu randare de tabele:
 
 ```text
 TraceabilityCase -> docx_minimal
@@ -219,6 +235,7 @@ surse utilizate
 interpretarea tipului de caz
 dovezi folosite
 observații tehnice
+tabele operaționale din TraceabilityCase
 secțiuni fără date
 concluzie preliminară
 recomandare operațională
@@ -230,18 +247,21 @@ Reguli respectate:
 
 ```text
 DOCX se generează din TraceabilityCase, nu direct din fișierele sursă.
-Lipsurile sunt marcate explicit cu FARA DATE IDENTIFICATE.
+Report Engine randează report_tables fără să citească surse operaționale.
+Lipsurile sunt marcate explicit cu FARA DATE IDENTIFICATE sau cu mesajul tabelului.
 Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 ```
 
 ## Limită curentă
 
-DOCX-ul este narativ și auditabil, dar TraceabilityCase nu conține încă tabele operaționale detaliate.
+TraceabilityCase are structurile de tabele, iar DOCX-ul le afișează, dar tabelele nu sunt încă populate controlat din `CorePipelineResult`.
 
 Nu există încă:
 
 ```text
-secțiuni/tabele operaționale detaliate în TraceabilityCase
+populare operațională detaliată a report_tables
+trasabilitate amonte/aval calculată
+bilanțuri detaliate
 șablon vizual profesional
 UI
 installer
@@ -249,11 +269,11 @@ installer
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX narativ v1:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele:
 
 ```text
 python -m pytest -q
-23 passed
+25 passed
 ```
 
 ## Următorul pas la reluare
@@ -263,7 +283,7 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-extinderea TraceabilityCase cu secțiuni/tabele operaționale detaliate
+popularea controlată a tabelelor TraceabilityCase din CorePipelineResult
 ```
 
 Primul cod permis:
@@ -275,15 +295,10 @@ src/rules/traceability_case.py
 Primul obiectiv tehnic următor:
 
 ```text
-adăugarea de structuri interne pentru tabele raportabile:
-- producție
-- livrări PF
-- materii prime
-- ambalaje
-- auxiliare / gaz
-- recepții WMS
-- consumuri PRD
-- stoc
+popularea inițială, fără reguli complexe de trasabilitate, a unor tabele din report_tables folosind record_selection:
+- production din rândurile production selectate
+- wms_receipts / stock din rândurile WMS sau stock selectate, unde există
+- păstrarea mesajelor explicite pentru tabelele rămase goale
 ```
 
 Regulă importantă:
@@ -297,5 +312,5 @@ TraceabilityCase poate fi extins din rezultatul Core/Rules, dar DOCX rămâne ge
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu extinderea TraceabilityCase cu secțiuni/tabele operaționale detaliate.
+Continuăm de la CHECKPOINT.md cu popularea controlată a tabelelor TraceabilityCase din CorePipelineResult.
 ```
