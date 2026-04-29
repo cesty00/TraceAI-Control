@@ -34,7 +34,7 @@ Runner demonstrativ DOCX controlat: integrat, testat și documentat
 Contract UI -> engine: integrat
 Funcție UI de orchestrare: integrată și testată
 CLI/UI shell minimal peste orchestrator: integrat și testat
-UI vizual profesional simplu: nu a început încă
+UI vizual minimal peste orchestrator: integrat și testat
 Installer Windows: nu a început încă
 ```
 
@@ -95,10 +95,10 @@ Core Engine
 -> Report Engine DOCX
 ```
 
-Stratul UI/CLI minimal este doar orchestration-only:
+Stratul UI/CLI/visual este doar orchestration-only:
 
 ```text
-UI/CLI shell
+UI/CLI/visual shell
 -> UiGenerationRequest
 -> generate_report_from_ui_request()
 -> engine existent
@@ -178,19 +178,6 @@ Documentația runnerului este în:
 samples/README.md
 ```
 
-Limitări intenționate ale runnerului demonstrativ:
-
-```text
-nu folosește UI
-nu citește fișiere operaționale reale
-nu citește sursele oficiale CSV/XLSX
-nu schimbă Core Engine
-nu schimbă Rules Engine
-nu schimbă Report Engine
-nu deduce trasabilitate amonte/aval
-nu convertește automat unități de măsură
-```
-
 ## CLI/UI shell minimal
 
 CLI-ul minimal apelează funcția UI de orchestrare și nu conține logică de business.
@@ -207,18 +194,34 @@ Rulare:
 python -m src.ui.cli "cale/catre/date" --code DS099903883 --lot 105.26 --output raport_trasabilitate.docx
 ```
 
-CLI-ul minimal:
+## UI vizual minimal
+
+UI-ul vizual minimal este implementat cu Tkinter și apelează același orchestrator.
+
+Fișier:
 
 ```text
-parsează argumente
-construiește UiGenerationRequest
-apelează generate_report_from_ui_request()
-afișează mesajul rezultatului
-returnează cod 0 la succes
-returnează cod 1 la eroare
+src/ui/visual.py
 ```
 
-Limitări:
+Rulare:
+
+```bash
+python -m src.ui.visual
+```
+
+UI-ul vizual minimal include:
+
+```text
+câmp folder surse oficiale
+câmp cod articol
+câmp lot
+câmp raport DOCX output
+buton generare raport DOCX
+mesaj succes / eroare
+```
+
+Limitări UI/CLI/visual:
 
 ```text
 nu citește direct surse operaționale
@@ -246,7 +249,7 @@ python -m pytest -q
 Status curent:
 
 ```text
-38 passed
+39 passed
 ```
 
 Testele acoperă:
@@ -261,6 +264,7 @@ flux E2E controlat
 runner demonstrativ DOCX
 funcție UI de orchestrare
 CLI/UI shell minimal
+UI vizual minimal
 ```
 
 ## Limitări curente
@@ -271,7 +275,6 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-UI vizual profesional simplu
 installer
 ```
 
