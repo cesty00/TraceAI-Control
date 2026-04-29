@@ -4,10 +4,12 @@ Acest folder pregătește pașii pentru construirea unui executabil Windows pent
 
 ## Status
 
-Pregătire inițială installer:
+Pregătire installer rafinată:
 
 ```text
 script PowerShell de build
+entry point PyInstaller explicit
+verificare existență entry point înainte de build
 instrucțiuni de rulare
 reguli de validare manuală
 fără schimbări în Core/Rules/Report/UI business boundary
@@ -20,6 +22,12 @@ Installerul complet nu este încă finalizat.
 Executabilul Windows trebuie să pornească UI-ul vizual minimal:
 
 ```text
+src\ui\visual.py
+```
+
+În dezvoltare, UI-ul poate fi pornit cu:
+
+```powershell
 python -m src.ui.visual
 ```
 
@@ -54,10 +62,42 @@ Din rădăcina repo-ului:
 powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
 ```
 
+Pentru rulare fără teste, doar când testele au fost deja rulate separat:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
+```
+
 Output așteptat:
 
 ```text
 dist/TraceAI-Control/TraceAI-Control.exe
+```
+
+## Ce face scriptul
+
+Scriptul `build_windows.ps1`:
+
+```text
+setează repo root
+verifică existența entry point-ului src\ui\visual.py
+rulează testele cu python -m pytest -q, dacă nu este folosit -SkipTests
+verifică PyInstaller
+curăță artefactele build/dist vechi
+rulează PyInstaller cu entry point explicit
+verifică existența executabilului rezultat
+```
+
+Entry point PyInstaller:
+
+```text
+src\ui\visual.py
+```
+
+Output verificat:
+
+```text
+dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
 ## Validare manuală după build
