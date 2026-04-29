@@ -21,6 +21,7 @@ Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
+Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -37,6 +38,7 @@ Rules Engine
 TraceabilityCase
 Teste automate
 Report Engine DOCX
+Flux E2E controlat
 UI profesional simplu
 Installer Windows
 ```
@@ -110,6 +112,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 6. DOCX-ul se generează din TraceabilityCase, nu direct din fișiere.
 7. UI-ul nu conține logică de business.
 8. Bilanțul preliminar este conservator și nu deduce fluxuri lipsă.
+9. Fluxul E2E controlat folosește date sintetice de test, nu UI și nu fișiere operaționale reale.
 
 ## Teste virtuale acceptate
 
@@ -130,29 +133,13 @@ TraceAI-Control/
   README.md
   CHECKPOINT.md
   docs/
-    SPECIFICATIE_FUNCTIONALA.md
-    TESTE_VALIDATE.md
-    RAPORT_DOCX_MODEL.md
-    ARHITECTURA.md
-    TRACEABILITY_CASE.md
-    ROADMAP.md
-    STRUCTURA_REPO.md
   src/
     core/
-      source_inventory.py
-      normalized_dataset.py
-      dataset_validation.py
-      record_selection.py
-      run_pipeline.py
     rules/
-      case_type_detection.py
-      run_rules_pipeline.py
-      traceability_case.py
-      run_traceability_case.py
     report/
-      docx_minimal.py
     ui/
   tests/
+    README.md
     test_source_inventory.py
     test_normalized_dataset.py
     test_dataset_validation.py
@@ -163,6 +150,7 @@ TraceAI-Control/
     test_traceability_case.py
     test_run_traceability_case.py
     test_docx_minimal.py
+    test_e2e_docx_controlled_flow.py
   samples/
 ```
 
@@ -259,8 +247,6 @@ nu deduce trasabilitate amonte/aval
 nu deduce fluxuri lipsă
 ```
 
-Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rânduri.
-
 ## Report Engine DOCX narativ implementat
 
 Faza 5 este implementată tehnic v1 narativ cu tabele Word reale, șablon profesional minimal și bilanț preliminar randat:
@@ -289,30 +275,6 @@ documente de pregătit pentru audit
 semnături
 ```
 
-Tabelele DOCX includ:
-
-```text
-<w:tbl>
-header de tabel
-rânduri de valori
-rând separat cu contextul sursă, unde există
-mesaj explicit pentru tabele goale
-stil TraceAITable
-borduri simple
-```
-
-Șablonul DOCX profesional minimal include:
-
-```text
-word/styles.xml
-word/header1.xml
-word/footer1.xml
-relații Word pentru styles/header/footer
-headerReference / footerReference în sectPr
-secțiune Metadate raport
-stil de tabel TraceAITable
-```
-
 Secțiunea DOCX de bilanț preliminar include:
 
 ```text
@@ -332,6 +294,35 @@ Lipsurile sunt marcate explicit cu FARA DATE IDENTIFICATE sau cu mesajul tabelul
 Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 ```
 
+## Flux E2E controlat implementat
+
+Fluxul E2E controlat este implementat în:
+
+```text
+tests/test_e2e_docx_controlled_flow.py
+tests/README.md
+```
+
+Flux validat:
+
+```text
+NormalizedDataSet sintetic
+-> record_selection
+-> case_type_detection
+-> build_traceability_case
+-> verificare report_tables
+-> verificare preliminary_balance
+-> generate_minimal_docx_report
+-> verificare word/document.xml
+```
+
+Scop:
+
+```text
+validarea integrării tehnice dintre Rules Engine, TraceabilityCase și Report Engine,
+fără UI și fără citirea directă a surselor operaționale reale în Report Engine.
+```
+
 ## Limită curentă
 
 TraceabilityCase are structurile de tabele, bilanț preliminar conservator și raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate și bilanț preliminar randat.
@@ -348,11 +339,11 @@ installer
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator și Report Engine DOCX cu randare bilanț:
+Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX și fluxul controlat TraceabilityCase -> DOCX:
 
 ```text
 python -m pytest -q
-34 passed
+35 passed
 ```
 
 ## Următorul pas la reluare
@@ -362,26 +353,21 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-pregătirea unui flux end-to-end controlat pentru generare raport DOCX din date de test
+pregătirea unui sample controlat în samples/ sau a unui runner CLI E2E pentru generare raport DOCX controlată
 ```
 
 Primul cod permis:
 
 ```text
-tests/
 samples/
+tests/
 src/report/docx_minimal.py
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unui test / sample controlat care validează:
-- construire TraceabilityCase complet
-- report_tables populate
-- preliminary_balance populat
-- generare DOCX valid
-- existența secțiunilor principale în document.xml
+adăugarea unui sample controlat sau runner E2E care permite generarea unui DOCX demonstrativ reproductibil, fără UI și fără schimbarea regulilor de business.
 ```
 
 Regulă importantă:
@@ -397,5 +383,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu un flux end-to-end controlat pentru generare raport DOCX din date de test.
+Continuăm de la CHECKPOINT.md cu sample controlat sau runner E2E pentru generare DOCX demonstrativă.
 ```
