@@ -14,6 +14,7 @@ script PowerShell de verificare artefact build
 script Inno Setup pentru installer complet
 script PowerShell pentru rularea Inno Setup Compiler
 checklist de validare reală Windows
+șablon rezultat validare Windows
 instrucțiuni de rulare
 reguli de validare manuală
 fără schimbări în Core/Rules/Report/UI business boundary
@@ -178,6 +179,27 @@ build_windows.ps1
 -> generare raport DOCX
 ```
 
+## 5. Șablon rezultat validare
+
+Șablonul de rezultat este în:
+
+```text
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
+```
+
+Acesta se copiază sau se completează după rularea checklistului pe Windows real.
+
+Include:
+
+```text
+mediu validare
+artefacte așteptate
+rezultate pe pași
+probleme găsite
+verdict final ACCEPTED / REJECTED
+reguli confirmate
+```
+
 ## Ce face scriptul de build PyInstaller
 
 Scriptul `build_windows.ps1`:
@@ -206,10 +228,11 @@ dist\TraceAI-Control\TraceAI-Control.exe
 
 ## Validare manuală după build
 
-Pentru validare completă se folosește:
+Pentru validare completă se folosesc:
 
 ```text
 installer/windows/VALIDATION_CHECKLIST.md
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
 ```
 
 Pașii rapizi sunt:
