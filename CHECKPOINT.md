@@ -20,7 +20,8 @@ Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: schelet + runner implementate
-Faza 5 — Report Engine DOCX: NU a început încă
+Faza 5 — Report Engine DOCX: implementată tehnic v1 minimal
+Faza 6 — UI profesional simplu: NU a început încă
 ```
 
 ## Decizie principală
@@ -42,7 +43,7 @@ Installer Windows
 
 ## Scop aplicație
 
-TraceAI Control — Modul Trasabilitate va genera un raport DOCX auditabil pentru un articol și lot.
+TraceAI Control — Modul Trasabilitate generează un raport DOCX auditabil pentru un articol și lot.
 
 Input utilizator:
 
@@ -59,7 +60,7 @@ Raport DOCX de trasabilitate
 
 ## Surse oficiale
 
-Aplicația va folosi doar:
+Aplicația folosește doar:
 
 ```text
 trasabilitate_wms.csv
@@ -88,7 +89,7 @@ Document comanda = din WMS
 
 ## Tipuri de cazuri definite
 
-Aplicația trebuie să detecteze automat:
+Aplicația detectează automat:
 
 ```text
 FINISHED_PRODUCT
@@ -148,6 +149,7 @@ TraceAI-Control/
       traceability_case.py
       run_traceability_case.py
     report/
+      docx_minimal.py
     ui/
   tests/
     test_source_inventory.py
@@ -159,6 +161,7 @@ TraceAI-Control/
     test_run_rules_pipeline.py
     test_traceability_case.py
     test_run_traceability_case.py
+    test_docx_minimal.py
   samples/
 ```
 
@@ -174,6 +177,7 @@ TraceAI-Control/
 - `docs/STRUCTURA_REPO.md` — structura repo-ului.
 - `src/core/README.md` — utilizarea modulelor Core Engine.
 - `src/rules/README.md` — utilizarea modulelor Rules Engine și TraceabilityCase.
+- `src/report/README.md` — utilizarea generatorului DOCX minimal.
 
 ## Core Engine v1 implementat
 
@@ -215,7 +219,7 @@ UNKNOWN
 
 ## TraceabilityCase v1 implementat
 
-Faza 4 a început și are schelet funcțional:
+Faza 4 are schelet funcțional:
 
 ```text
 traceability_case -> run_traceability_case
@@ -235,28 +239,60 @@ observations: observații Rules Engine
 sections: metadate tehnice minimale Core Engine
 ```
 
+## Report Engine DOCX minimal implementat
+
+Faza 5 a fost implementată tehnic v1 minimal:
+
+```text
+TraceabilityCase -> docx_minimal
+```
+
+Livrabile Report:
+
+- `docx_minimal.py` generează un pachet DOCX valid din `TraceabilityCase`;
+- `src/report/README.md` documentează utilizarea CLI;
+- `tests/test_docx_minimal.py` verifică structura DOCX și conținutul minim.
+
+Secțiunile generate în DOCX minimal:
+
+```text
+1. Subiectul raportului
+2. Dovezi folosite
+3. Observații
+4. Secțiuni tehnice
+5. Secțiuni fără date
+```
+
+Reguli respectate:
+
+```text
+DOCX se generează din TraceabilityCase, nu direct din fișierele sursă.
+Lipsurile sunt marcate explicit cu FARA DATE IDENTIFICATE.
+Generatorul minimal nu conține UI și nu schimbă regulile Core / Rules Engine.
+```
+
 ## Limită curentă
 
-Aplicația nu generează încă DOCX.
+DOCX-ul este funcțional minimal, dar nu are încă modelul narativ final și layout profesional.
 
-TraceabilityCase este încă minimal și nu conține încă secțiuni narative finale pentru raport.
+TraceabilityCase este încă minimal și nu conține încă toate secțiunile narative finale pentru raport.
 
 Nu există încă:
 
 ```text
-Report Engine DOCX
-șablon DOCX generat automat
+raport DOCX final apropiat de modelul narativ complet
+șablon vizual profesional
 UI
 installer
 ```
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules și TraceabilityCase v1:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine minimal:
 
 ```text
 python -m pytest -q
-21 passed
+22 passed
 ```
 
 ## Următorul pas la reluare
@@ -266,7 +302,7 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-Faza 5 — Report Engine DOCX minimal
+îmbunătățirea Report Engine DOCX către modelul narativ final
 ```
 
 Primul cod permis:
@@ -275,14 +311,15 @@ Primul cod permis:
 src/report/
 ```
 
-Primul obiectiv tehnic Faza 5:
+Primul obiectiv tehnic următor:
 
 ```text
-generarea unui DOCX narativ minimal din TraceabilityCase, cu secțiuni explicite:
-- subiectul raportului
-- tipul cazului
-- dovezi folosite
-- observații
+extinderea DOCX minimal cu structură narativă mai apropiată de docs/RAPORT_DOCX_MODEL.md:
+- rezumat executiv
+- identificarea cazului
+- surse utilizate
+- interpretarea tipului de caz
+- dovezi și observații
 - secțiuni fără date marcate explicit
 ```
 
@@ -297,5 +334,5 @@ DOCX se generează din TraceabilityCase, nu direct din fișierele sursă.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu Faza 5 — Report Engine DOCX minimal din TraceabilityCase.
+Continuăm de la CHECKPOINT.md cu îmbunătățirea Report Engine DOCX către modelul narativ final.
 ```
