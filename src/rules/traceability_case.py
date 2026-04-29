@@ -20,6 +20,32 @@ from src.rules.run_rules_pipeline import RulesPipelineResult
 ALISOL_HINT = "alisol"
 ALISOL_AUXILIARY_OBSERVATION = "ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară."
 
+RAW_MATERIAL_HINTS = (
+    "materie prima",
+    "materie primă",
+    "materii prime",
+    "ingredient",
+)
+
+PACKAGING_HINTS = (
+    "ambalaj",
+    "ambalaje",
+    "folie",
+    "punga",
+    "pungă",
+    "cutie",
+    "carton",
+    "eticheta",
+    "etichetă",
+    "capac",
+    "borcan",
+    "palet",
+    "pallet",
+)
+
+RAW_MATERIAL_ROLE = "materie primă alimentară"
+PACKAGING_ROLE = "ambalaj"
+
 
 @dataclass(frozen=True)
 class TraceabilityCaseSubject:
@@ -130,12 +156,14 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
 def build_report_tables_from_rules_result(result: RulesPipelineResult) -> TraceabilityReportTables:
     """Populate first report tables from selected Core records only.
 
-    This is an initial controlled population step. It maps selected rows into
-    reportable strings and does not infer upstream/downstream traceability.
+    This is a controlled population step. It maps selected rows into reportable
+    strings and does not infer upstream/downstream traceability.
     """
 
     tables = build_empty_report_tables()
     production_rows: list[TraceabilityTableRow] = []
+    raw_material_rows: list[TraceabilityTableRow] = []
+    packaging_rows: list[TraceabilityTableRow] = []
     auxiliary_rows: list[TraceabilityTableRow] = []
     wms_rows: list[TraceabilityTableRow] = []
     stock_rows: list[TraceabilityTableRow] = []
@@ -144,6 +172,10 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
         row = table_row_from_selected_record(record)
         if is_alisol_auxiliary_record(record):
             auxiliary_rows.append(add_alisol_auxiliary_note(row))
+        elif is_packaging_record(record):
+            packaging_rows.append(add_classification_role(row, PACKAGING_ROLE))
+        elif is_raw_material_record(record):
+            raw_material_rows.append(add_classification_role(row, RAW_MATERIAL_ROLE))
         elif record.source_key == "production":
             production_rows.append(row)
         elif record.source_key == "wms":
@@ -154,8 +186,8 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     return TraceabilityReportTables(
         production=replace_table_rows(tables.production, production_rows),
         finished_goods_deliveries=tables.finished_goods_deliveries,
-        raw_materials=tables.raw_materials,
-        packaging=tables.packaging,
+        raw_materials=replace_table_rows(tables.raw_materials, raw_material_rows),
+        packaging=replace_table_rows(tables.packaging, packaging_rows),
         auxiliaries_gas=replace_table_rows(tables.auxiliaries_gas, auxiliary_rows),
         wms_receipts=replace_table_rows(tables.wms_receipts, wms_rows),
         prd_consumptions=tables.prd_consumptions,
@@ -182,8 +214,27 @@ def is_alisol_auxiliary_record(record: Any) -> bool:
     classified as food raw material.
     """
 
-    combined_values = " ".join(str(value) for value in record.values.values()).casefold()
-    return ALISOL_HINT in combined_values
+    return ALISOL_HINT in normalized_record_text(record)
+
+
+def is_raw_material_record(record: Any) -> bool:
+    """Return True for explicit food raw material hints only."""
+
+    text = normalized_record_text(record)
+    return any(hint in text for hint in RAW_MATERIAL_HINTS)
+
+
+def is_packaging_record(record: Any) -> bool:
+    """Return True for explicit packaging hints only."""
+
+    text = normalized_record_text(record)
+    return any(hint in text for hint in PACKAGING_HINTS)
+
+
+def normalized_record_text(record: Any) -> str:
+    """Build a normalized text blob from a selected record."""
+
+    return " ".join(str(value) for value in record.values.values()).casefold()
 
 
 def add_alisol_auxiliary_note(row: TraceabilityTableRow) -> TraceabilityTableRow:
@@ -191,6 +242,20 @@ def add_alisol_auxiliary_note(row: TraceabilityTableRow) -> TraceabilityTableRow
 
     values = dict(row.values)
     values.setdefault("Observații", ALISOL_AUXILIARY_OBSERVATION)
+    return TraceabilityTableRow(
+        values=values,
+        source_key=row.source_key,
+        source_name=row.source_name,
+        sheet_name=row.sheet_name,
+        row_number=row.row_number,
+    )
+
+
+def add_classification_role(row: TraceabilityTableRow, role: str) -> TraceabilityTableRow:
+    """Add a report role when one is not already present."""
+
+    values = dict(row.values)
+    values.setdefault("Rol", role)
     return TraceabilityTableRow(
         values=values,
         source_key=row.source_key,
