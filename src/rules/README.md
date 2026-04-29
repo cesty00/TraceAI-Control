@@ -75,7 +75,8 @@ Obiectul conține:
 Popularea controlată existentă:
 
 - rândurile `production` selectate de Core sunt mapate în tabelul `production`;
-- rândurile `wms` selectate de Core sunt mapate în tabelul `wms_receipts`;
+- rândurile `wms` selectate de Core, cu indicii explicite de livrare, sunt mapate în `finished_goods_deliveries`;
+- rândurile `wms` selectate de Core, fără indicii explicite de livrare, sunt mapate în `wms_receipts`;
 - rândurile `stock` selectate de Core sunt mapate în tabelul `stock`;
 - rândurile care conțin `ALISOL` sunt mapate în tabelul `auxiliaries_gas`;
 - rândurile cu indicii explicite de materie primă sunt mapate în `raw_materials`;
@@ -87,6 +88,7 @@ Reguli critice:
 ```text
 ALISOL este auxiliar / gaz tehnologic și nu se clasifică drept materie primă alimentară.
 Clasificarea materii prime / ambalaje se face doar pe indicii explicite, fără deducții de trasabilitate.
+Livrările produs finit din WMS se identifică doar pe indicii explicite de livrare / document comandă / client.
 ```
 
 Această populare este o mapare de rânduri selectate și nu calculează încă trasabilitate amonte/aval.
