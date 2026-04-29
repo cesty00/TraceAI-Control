@@ -70,7 +70,8 @@ Obiectul conține:
   - materiale auxiliare / gaz;
   - recepții WMS;
   - consumuri PRD;
-  - stoc la moment.
+  - stoc la moment;
+- bilanț preliminar conservator.
 
 Popularea controlată existentă:
 
@@ -83,12 +84,22 @@ Popularea controlată existentă:
 - rândurile cu indicii explicite de ambalaj sunt mapate în `packaging`;
 - tabelele rămase nepopulate păstrează mesajele explicite de lipsă date.
 
+Bilanț preliminar:
+
+- se calculează doar din `TraceabilityCase.report_tables` deja populate;
+- folosește doar valori numerice clare;
+- grupează totalurile pe UM;
+- nu convertește automat unități de măsură;
+- ignoră rândurile cu valori/UM neclare și marchează explicit acest lucru;
+- nu deduce trasabilitate amonte/aval.
+
 Reguli critice:
 
 ```text
 ALISOL este auxiliar / gaz tehnologic și nu se clasifică drept materie primă alimentară.
 Clasificarea materii prime / ambalaje se face doar pe indicii explicite, fără deducții de trasabilitate.
 Livrările produs finit din WMS se identifică doar pe indicii explicite de livrare / document comandă / client.
+Bilanțul preliminar nu convertește unități de măsură și nu deduce fluxuri lipsă.
 ```
 
 Această populare este o mapare de rânduri selectate și nu calculează încă trasabilitate amonte/aval.
