@@ -25,12 +25,13 @@ Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demons
 Faza 6.0 — Contract minim UI -> engine: definit și documentat
 Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic + documentată
 Faza 6.2 — CLI/UI shell minimal peste orchestrator: implementat tehnic + testat + documentat
-Faza 6 — UI vizual profesional simplu: NU este implementat încă
+Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat + documentat
+Installer Windows: NU a început încă
 ```
 
 ## Decizie principală
 
-Nu dezvoltăm aplicația direct în UI vizual complex.
+UI-ul vizual există doar ca strat peste orchestrator. Nu conține logică de business.
 
 Ordinea proiectului este:
 
@@ -47,9 +48,8 @@ Documentație runner demonstrativ
 README principal sincronizat
 Contract UI -> engine
 Funcție UI de orchestrare testabilă
-Documentație funcție UI de orchestrare
 CLI/UI shell minimal
-UI vizual profesional simplu
+UI vizual minimal
 Installer Windows
 ```
 
@@ -71,6 +71,7 @@ Installer Windows
 14. Funcția UI de orchestrare nu citește direct sursele și nu conține logică de business.
 15. Documentația UI explică explicit `UiGenerationRequest`, `UiGenerationResult` și `generate_report_from_ui_request()`.
 16. CLI/UI shell-ul minimal apelează doar orchestratorul și nu conține logică de business.
+17. UI-ul vizual minimal apelează doar orchestratorul și nu conține logică de business.
 
 ## Structura repo la checkpoint
 
@@ -89,6 +90,7 @@ TraceAI-Control/
       __init__.py
       cli.py
       orchestrator.py
+      visual.py
   tests/
     README.md
     test_source_inventory.py
@@ -105,17 +107,18 @@ TraceAI-Control/
     test_demo_docx_runner.py
     test_ui_orchestrator.py
     test_ui_cli.py
+    test_ui_visual.py
   samples/
     README.md
     demo_docx_runner.py
 ```
 
-## CLI/UI shell minimal implementat
+## UI vizual minimal implementat
 
 Implementare:
 
 ```text
-src/ui/cli.py
+src/ui/visual.py
 src/ui/__init__.py
 ```
 
@@ -129,27 +132,35 @@ README.md
 Test dedicat:
 
 ```text
-tests/test_ui_cli.py
+tests/test_ui_visual.py
 ```
 
 Rulare:
 
 ```bash
-python -m src.ui.cli "cale/catre/date" --code DS099903883 --lot 105.26 --output raport_trasabilitate.docx
+python -m src.ui.visual
 ```
 
-Flux CLI:
+UI-ul vizual minimal include:
 
 ```text
-parsează argumente
-construiește UiGenerationRequest
-apelează generate_report_from_ui_request()
-afișează mesajul rezultatului
-returnează cod 0 la succes
-returnează cod 1 la eroare
+câmp folder surse oficiale
+câmp cod articol
+câmp lot
+câmp raport DOCX output
+buton generare raport DOCX
+mesaj succes / eroare
 ```
 
-Reguli CLI:
+Funcții testabile:
+
+```text
+build_request_from_form_values()
+submit_visual_form_values()
+run_visual_app()
+```
+
+Reguli UI vizual:
 
 ```text
 nu citește direct surse operaționale
@@ -157,15 +168,16 @@ nu clasifică tipuri de caz
 nu calculează bilanțuri
 nu generează DOCX direct din CSV/XLSX
 nu conține logică de business
+apelează doar generate_report_from_ui_request()
 ```
 
 ## Testare curentă
 
-Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX, fluxul controlat TraceabilityCase -> DOCX, runnerul demonstrativ, funcția UI de orchestrare și CLI/UI shell-ul minimal:
+Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX, fluxul controlat TraceabilityCase -> DOCX, runnerul demonstrativ, funcția UI de orchestrare, CLI/UI shell-ul minimal și UI-ul vizual minimal:
 
 ```text
 python -m pytest -q
-38 passed
+39 passed
 ```
 
 ## Limită curentă
@@ -176,7 +188,6 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-UI vizual profesional simplu
 installer
 ```
 
@@ -185,7 +196,7 @@ installer
 Următorul pas corect este:
 
 ```text
-pregătirea UI vizual profesional simplu doar ca strat peste orchestrator, fără logică de business
+pregătirea pentru installer Windows sau rafinare strict vizuală UI, fără logică de business nouă
 ```
 
 Primul cod permis:
@@ -209,5 +220,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu UI vizual profesional simplu peste orchestrator, fără logică de business.
+Continuăm de la CHECKPOINT.md cu pregătirea pentru installer Windows sau rafinare strict vizuală UI, fără logică de business nouă.
 ```
