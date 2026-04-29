@@ -26,12 +26,13 @@ Faza 6.0 — Contract minim UI -> engine: definit și documentat
 Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic + documentată
 Faza 6.2 — CLI/UI shell minimal peste orchestrator: implementat tehnic + testat + documentat
 Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat + documentat
-Installer Windows: NU a început încă
+Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație integrate
+Installer Windows complet: NU este finalizat încă
 ```
 
 ## Decizie principală
 
-UI-ul vizual există doar ca strat peste orchestrator. Nu conține logică de business.
+UI-ul vizual există doar ca strat peste orchestrator. Installerul nu introduce logică de business.
 
 Ordinea proiectului este:
 
@@ -50,7 +51,8 @@ Contract UI -> engine
 Funcție UI de orchestrare testabilă
 CLI/UI shell minimal
 UI vizual minimal
-Installer Windows
+Pregătire installer Windows
+Installer Windows complet
 ```
 
 ## Reguli critice validate
@@ -72,6 +74,7 @@ Installer Windows
 15. Documentația UI explică explicit `UiGenerationRequest`, `UiGenerationResult` și `generate_report_from_ui_request()`.
 16. CLI/UI shell-ul minimal apelează doar orchestratorul și nu conține logică de business.
 17. UI-ul vizual minimal apelează doar orchestratorul și nu conține logică de business.
+18. Scriptul Windows build pornește de la UI-ul vizual minimal și nu schimbă engine-ul.
 
 ## Structura repo la checkpoint
 
@@ -81,6 +84,10 @@ TraceAI-Control/
   CHECKPOINT.md
   docs/
     UI_ENGINE_CONTRACT.md
+  installer/
+    windows/
+      README.md
+      build_windows.ps1
   src/
     core/
     rules/
@@ -113,62 +120,51 @@ TraceAI-Control/
     demo_docx_runner.py
 ```
 
-## UI vizual minimal implementat
+## Pregătire installer Windows integrată
 
 Implementare:
 
 ```text
-src/ui/visual.py
-src/ui/__init__.py
+installer/windows/README.md
+installer/windows/build_windows.ps1
 ```
 
-Documentație:
+Documentație suplimentară:
 
 ```text
-src/ui/README.md
 README.md
 ```
 
-Test dedicat:
+Build local pe Windows:
 
-```text
-tests/test_ui_visual.py
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
 ```
 
-Rulare:
-
-```bash
-python -m src.ui.visual
-```
-
-UI-ul vizual minimal include:
+Output așteptat:
 
 ```text
-câmp folder surse oficiale
-câmp cod articol
-câmp lot
-câmp raport DOCX output
-buton generare raport DOCX
-mesaj succes / eroare
+dist/TraceAI-Control/TraceAI-Control.exe
 ```
 
-Funcții testabile:
+Scriptul:
 
 ```text
-build_request_from_form_values()
-submit_visual_form_values()
-run_visual_app()
+rulează testele cu python -m pytest -q
+verifică PyInstaller
+curăță build/dist vechi
+construiește executabilul cu PyInstaller
+verifică existența executabilului rezultat
 ```
 
-Reguli UI vizual:
+Limitări installer curente:
 
 ```text
-nu citește direct surse operaționale
-nu clasifică tipuri de caz
-nu calculează bilanțuri
-nu generează DOCX direct din CSV/XLSX
-nu conține logică de business
-apelează doar generate_report_from_ui_request()
+nu există încă MSI/NSIS/Inno Setup
+nu există semnare executabil
+nu există icon final
+nu există pipeline CI Windows
+nu există verificare automată pe Windows
 ```
 
 ## Testare curentă
@@ -188,7 +184,7 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-installer
+installer Windows complet
 ```
 
 ## Următorul pas la reluare
@@ -196,22 +192,22 @@ installer
 Următorul pas corect este:
 
 ```text
-pregătirea pentru installer Windows sau rafinare strict vizuală UI, fără logică de business nouă
+validarea sau rafinarea scriptului Windows build, apoi pregătirea unui installer complet MSI/NSIS/Inno Setup
 ```
 
 Primul cod permis:
 
 ```text
-src/ui/
-tests/
-docs/
+installer/windows/
 README.md
+CHECKPOINT.md
 ```
 
 Regulă importantă:
 
 ```text
-Nu se adaugă logică de business în UI.
+Nu se adaugă logică de business în installer.
+Installerul trebuie să pornească UI-ul vizual minimal existent.
 UI-ul vizual trebuie să apeleze același generate_report_from_ui_request().
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
@@ -220,5 +216,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu pregătirea pentru installer Windows sau rafinare strict vizuală UI, fără logică de business nouă.
+Continuăm de la CHECKPOINT.md cu validarea/rafinarea scriptului Windows build și pregătirea installerului complet.
 ```
