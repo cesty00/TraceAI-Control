@@ -19,7 +19,7 @@ Faza 0 — Documentație și arhitectură inițială: finalizată
 Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
-Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare implementate
+Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal
 Faza 6 — UI profesional simplu: NU a început încă
 ```
@@ -109,6 +109,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 5. Raportul DOCX trebuie să fie narativ și auditabil, nu un Excel copiat în Word.
 6. DOCX-ul se generează din TraceabilityCase, nu direct din fișiere.
 7. UI-ul nu conține logică de business.
+8. Bilanțul preliminar este conservator și nu deduce fluxuri lipsă.
 
 ## Teste virtuale acceptate
 
@@ -200,6 +201,7 @@ evidence: sursă, sheet, rând, mesaj
 observations: observații Rules Engine
 sections: metadate tehnice minimale Core Engine
 report_tables: tabele raportabile pentru DOCX
+preliminary_balance: bilanț preliminar conservator
 ```
 
 Tabele definite în `TraceabilityCase.report_tables`:
@@ -233,6 +235,28 @@ Reguli de clasificare implementate:
 ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară.
 Materiile prime și ambalajele sunt clasificate doar pe indicii explicite, fără deducții de trasabilitate.
 Livrările produs finit din WMS sunt clasificate doar pe indicii explicite de livrare / document comandă / client.
+```
+
+Bilanț preliminar conservator implementat:
+
+```text
+TraceabilityBalanceLine
+TraceabilityPreliminaryBalance
+TraceabilityCase.preliminary_balance
+build_preliminary_balance()
+```
+
+Reguli bilanț preliminar:
+
+```text
+calculează doar din TraceabilityCase.report_tables
+folosește doar valori numerice clare
+grupează totalurile pe UM
+nu convertește unități de măsură
+ignoră și raportează rândurile cu valori/UM neclare
+respinge valori cu separatori amestecați
+nu deduce trasabilitate amonte/aval
+nu deduce fluxuri lipsă
 ```
 
 Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rânduri.
@@ -299,13 +323,14 @@ Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, DOCX-ul le afișează ca tabele Word reale, iar raportul are șablon profesional minimal cu stiluri, antet, subsol și metadate.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator și raport DOCX cu tabele Word reale, stiluri, antet, subsol și metadate.
 
 Nu există încă:
 
 ```text
 trasabilitate amonte/aval calculată
-bilanțuri detaliate
+bilanțuri detaliate / reconciliere operațională completă
+randare DOCX a bilanțului preliminar
 branding complet / logo / paginare avansată / cuprins automat
 UI
 installer
@@ -313,11 +338,11 @@ installer
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele Word reale și șablon profesional minimal:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator și Report Engine DOCX:
 
 ```text
 python -m pytest -q
-30 passed
+33 passed
 ```
 
 ## Următorul pas la reluare
@@ -327,30 +352,30 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-bilanț preliminar pe tabelele deja populate, fără conversii automate de unități
+randarea bilanțului preliminar în DOCX
 ```
 
 Primul cod permis:
 
 ```text
-src/rules/traceability_case.py
+src/report/docx_minimal.py
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei secțiuni de bilanț preliminar în TraceabilityCase, pe baza tabelelor deja populate:
-- totaluri doar pe valori numerice clare
-- grupare pe UM, fără conversii automate
-- mesaje explicite când bilanțul nu poate fi calculat
-- fără trasabilitate amonte/aval dedusă automat
+adăugarea unei secțiuni DOCX pentru preliminary_balance, cu:
+- mesaje generale ale bilanțului
+- tabel Word pentru liniile de bilanț
+- mesaj explicit dacă nu există linii de bilanț
+- fără citire directă a surselor operaționale
 ```
 
 Regulă importantă:
 
 ```text
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
-Bilanțul preliminar trebuie să fie conservator și să nu convertească unități de măsură automat.
+Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
 ```
 
 ## Fraza de reluare recomandată
@@ -358,5 +383,5 @@ Bilanțul preliminar trebuie să fie conservator și să nu convertească unită
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu bilanț preliminar pe tabelele deja populate.
+Continuăm de la CHECKPOINT.md cu randarea bilanțului preliminar în DOCX.
 ```
