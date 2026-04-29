@@ -7,7 +7,16 @@ from src.rules.traceability_case import (
     TraceabilityCase,
     TraceabilityCaseEvidence,
     TraceabilityCaseSubject,
+    TraceabilityReportTable,
+    TraceabilityReportTables,
+    TraceabilityTableRow,
+    build_empty_report_tables,
 )
+
+
+def read_document_xml(path: Path) -> str:
+    with zipfile.ZipFile(path) as package:
+        return package.read("word/document.xml").decode("utf-8")
 
 
 def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path) -> None:
@@ -47,6 +56,9 @@ def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path)
     assert "Identificarea cazului" in document_xml
     assert "Surse utilizate" in document_xml
     assert "Interpretarea tipului de caz" in document_xml
+    assert "Tabele operaționale din TraceabilityCase" in document_xml
+    assert "Producția lotului" in document_xml
+    assert "Nu au fost identificate date detaliate de producție" in document_xml
     assert "Concluzie preliminară" in document_xml
     assert "Recomandare operațională" in document_xml
     assert "Documente de pregătit pentru audit" in document_xml
@@ -70,10 +82,57 @@ def test_generate_minimal_docx_report_contains_wms_only_narrative(tmp_path: Path
     )
 
     output = generate_minimal_docx_report(traceability_case, tmp_path / "raport_wms.docx")
-
-    with zipfile.ZipFile(output) as package:
-        document_xml = package.read("word/document.xml").decode("utf-8")
+    document_xml = read_document_xml(output)
 
     assert "WMS-only" in document_xml
     assert "Flux PRD" in document_xml
     assert "Nu au fost identificate înregistrări PRD" in document_xml
+
+
+def test_generate_minimal_docx_report_renders_table_rows_from_traceability_case(tmp_path: Path) -> None:
+    tables = build_empty_report_tables()
+    production_table = TraceabilityReportTable(
+        key="production",
+        title="Producția lotului",
+        columns=["Cod", "Lot", "Comandă", "Cantitate", "UM", "Observații"],
+        rows=[
+            TraceabilityTableRow(
+                values={
+                    "Cod": "DS0001",
+                    "Lot": "L001",
+                    "Comandă": "CMD-1",
+                    "Cantitate": "10",
+                    "UM": "kg",
+                    "Observații": "test",
+                },
+                source_key="production",
+                source_name="rapoarte productie.csv",
+                sheet_name=None,
+                row_number=2,
+            )
+        ],
+        empty_message="Nu au fost identificate date detaliate de producție în TraceabilityCase.",
+    )
+    report_tables = TraceabilityReportTables(
+        production=production_table,
+        finished_goods_deliveries=tables.finished_goods_deliveries,
+        raw_materials=tables.raw_materials,
+        packaging=tables.packaging,
+        auxiliaries_gas=tables.auxiliaries_gas,
+        wms_receipts=tables.wms_receipts,
+        prd_consumptions=tables.prd_consumptions,
+        stock=tables.stock,
+    )
+    traceability_case = TraceabilityCase(
+        subject=TraceabilityCaseSubject("DS0001", "L001", CASE_FINISHED_PRODUCT),
+        report_tables=report_tables,
+    )
+
+    output = generate_minimal_docx_report(traceability_case, tmp_path / "raport_tabele.docx")
+    document_xml = read_document_xml(output)
+
+    assert "Rând 1" in document_xml
+    assert "CMD-1" in document_xml
+    assert "Cantitate: 10" in document_xml
+    assert "Sursă: production / rapoarte productie.csv" in document_xml
+    assert "Nu au fost identificate livrări produs finit" in document_xml
