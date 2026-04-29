@@ -17,6 +17,9 @@ from typing import Any
 
 from src.rules.run_rules_pipeline import RulesPipelineResult
 
+ALISOL_HINT = "alisol"
+ALISOL_AUXILIARY_OBSERVATION = "ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară."
+
 
 @dataclass(frozen=True)
 class TraceabilityCaseSubject:
@@ -107,6 +110,10 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
         "dataset_problem_count": len(result.core.normalized_dataset.problems),
     }
 
+    observations = list(detection.observations)
+    if any(is_alisol_auxiliary_record(record) for record in result.core.selection.records):
+        observations.append(ALISOL_AUXILIARY_OBSERVATION)
+
     return TraceabilityCase(
         subject=TraceabilityCaseSubject(
             code=code,
@@ -114,7 +121,7 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
             case_type=detection.case_type,
         ),
         evidence=evidence,
-        observations=list(detection.observations),
+        observations=observations,
         sections=sections,
         report_tables=build_report_tables_from_rules_result(result),
     )
@@ -129,12 +136,15 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
 
     tables = build_empty_report_tables()
     production_rows: list[TraceabilityTableRow] = []
+    auxiliary_rows: list[TraceabilityTableRow] = []
     wms_rows: list[TraceabilityTableRow] = []
     stock_rows: list[TraceabilityTableRow] = []
 
     for record in result.core.selection.records:
         row = table_row_from_selected_record(record)
-        if record.source_key == "production":
+        if is_alisol_auxiliary_record(record):
+            auxiliary_rows.append(add_alisol_auxiliary_note(row))
+        elif record.source_key == "production":
             production_rows.append(row)
         elif record.source_key == "wms":
             wms_rows.append(row)
@@ -146,7 +156,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
         finished_goods_deliveries=tables.finished_goods_deliveries,
         raw_materials=tables.raw_materials,
         packaging=tables.packaging,
-        auxiliaries_gas=tables.auxiliaries_gas,
+        auxiliaries_gas=replace_table_rows(tables.auxiliaries_gas, auxiliary_rows),
         wms_receipts=replace_table_rows(tables.wms_receipts, wms_rows),
         prd_consumptions=tables.prd_consumptions,
         stock=replace_table_rows(tables.stock, stock_rows),
@@ -162,6 +172,31 @@ def table_row_from_selected_record(record: Any) -> TraceabilityTableRow:
         source_name=record.source_name,
         sheet_name=record.sheet_name,
         row_number=record.row_number,
+    )
+
+
+def is_alisol_auxiliary_record(record: Any) -> bool:
+    """Return True when the selected record refers to ALISOL.
+
+    Business rule: ALISOL is auxiliary / technological gas and must never be
+    classified as food raw material.
+    """
+
+    combined_values = " ".join(str(value) for value in record.values.values()).casefold()
+    return ALISOL_HINT in combined_values
+
+
+def add_alisol_auxiliary_note(row: TraceabilityTableRow) -> TraceabilityTableRow:
+    """Add explicit ALISOL classification note to a report table row."""
+
+    values = dict(row.values)
+    values.setdefault("Observații", ALISOL_AUXILIARY_OBSERVATION)
+    return TraceabilityTableRow(
+        values=values,
+        source_key=row.source_key,
+        source_name=row.source_name,
+        sheet_name=row.sheet_name,
+        row_number=row.row_number,
     )
 
 

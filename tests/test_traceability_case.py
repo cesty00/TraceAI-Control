@@ -6,6 +6,7 @@ from src.core.source_inventory import InventoryReport
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT, detect_case_type
 from src.rules.run_rules_pipeline import RulesPipelineResult
 from src.rules.traceability_case import (
+    ALISOL_AUXILIARY_OBSERVATION,
     build_empty_report_tables,
     build_traceability_case,
     report_tables_as_list,
@@ -115,3 +116,27 @@ def test_build_traceability_case_populates_selected_report_tables() -> None:
     assert stock_rows[0]["values"]["stoc"] == "5"
     assert stock_rows[0]["source_key"] == "stock"
     assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
+
+
+def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "production",
+                "rapoarte productie.csv",
+                {"cod": "DS0001", "lot": "L001", "denumire": "Gaz ALISOL", "cantitate": "2", "um": "kg"},
+            )
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    auxiliary_rows = traceability_case["report_tables"]["auxiliaries_gas"]["rows"]
+    raw_material_rows = traceability_case["report_tables"]["raw_materials"]["rows"]
+    production_rows = traceability_case["report_tables"]["production"]["rows"]
+
+    assert auxiliary_rows[0]["values"]["denumire"] == "Gaz ALISOL"
+    assert auxiliary_rows[0]["values"]["Observații"] == ALISOL_AUXILIARY_OBSERVATION
+    assert raw_material_rows == []
+    assert production_rows == []
+    assert ALISOL_AUXILIARY_OBSERVATION in traceability_case["observations"]

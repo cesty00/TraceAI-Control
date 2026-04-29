@@ -18,15 +18,19 @@ from .run_rules_pipeline import (
 )
 from .run_traceability_case import run_traceability_case
 from .traceability_case import (
+    ALISOL_AUXILIARY_OBSERVATION,
+    ALISOL_HINT,
     TraceabilityCase,
     TraceabilityCaseEvidence,
     TraceabilityCaseSubject,
     TraceabilityReportTable,
     TraceabilityReportTables,
     TraceabilityTableRow,
+    add_alisol_auxiliary_note,
     build_empty_report_tables,
     build_report_tables_from_rules_result,
     build_traceability_case,
+    is_alisol_auxiliary_record,
     report_tables_as_list,
     table_row_from_selected_record,
     traceability_case_to_dict,
@@ -34,6 +38,8 @@ from .traceability_case import (
 )
 
 __all__ = [
+    "ALISOL_AUXILIARY_OBSERVATION",
+    "ALISOL_HINT",
     "CASE_FINISHED_PRODUCT",
     "CASE_RAW_MATERIAL",
     "CASE_UNKNOWN",
@@ -47,12 +53,14 @@ __all__ = [
     "TraceabilityReportTable",
     "TraceabilityReportTables",
     "TraceabilityTableRow",
+    "add_alisol_auxiliary_note",
     "build_empty_report_tables",
     "build_report_tables_from_rules_result",
     "build_traceability_case",
     "case_type_result_to_dict",
     "detect_case_type",
     "detect_case_type_from_dataset",
+    "is_alisol_auxiliary_record",
     "report_tables_as_list",
     "rules_pipeline_result_to_dict",
     "run_rules_pipeline",
