@@ -5,7 +5,7 @@ Faza 5 scope:
 - generate a narrative DOCX from TraceabilityCase;
 - do not read operational source files directly;
 - mark missing sections explicitly;
-- move the report structure closer to docs/RAPORT_DOCX_MODEL.md.
+- render report tables carried by TraceabilityCase.
 
 The implementation builds a valid DOCX package using only the Python standard
 library so the report engine has no external runtime dependency.
@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Iterable
 
 from src.rules.run_traceability_case import run_traceability_case
-from src.rules.traceability_case import TraceabilityCase
+from src.rules.traceability_case import TraceabilityCase, TraceabilityReportTable, report_tables_as_list
 
 CONTENT_TYPES_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -102,6 +102,7 @@ def build_document_xml(traceability_case: TraceabilityCase) -> str:
     body_parts.extend(build_case_type_interpretation(traceability_case))
     body_parts.extend(build_evidence_section(traceability_case))
     body_parts.extend(build_observations_section(traceability_case))
+    body_parts.extend(build_report_tables_section(traceability_case))
     body_parts.extend(build_missing_data_section(traceability_case))
     body_parts.extend(build_preliminary_conclusion(traceability_case))
     body_parts.extend(build_operational_recommendation(traceability_case))
@@ -138,7 +139,7 @@ def build_executive_summary(traceability_case: TraceabilityCase) -> list[str]:
         ),
         paragraph(
             "Documentul este generat din TraceabilityCase și are caracter preliminar. "
-            "Secțiunile pentru care TraceabilityCase nu conține încă detalii sunt marcate explicit."
+            "Tabelele operaționale sunt afișate numai dacă există în TraceabilityCase."
         ),
     ]
 
@@ -211,11 +212,51 @@ def build_observations_section(traceability_case: TraceabilityCase) -> list[str]
     return paragraphs
 
 
+def build_report_tables_section(traceability_case: TraceabilityCase) -> list[str]:
+    paragraphs = [
+        paragraph("7. Tabele operaționale din TraceabilityCase", style="Heading1"),
+        paragraph("Tabelele de mai jos sunt randate exclusiv din TraceabilityCase. Report Engine nu citește fișierele sursă."),
+    ]
+    for table in report_tables_as_list(traceability_case.report_tables):
+        paragraphs.extend(build_report_table(table))
+    return paragraphs
+
+
+def build_report_table(table: TraceabilityReportTable) -> list[str]:
+    paragraphs = [paragraph(table.title, style="Heading2")]
+    paragraphs.append(paragraph(f"Coloane: {', '.join(table.columns)}"))
+
+    if not table.rows:
+        paragraphs.append(paragraph(table.empty_message))
+        return paragraphs
+
+    for index, row in enumerate(table.rows, start=1):
+        displayed_values = [f"{column}: {value_or_missing(row.values.get(column))}" for column in table.columns]
+        source = format_row_source(row.source_key, row.source_name, row.sheet_name, row.row_number)
+        paragraphs.append(paragraph(f"Rând {index}: {'; '.join(displayed_values)}. Sursă: {source}"))
+    return paragraphs
+
+
+def format_row_source(
+    source_key: str | None,
+    source_name: str | None,
+    sheet_name: str | None,
+    row_number: int | None,
+) -> str:
+    source_parts = [
+        value_or_missing(source_key),
+        value_or_missing(source_name),
+        value_or_missing(sheet_name),
+        value_or_missing(row_number),
+    ]
+    return " / ".join(source_parts)
+
+
 def build_missing_data_section(traceability_case: TraceabilityCase) -> list[str]:
     case_type = traceability_case.subject.case_type
     missing_items = missing_data_messages(case_type)
     return [
-        paragraph("7. Secțiuni fără date", style="Heading1"),
+        paragraph("8. Secțiuni fără date", style="Heading1"),
         paragraph("Secțiunile de mai jos nu sunt lăsate goale; lipsa datelor este marcată explicit."),
         *bullet_list(missing_items),
     ]
@@ -224,7 +265,7 @@ def build_missing_data_section(traceability_case: TraceabilityCase) -> list[str]
 def build_preliminary_conclusion(traceability_case: TraceabilityCase) -> list[str]:
     subject = traceability_case.subject
     return [
-        paragraph("8. Concluzie preliminară", style="Heading1"),
+        paragraph("9. Concluzie preliminară", style="Heading1"),
         paragraph(preliminary_conclusion(subject.code, subject.lot, subject.case_type, bool(traceability_case.evidence))),
     ]
 
@@ -239,14 +280,14 @@ def build_operational_recommendation(traceability_case: TraceabilityCase) -> lis
     }.get(case_type, "Verificați manual sursele operaționale relevante înainte de audit.")
 
     return [
-        paragraph("9. Recomandare operațională", style="Heading1"),
+        paragraph("10. Recomandare operațională", style="Heading1"),
         paragraph(recommendation),
     ]
 
 
 def build_audit_documents_section() -> list[str]:
     return [
-        paragraph("10. Documente de pregătit pentru audit", style="Heading1"),
+        paragraph("11. Documente de pregătit pentru audit", style="Heading1"),
         *bullet_list(
             [
                 "Documente WMS: Numar comanda, Document intrare, Document comanda, unde există.",
@@ -260,7 +301,7 @@ def build_audit_documents_section() -> list[str]:
 
 def build_signatures_section() -> list[str]:
     return [
-        paragraph("11. Semnături", style="Heading1"),
+        paragraph("12. Semnături", style="Heading1"),
         paragraph("Întocmit de: ______________________________"),
         paragraph("Verificat de: ______________________________"),
         paragraph("Luare la cunoștință: ________________________"),
