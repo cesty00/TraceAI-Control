@@ -66,6 +66,22 @@ Utilizare:
 python -m src.core.dataset_validation "cale/catre/folder/date" --output validation_report.json
 ```
 
+## `record_selection.py`
+
+Selectează rândurile din `NormalizedDataSet` pentru codul și lotul introduse de operator.
+
+Ce face:
+
+- caută potriviri exacte normalizate pentru cod + lot;
+- păstrează contextul sursei, sheet-ului și rândului;
+- returnează valorile originale, valorile normalizate și cantitățile parsate.
+
+Utilizare:
+
+```bash
+python -m src.core.record_selection "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output selected_records.json
+```
+
 ## Limită intenționată
 
 Core Engine, în această etapă, nu calculează trasabilitate, nu clasifică tipuri de caz, nu construiește `TraceabilityCase` și nu generează DOCX.

@@ -14,6 +14,12 @@ from .normalized_dataset import (
     build_normalized_dataset,
     dataset_to_dict,
 )
+from .record_selection import (
+    RecordSelectionResult,
+    SelectedRecord,
+    select_records_by_code_lot,
+    selection_result_to_dict,
+)
 from .source_inventory import (
     OFFICIAL_SOURCES,
     InventoryReport,
@@ -30,6 +36,8 @@ __all__ = [
     "NormalizedDataSet",
     "NormalizedRow",
     "NormalizedTable",
+    "RecordSelectionResult",
+    "SelectedRecord",
     "SheetInventory",
     "SourceInventory",
     "ValidationIssue",
@@ -38,6 +46,8 @@ __all__ = [
     "build_normalized_dataset",
     "dataset_to_dict",
     "report_to_dict",
+    "select_records_by_code_lot",
+    "selection_result_to_dict",
     "validate_normalized_dataset",
     "validation_report_to_dict",
 ]
