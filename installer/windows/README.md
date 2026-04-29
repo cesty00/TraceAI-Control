@@ -1,6 +1,6 @@
 # Installer Windows — TraceAI Control
 
-Acest folder pregătește pașii pentru construirea unui executabil Windows pentru TraceAI Control.
+Acest folder pregătește pașii pentru construirea și verificarea unui executabil Windows pentru TraceAI Control.
 
 ## Status
 
@@ -10,6 +10,7 @@ Pregătire installer rafinată:
 script PowerShell de build
 entry point PyInstaller explicit
 verificare existență entry point înainte de build
+script PowerShell de verificare artefact build
 instrucțiuni de rulare
 reguli de validare manuală
 fără schimbări în Core/Rules/Report/UI business boundary
@@ -74,7 +75,27 @@ Output așteptat:
 dist/TraceAI-Control/TraceAI-Control.exe
 ```
 
-## Ce face scriptul
+## Verificare build
+
+După build, rulează:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
+```
+
+Scriptul de verificare:
+
+```text
+verifică existența folderului dist\TraceAI-Control
+verifică existența executabilului dist\TraceAI-Control\TraceAI-Control.exe
+verifică faptul că executabilul nu este gol
+afișează path-ul și dimensiunea executabilului
+afișează pașii manuali de smoke test
+```
+
+Scriptul de verificare nu pornește automat UI-ul și nu apelează engine-ul.
+
+## Ce face scriptul de build
 
 Scriptul `build_windows.ps1`:
 
@@ -137,5 +158,5 @@ semnare executabil
 icon final
 installer MSI/NSIS/Inno Setup
 pipeline CI pentru build Windows
-verificare automată pe Windows
+verificare automată pe Windows prin CI
 ```
