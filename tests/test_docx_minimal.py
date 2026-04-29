@@ -67,6 +67,9 @@ def test_generate_minimal_docx_report_creates_valid_docx_package(tmp_path: Path)
     assert "L001" in document_xml
     assert CASE_FINISHED_PRODUCT in document_xml
     assert "FARA DATE IDENTIFICATE" in document_xml
+    assert "<w:tbl>" in document_xml
+    assert "<w:tblStyle w:val=\"TableGrid\"/>" in document_xml
+    assert "<w:gridSpan" in document_xml
 
 
 def test_generate_minimal_docx_report_contains_wms_only_narrative(tmp_path: Path) -> None:
@@ -131,8 +134,10 @@ def test_generate_minimal_docx_report_renders_table_rows_from_traceability_case(
     output = generate_minimal_docx_report(traceability_case, tmp_path / "raport_tabele.docx")
     document_xml = read_document_xml(output)
 
-    assert "Rând 1" in document_xml
+    assert "<w:tbl>" in document_xml
+    assert "<w:tr>" in document_xml
+    assert "<w:tc>" in document_xml
     assert "CMD-1" in document_xml
-    assert "Cantitate: 10" in document_xml
+    assert "10" in document_xml
     assert "Sursă: production / rapoarte productie.csv" in document_xml
     assert "Nu au fost identificate livrări produs finit" in document_xml
