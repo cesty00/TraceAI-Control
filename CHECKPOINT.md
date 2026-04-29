@@ -22,7 +22,7 @@ Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
 Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
-Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic
+Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -154,6 +154,7 @@ TraceAI-Control/
     test_run_traceability_case.py
     test_docx_minimal.py
     test_e2e_docx_controlled_flow.py
+    test_demo_docx_runner.py
   samples/
     demo_docx_runner.py
 ```
@@ -327,12 +328,18 @@ validarea integrării tehnice dintre Rules Engine, TraceabilityCase și Report E
 fără UI și fără citirea directă a surselor operaționale reale în Report Engine.
 ```
 
-## Runner demonstrativ DOCX implementat
+## Runner demonstrativ DOCX implementat și testat
 
 Runnerul demonstrativ este implementat în:
 
 ```text
 samples/demo_docx_runner.py
+```
+
+Test automat dedicat:
+
+```text
+tests/test_demo_docx_runner.py
 ```
 
 Flux runner:
@@ -365,7 +372,7 @@ nu deduce trasabilitate amonte/aval
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat și runner demonstrativ controlat.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat și test automat dedicat pentru runner.
 
 Nu există încă:
 
@@ -379,17 +386,18 @@ installer
 
 ## Testare curentă
 
-Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX și fluxul controlat TraceabilityCase -> DOCX:
+Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX, fluxul controlat TraceabilityCase -> DOCX și runnerul demonstrativ:
 
 ```text
 python -m pytest -q
-35 passed
+36 passed
 ```
 
-Runner demonstrativ integrat:
+Runner demonstrativ integrat și testat:
 
 ```text
 samples/demo_docx_runner.py
+tests/test_demo_docx_runner.py
 ```
 
 ## Următorul pas la reluare
@@ -399,21 +407,21 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-pregătirea documentației de utilizare pentru runnerul demonstrativ sau validarea runnerului prin test automat dedicat
+pregătirea documentației de utilizare pentru runnerul demonstrativ DOCX
 ```
 
 Primul cod permis:
 
 ```text
+README.md
 samples/
 tests/
-README.md
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei documentații scurte de rulare demo sau a unui test care rulează samples/demo_docx_runner.py și verifică DOCX-ul generat.
+adăugarea unei secțiuni scurte în README.md sau samples/README.md care explică rularea runnerului demonstrativ și limitările lui.
 ```
 
 Regulă importantă:
@@ -430,5 +438,5 @@ Runnerul demo rămâne controlat și nu citește surse operaționale reale.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu documentația sau testarea runnerului demonstrativ DOCX.
+Continuăm de la CHECKPOINT.md cu documentația de utilizare pentru runnerul demonstrativ DOCX.
 ```
