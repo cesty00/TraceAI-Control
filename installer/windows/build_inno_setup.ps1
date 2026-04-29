@@ -1,13 +1,13 @@
 param(
-    [string]$AppName = "TraceAI-Control",
-    [string]$InnoSetupCompilerPath = ""
+    [string]$AppName = 'TraceAI-Control',
+    [string]$InnoSetupCompilerPath = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
-Write-Host "TraceAI Control — Inno Setup installer build" -ForegroundColor Cyan
+Write-Host 'TraceAI Control - Inno Setup installer build' -ForegroundColor Cyan
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 Set-Location $RepoRoot
 
 $PyInstallerExe = Join-Path $RepoRoot "dist\$AppName\$AppName.exe"
@@ -29,10 +29,10 @@ if ([string]::IsNullOrWhiteSpace($InnoSetupCompilerPath)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($InnoSetupCompilerPath) -or -not (Test-Path $InnoSetupCompilerPath)) {
-    throw "Inno Setup compiler ISCC.exe not found. Install Inno Setup 6 or pass -InnoSetupCompilerPath."
+    throw 'Inno Setup compiler ISCC.exe not found. Install Inno Setup 6 or pass -InnoSetupCompilerPath.'
 }
 
-$InstallerScript = Join-Path $PSScriptRoot "TraceAI-Control.iss"
+$InstallerScript = Join-Path $PSScriptRoot 'TraceAI-Control.iss'
 if (-not (Test-Path $InstallerScript)) {
     throw "Inno Setup script not found: $InstallerScript"
 }
@@ -42,10 +42,10 @@ Write-Host "Using installer script: $InstallerScript" -ForegroundColor Cyan
 
 & $InnoSetupCompilerPath $InstallerScript
 
-$InstallerOutput = Join-Path $PSScriptRoot "output\TraceAI-Control-Setup.exe"
+$InstallerOutput = Join-Path $PSScriptRoot 'output\TraceAI-Control-Setup.exe'
 if (-not (Test-Path $InstallerOutput)) {
     throw "Installer build failed. Output not found: $InstallerOutput"
 }
 
-Write-Host "Installer build completed successfully." -ForegroundColor Green
+Write-Host 'Installer build completed successfully.' -ForegroundColor Green
 Write-Host "Installer: $InstallerOutput" -ForegroundColor Green
