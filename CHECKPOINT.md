@@ -22,7 +22,7 @@ Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
 Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
-Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat
+Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -41,6 +41,7 @@ Teste automate
 Report Engine DOCX
 Flux E2E controlat
 Runner demonstrativ DOCX
+Documentație runner demonstrativ
 UI profesional simplu
 Installer Windows
 ```
@@ -116,6 +117,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 8. Bilanțul preliminar este conservator și nu deduce fluxuri lipsă.
 9. Fluxul E2E controlat folosește date sintetice de test, nu UI și nu fișiere operaționale reale.
 10. Runnerul demonstrativ folosește dataset sintetic controlat și nu schimbă regulile de business.
+11. Documentația runnerului explică explicit că demo-ul nu citește surse operaționale reale.
 
 ## Teste virtuale acceptate
 
@@ -156,6 +158,7 @@ TraceAI-Control/
     test_e2e_docx_controlled_flow.py
     test_demo_docx_runner.py
   samples/
+    README.md
     demo_docx_runner.py
 ```
 
@@ -328,12 +331,18 @@ validarea integrării tehnice dintre Rules Engine, TraceabilityCase și Report E
 fără UI și fără citirea directă a surselor operaționale reale în Report Engine.
 ```
 
-## Runner demonstrativ DOCX implementat și testat
+## Runner demonstrativ DOCX implementat, testat și documentat
 
 Runnerul demonstrativ este implementat în:
 
 ```text
 samples/demo_docx_runner.py
+```
+
+Documentație de utilizare:
+
+```text
+samples/README.md
 ```
 
 Test automat dedicat:
@@ -364,15 +373,17 @@ Reguli runner:
 ```text
 nu folosește UI
 nu citește fișiere operaționale reale
+nu citește sursele oficiale CSV/XLSX
 nu schimbă Core Engine
 nu schimbă Rules Engine
 nu schimbă Report Engine
 nu deduce trasabilitate amonte/aval
+nu convertește automat unități de măsură
 ```
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat și test automat dedicat pentru runner.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner și documentație de utilizare pentru demo.
 
 Nu există încă:
 
@@ -393,10 +404,11 @@ python -m pytest -q
 36 passed
 ```
 
-Runner demonstrativ integrat și testat:
+Runner demonstrativ integrat, testat și documentat:
 
 ```text
 samples/demo_docx_runner.py
+samples/README.md
 tests/test_demo_docx_runner.py
 ```
 
@@ -407,21 +419,23 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-pregătirea documentației de utilizare pentru runnerul demonstrativ DOCX
+actualizarea README.md principal cu statusul curent și comanda pentru runnerul demonstrativ DOCX
 ```
 
 Primul cod permis:
 
 ```text
 README.md
-samples/
-tests/
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei secțiuni scurte în README.md sau samples/README.md care explică rularea runnerului demonstrativ și limitările lui.
+adăugarea unei secțiuni scurte în README.md principal cu:
+- statusul modulelor integrate
+- comanda de rulare demo
+- comanda de testare
+- limitarea că demo-ul nu citește surse operaționale reale
 ```
 
 Regulă importantă:
@@ -438,5 +452,5 @@ Runnerul demo rămâne controlat și nu citește surse operaționale reale.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu documentația de utilizare pentru runnerul demonstrativ DOCX.
+Continuăm de la CHECKPOINT.md cu actualizarea README.md principal pentru status și runnerul demonstrativ DOCX.
 ```
