@@ -10,6 +10,11 @@ Write-Host "TraceAI Control — Windows build" -ForegroundColor Cyan
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Set-Location $RepoRoot
 
+$EntryPoint = Join-Path $RepoRoot "src\ui\visual.py"
+if (-not (Test-Path $EntryPoint)) {
+    throw "Entry point not found: $EntryPoint"
+}
+
 if (-not $SkipTests) {
     Write-Host "Running tests..." -ForegroundColor Cyan
     python -m pytest -q
@@ -29,7 +34,7 @@ python -m PyInstaller `
     --clean `
     --noconfirm `
     --collect-submodules src `
-    -m src.ui.visual
+    $EntryPoint
 
 $ExePath = Join-Path $RepoRoot "dist\$AppName\$AppName.exe"
 
