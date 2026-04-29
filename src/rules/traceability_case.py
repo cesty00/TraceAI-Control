@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from src.rules.run_rules_pipeline import RulesPipelineResult
@@ -54,6 +55,9 @@ FINISHED_GOODS_DELIVERY_HINTS = (
     "document comandă",
     "client",
 )
+
+QUANTITY_COLUMNS = ("Cantitate", "Stoc")
+UNIT_COLUMNS = ("UM", "U.M.", "Unitate", "Unitate masura", "Unitate măsură")
 
 RAW_MATERIAL_ROLE = "materie primă alimentară"
 PACKAGING_ROLE = "ambalaj"
@@ -116,6 +120,28 @@ class TraceabilityReportTables:
 
 
 @dataclass(frozen=True)
+class TraceabilityBalanceLine:
+    """One conservative preliminary balance line."""
+
+    table_key: str
+    table_title: str
+    quantity_column: str
+    unit: str
+    total: str
+    source_row_count: int
+    skipped_row_count: int
+    message: str
+
+
+@dataclass(frozen=True)
+class TraceabilityPreliminaryBalance:
+    """Conservative balance calculated only from already populated report tables."""
+
+    lines: list[TraceabilityBalanceLine] = field(default_factory=list)
+    messages: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class TraceabilityCase:
     """Internal contract for DOCX reporting."""
 
@@ -124,6 +150,7 @@ class TraceabilityCase:
     observations: list[str] = field(default_factory=list)
     sections: dict[str, Any] = field(default_factory=dict)
     report_tables: TraceabilityReportTables = field(default_factory=lambda: build_empty_report_tables())
+    preliminary_balance: TraceabilityPreliminaryBalance = field(default_factory=lambda: build_empty_preliminary_balance())
 
 
 def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) -> TraceabilityCase:
@@ -152,6 +179,8 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
     if any(is_alisol_auxiliary_record(record) for record in result.core.selection.records):
         observations.append(ALISOL_AUXILIARY_OBSERVATION)
 
+    report_tables = build_report_tables_from_rules_result(result)
+
     return TraceabilityCase(
         subject=TraceabilityCaseSubject(
             code=code,
@@ -161,7 +190,8 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
         evidence=evidence,
         observations=observations,
         sections=sections,
-        report_tables=build_report_tables_from_rules_result(result),
+        report_tables=report_tables,
+        preliminary_balance=build_preliminary_balance(report_tables),
     )
 
 
@@ -207,6 +237,142 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
         wms_receipts=replace_table_rows(tables.wms_receipts, wms_rows),
         prd_consumptions=tables.prd_consumptions,
         stock=replace_table_rows(tables.stock, stock_rows),
+    )
+
+
+def build_preliminary_balance(report_tables: TraceabilityReportTables) -> TraceabilityPreliminaryBalance:
+    """Build conservative totals from already populated report tables.
+
+    Rules:
+    - use only explicit numeric values;
+    - group totals by unit of measure;
+    - never convert units;
+    - never infer upstream/downstream traceability.
+    """
+
+    lines: list[TraceabilityBalanceLine] = []
+    messages: list[str] = [
+        "Bilanț preliminar calculat doar din TraceabilityCase.report_tables.",
+        "Unitățile de măsură sunt grupate separat; nu se fac conversii automate.",
+    ]
+
+    for table in report_tables_as_list(report_tables):
+        table_lines, table_messages = build_balance_lines_for_table(table)
+        lines.extend(table_lines)
+        messages.extend(table_messages)
+
+    if not lines:
+        messages.append("Nu există valori numerice clare pentru calculul unui bilanț preliminar.")
+
+    return TraceabilityPreliminaryBalance(lines=lines, messages=messages)
+
+
+def build_balance_lines_for_table(table: TraceabilityReportTable) -> tuple[list[TraceabilityBalanceLine], list[str]]:
+    """Build conservative balance lines for one report table."""
+
+    if not table.rows:
+        return [], [f"{table.title}: {table.empty_message}"]
+
+    quantity_column = find_first_available_column(table.columns, QUANTITY_COLUMNS)
+    unit_column = find_first_available_column(table.columns, UNIT_COLUMNS)
+    if not quantity_column:
+        return [], [f"{table.title}: nu există coloană explicită de cantitate / stoc."]
+    if not unit_column:
+        return [], [f"{table.title}: nu există coloană explicită UM; nu se calculează total."]
+
+    totals: dict[str, Decimal] = {}
+    source_counts: dict[str, int] = {}
+    skipped = 0
+
+    for row in table.rows:
+        raw_quantity = get_value_case_insensitive(row.values, quantity_column)
+        raw_unit = get_value_case_insensitive(row.values, unit_column)
+        parsed = parse_clear_decimal(raw_quantity)
+        unit = str(raw_unit).strip() if raw_unit is not None else ""
+        if parsed is None or not unit:
+            skipped += 1
+            continue
+        totals[unit] = totals.get(unit, Decimal("0")) + parsed
+        source_counts[unit] = source_counts.get(unit, 0) + 1
+
+    if not totals:
+        return [], [f"{table.title}: nu există valori numerice clare pentru totalizare."]
+
+    lines = [
+        TraceabilityBalanceLine(
+            table_key=table.key,
+            table_title=table.title,
+            quantity_column=quantity_column,
+            unit=unit,
+            total=format_decimal(total),
+            source_row_count=source_counts[unit],
+            skipped_row_count=skipped,
+            message="Total preliminar pe UM, fără conversie automată.",
+        )
+        for unit, total in sorted(totals.items())
+    ]
+    messages = []
+    if skipped:
+        messages.append(f"{table.title}: {skipped} rând(uri) ignorate din cauza cantității/UM neclare.")
+    return lines, messages
+
+
+def find_first_available_column(columns: list[str], candidates: tuple[str, ...]) -> str | None:
+    """Return the first candidate present in the table columns, case-insensitive."""
+
+    normalized_columns = {column.casefold(): column for column in columns}
+    for candidate in candidates:
+        found = normalized_columns.get(candidate.casefold())
+        if found:
+            return found
+    return None
+
+
+def get_value_case_insensitive(values: dict[str, str], key: str) -> str | None:
+    """Return a row value by key using case-insensitive matching."""
+
+    if key in values:
+        return values[key]
+    key_folded = key.casefold()
+    for existing_key, value in values.items():
+        if existing_key.casefold() == key_folded:
+            return value
+    return None
+
+
+def parse_clear_decimal(value: object) -> Decimal | None:
+    """Parse only clear decimal values; reject mixed separators and text."""
+
+    if value is None:
+        return None
+    text = str(value).strip().replace(" ", "")
+    if not text:
+        return None
+    if "," in text and "." in text:
+        return None
+    normalized = text.replace(",", ".")
+    try:
+        parsed = Decimal(normalized)
+    except InvalidOperation:
+        return None
+    return parsed
+
+
+def format_decimal(value: Decimal) -> str:
+    """Format Decimal without scientific notation and without unnecessary zeros."""
+
+    normalized = value.normalize()
+    if normalized == normalized.to_integral():
+        return str(normalized.quantize(Decimal("1")))
+    return format(normalized, "f")
+
+
+def build_empty_preliminary_balance() -> TraceabilityPreliminaryBalance:
+    """Build an explicit empty preliminary balance."""
+
+    return TraceabilityPreliminaryBalance(
+        lines=[],
+        messages=["Bilanț preliminar necalculat: TraceabilityCase nu conține încă tabele populate."],
     )
 
 
