@@ -48,6 +48,24 @@ Utilizare:
 python -m src.core.normalized_dataset "cale/catre/folder/date" --output normalized_dataset.json
 ```
 
+## `dataset_validation.py`
+
+Validează structural `NormalizedDataSet` înainte de pașii următori.
+
+Ce verifică:
+
+- existența tabelelor normalizate;
+- existența coloanelor;
+- prezența probabilă a coloanelor cod + lot;
+- probleme de parsare pe rânduri;
+- erori globale de surse lipsă.
+
+Utilizare:
+
+```bash
+python -m src.core.dataset_validation "cale/catre/folder/date" --output validation_report.json
+```
+
 ## Limită intenționată
 
 Core Engine, în această etapă, nu calculează trasabilitate, nu clasifică tipuri de caz, nu construiește `TraceabilityCase` și nu generează DOCX.
