@@ -23,6 +23,7 @@ Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + r
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
 Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
 Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
+Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demonstrativ
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -42,6 +43,7 @@ Report Engine DOCX
 Flux E2E controlat
 Runner demonstrativ DOCX
 Documentație runner demonstrativ
+README principal sincronizat
 UI profesional simplu
 Installer Windows
 ```
@@ -82,6 +84,9 @@ Nu se folosesc:
 WME / fișă magazie
 patch-uri vechi
 fișiere auxiliare fără rol în fluxul curent
+PP-03
+OperatorView
+fișiere debug
 ```
 
 Regulă documente:
@@ -118,6 +123,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 9. Fluxul E2E controlat folosește date sintetice de test, nu UI și nu fișiere operaționale reale.
 10. Runnerul demonstrativ folosește dataset sintetic controlat și nu schimbă regulile de business.
 11. Documentația runnerului explică explicit că demo-ul nu citește surse operaționale reale.
+12. README.md principal reflectă statusul tehnic curent și nu mai conține status vechi de pre-cod.
 
 ## Teste virtuale acceptate
 
@@ -381,9 +387,34 @@ nu deduce trasabilitate amonte/aval
 nu convertește automat unități de măsură
 ```
 
+## README principal sincronizat
+
+README.md principal conține acum:
+
+```text
+statusul modulelor integrate
+arhitectura curentă
+sursele oficiale
+regulile importante
+structura TraceabilityCase
+ce include raportul DOCX
+runnerul demonstrativ DOCX
+comanda de rulare demo
+comanda de testare
+limitările curente
+trimitere către CHECKPOINT.md
+```
+
+Comenzi documentate în README.md:
+
+```bash
+python samples/demo_docx_runner.py --output samples/output/demo_traceability_report.docx
+python -m pytest -q
+```
+
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner și documentație de utilizare pentru demo.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo și README principal sincronizat.
 
 Nu există încă:
 
@@ -410,41 +441,46 @@ Runner demonstrativ integrat, testat și documentat:
 samples/demo_docx_runner.py
 samples/README.md
 tests/test_demo_docx_runner.py
+README.md
 ```
 
 ## Următorul pas la reluare
 
-La reluarea proiectului, NU se începe cu UI.
+La reluarea proiectului, NU se începe cu UI fără o verificare scurtă.
 
 Următorul pas corect este:
 
 ```text
-actualizarea README.md principal cu statusul curent și comanda pentru runnerul demonstrativ DOCX
+pregătirea fazei UI prin definirea contractului minim UI -> engine, fără implementare vizuală complexă
 ```
 
 Primul cod permis:
 
 ```text
-README.md
+docs/
+src/ui/
+tests/
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei secțiuni scurte în README.md principal cu:
-- statusul modulelor integrate
-- comanda de rulare demo
-- comanda de testare
-- limitarea că demo-ul nu citește surse operaționale reale
+adăugarea unei documentații/contract UI minimal care stabilește:
+- input UI: source_directory, code, lot, output_docx_path
+- apel unic către pipeline existent
+- UI fără logică de business
+- mesaje de succes/eroare
+- fără schimbări în Core/Rules/Report Engine
 ```
 
 Regulă importantă:
 
 ```text
-Nu se începe încă UI.
+Nu se începe cu UI vizual complex.
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
 Runnerul demo rămâne controlat și nu citește surse operaționale reale.
+UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de business.
 ```
 
 ## Fraza de reluare recomandată
@@ -452,5 +488,5 @@ Runnerul demo rămâne controlat și nu citește surse operaționale reale.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu actualizarea README.md principal pentru status și runnerul demonstrativ DOCX.
+Continuăm de la CHECKPOINT.md cu definirea contractului minim UI -> engine, fără UI vizual complex.
 ```
