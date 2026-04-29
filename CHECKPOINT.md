@@ -4,13 +4,11 @@ Data checkpoint: 2026-04-29
 
 ## Status general
 
-Proiectul a fost repornit curat în repo-ul:
+Proiectul este în repo-ul:
 
 ```text
 cesty00/TraceAI-Control
 ```
-
-Repo-ul păstrează doar direcția curentă pentru modulul de trasabilitate și raportul DOCX auditabil.
 
 Stadiul curent este:
 
@@ -25,6 +23,7 @@ Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
 Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
 Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demonstrativ
 Faza 6.0 — Contract minim UI -> engine: definit și documentat
+Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic
 Faza 6 — UI profesional simplu: NU este implementat vizual încă
 ```
 
@@ -128,6 +127,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 11. Documentația runnerului explică explicit că demo-ul nu citește surse operaționale reale.
 12. README.md principal reflectă statusul tehnic curent și nu mai conține status vechi de pre-cod.
 13. Contractul UI -> engine limitează UI-ul la colectare input, apel engine și afișare succes/eroare.
+14. Funcția UI de orchestrare nu citește direct sursele și nu conține logică de business.
 
 ## Teste virtuale acceptate
 
@@ -155,6 +155,8 @@ TraceAI-Control/
     report/
     ui/
       README.md
+      __init__.py
+      orchestrator.py
   tests/
     README.md
     test_source_inventory.py
@@ -169,6 +171,7 @@ TraceAI-Control/
     test_docx_minimal.py
     test_e2e_docx_controlled_flow.py
     test_demo_docx_runner.py
+    test_ui_orchestrator.py
   samples/
     README.md
     demo_docx_runner.py
@@ -465,9 +468,72 @@ convertească unități de măsură
 deducă trasabilitate amonte/aval
 ```
 
+## Funcție UI de orchestrare testabilă implementată
+
+Implementare:
+
+```text
+src/ui/orchestrator.py
+src/ui/__init__.py
+```
+
+Test dedicat:
+
+```text
+tests/test_ui_orchestrator.py
+```
+
+Funcție principală:
+
+```text
+generate_report_from_ui_request()
+```
+
+Input controlat:
+
+```text
+UiGenerationRequest:
+- source_directory
+- code
+- lot
+- output_docx_path
+```
+
+Output controlat:
+
+```text
+UiGenerationResult:
+- success
+- output_path
+- message
+- error
+```
+
+Testele verifică:
+
+```text
+orchestrare corectă către engine
+validare câmpuri lipsă
+fără apel engine când inputul e invalid
+capturare eroare engine
+raportare câmpuri obligatorii lipsă
+```
+
+Reguli funcție UI:
+
+```text
+nu există UI vizual
+nu citește direct CSV/XLSX
+nu conține logică de business
+nu clasifică tipuri de caz
+nu calculează bilanțuri
+nu modifică TraceabilityCase
+nu generează DOCX direct din surse
+```
+
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo, README principal sincronizat și contract UI -> engine definit.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo, README principal sincronizat, contract UI -> engine definit și funcție UI de orchestrare testabilă.
 
 Nu există încă:
 
@@ -475,18 +541,17 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-funcție UI de orchestrare testată
 UI vizual
 installer
 ```
 
 ## Testare curentă
 
-Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX, fluxul controlat TraceabilityCase -> DOCX și runnerul demonstrativ:
+Testele unitare și E2E controlate acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator, Report Engine DOCX, fluxul controlat TraceabilityCase -> DOCX, runnerul demonstrativ și funcția UI de orchestrare:
 
 ```text
 python -m pytest -q
-36 passed
+37 passed
 ```
 
 Runner demonstrativ integrat, testat și documentat:
@@ -505,6 +570,14 @@ docs/UI_ENGINE_CONTRACT.md
 src/ui/README.md
 ```
 
+Funcție UI de orchestrare integrată:
+
+```text
+src/ui/orchestrator.py
+src/ui/__init__.py
+tests/test_ui_orchestrator.py
+```
+
 ## Următorul pas la reluare
 
 La reluarea proiectului, NU se începe cu UI vizual complex.
@@ -512,7 +585,7 @@ La reluarea proiectului, NU se începe cu UI vizual complex.
 Următorul pas corect este:
 
 ```text
-implementarea unei funcții UI de orchestrare testabile, fără interfață grafică
+adăugarea unei documentații scurte pentru funcția UI de orchestrare sau pregătirea unui CLI/UI shell minimal peste orchestrator
 ```
 
 Primul cod permis:
@@ -520,22 +593,14 @@ Primul cod permis:
 ```text
 src/ui/
 tests/
+docs/
+README.md
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei funcții de orchestrare care primește:
-- source_directory
-- code
-- lot
-- output_docx_path
-
-și returnează un status controlat:
-- success
-- output_path
-- message
-- error, dacă există
+actualizarea documentației UI pentru a explica UiGenerationRequest, UiGenerationResult și generate_report_from_ui_request(), apoi pregătirea unui shell minimal care doar apelează orchestratorul.
 ```
 
 Regulă importantă:
@@ -554,5 +619,5 @@ UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de busine
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu funcția UI de orchestrare testabilă, fără UI vizual complex.
+Continuăm de la CHECKPOINT.md cu documentarea funcției UI de orchestrare sau cu un CLI/UI shell minimal peste orchestrator.
 ```
