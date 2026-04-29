@@ -13,6 +13,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONPATH: ${{ github.workspace }}
 
 jobs:
   build-windows-installer:
@@ -28,16 +29,33 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Show workspace diagnostics
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+          Get-ChildItem -Force
+          Get-ChildItem -Force installer\windows
+          python --version
+          python -c "import sys; print(sys.executable); print(sys.path)"
+
       - name: Install Python build dependencies
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pyinstaller python-docx openpyxl
+          python -m pip install pytest pyinstaller python-docx openpyxl pandas
+          python -m pip list
+
+      - name: Check Python imports
+        shell: pwsh
+        run: |
+          python -c "import pytest, docx, openpyxl, pandas; print('Python dependencies OK')"
+          python -c "import src.ui.visual; print('TraceAI visual UI import OK')"
 
       - name: Install Inno Setup
         shell: pwsh
         run: |
           choco install innosetup --yes --no-progress
+          if (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") { & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /? | Select-Object -First 5 }
 
       - name: Run test suite
         shell: pwsh
