@@ -1,0 +1,71 @@
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "installer/windows/**"
+      - ".github/workflows/windows-installer.yml"
+
+jobs:
+  build-windows-installer:
+    name: Build Windows installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyinstaller python-docx openpyxl
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+
+      - name: Run test suite
+        shell: pwsh
+        run: |
+          python -m pytest -q
+
+      - name: Build PyInstaller executable
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
+
+      - name: Verify PyInstaller executable
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TraceAI-Control-Windows-Installer
+          path: installer/windows/output/TraceAI-Control-Setup.exe
+          if-no-files-found: error
+
+      - name: Upload PyInstaller folder artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TraceAI-Control-PyInstaller-Folder
+          path: dist/TraceAI-Control
+          if-no-files-found: error
