@@ -20,7 +20,7 @@ Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
-Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal
+Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -263,7 +263,7 @@ Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rân
 
 ## Report Engine DOCX narativ implementat
 
-Faza 5 este implementată tehnic v1 narativ cu tabele Word reale și șablon profesional minimal:
+Faza 5 este implementată tehnic v1 narativ cu tabele Word reale, șablon profesional minimal și bilanț preliminar randat:
 
 ```text
 TraceabilityCase -> docx_minimal
@@ -281,6 +281,7 @@ interpretarea tipului de caz
 dovezi folosite
 observații tehnice
 tabele operaționale din TraceabilityCase ca tabele WordprocessingML reale
+bilanț preliminar din TraceabilityCase.preliminary_balance
 secțiuni fără date
 concluzie preliminară
 recomandare operațională
@@ -294,7 +295,7 @@ Tabelele DOCX includ:
 <w:tbl>
 header de tabel
 rânduri de valori
-rând separat cu contextul sursă
+rând separat cu contextul sursă, unde există
 mesaj explicit pentru tabele goale
 stil TraceAITable
 borduri simple
@@ -312,25 +313,34 @@ secțiune Metadate raport
 stil de tabel TraceAITable
 ```
 
+Secțiunea DOCX de bilanț preliminar include:
+
+```text
+mesaje generale ale bilanțului
+tabel Word pentru liniile de bilanț
+coloane: Tabel, Coloană, UM, Total, Rânduri sursă, Rânduri ignorate, Mesaj
+mesaj explicit când nu există linii de bilanț
+```
+
 Reguli respectate:
 
 ```text
 DOCX se generează din TraceabilityCase, nu direct din fișierele sursă.
 Report Engine randează report_tables fără să citească surse operaționale.
+Report Engine afișează preliminary_balance fără să recalculeze bilanțul.
 Lipsurile sunt marcate explicit cu FARA DATE IDENTIFICATE sau cu mesajul tabelului.
 Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 ```
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator și raport DOCX cu tabele Word reale, stiluri, antet, subsol și metadate.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator și raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate și bilanț preliminar randat.
 
 Nu există încă:
 
 ```text
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
-randare DOCX a bilanțului preliminar
 branding complet / logo / paginare avansată / cuprins automat
 UI
 installer
@@ -338,11 +348,11 @@ installer
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator și Report Engine DOCX:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase, bilanț preliminar conservator și Report Engine DOCX cu randare bilanț:
 
 ```text
 python -m pytest -q
-33 passed
+34 passed
 ```
 
 ## Următorul pas la reluare
@@ -352,28 +362,32 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-randarea bilanțului preliminar în DOCX
+pregătirea unui flux end-to-end controlat pentru generare raport DOCX din date de test
 ```
 
 Primul cod permis:
 
 ```text
+tests/
+samples/
 src/report/docx_minimal.py
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei secțiuni DOCX pentru preliminary_balance, cu:
-- mesaje generale ale bilanțului
-- tabel Word pentru liniile de bilanț
-- mesaj explicit dacă nu există linii de bilanț
-- fără citire directă a surselor operaționale
+adăugarea unui test / sample controlat care validează:
+- construire TraceabilityCase complet
+- report_tables populate
+- preliminary_balance populat
+- generare DOCX valid
+- existența secțiunilor principale în document.xml
 ```
 
 Regulă importantă:
 
 ```text
+Nu se începe încă UI.
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
 ```
@@ -383,5 +397,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu randarea bilanțului preliminar în DOCX.
+Continuăm de la CHECKPOINT.md cu un flux end-to-end controlat pentru generare raport DOCX din date de test.
 ```
