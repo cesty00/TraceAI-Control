@@ -23,7 +23,7 @@ Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
 Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
 Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demonstrativ
 Faza 6.0 — Contract minim UI -> engine: definit și documentat
-Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic
+Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic + documentată
 Faza 6 — UI profesional simplu: NU este implementat vizual încă
 ```
 
@@ -46,6 +46,8 @@ Documentație runner demonstrativ
 README principal sincronizat
 Contract UI -> engine
 Funcție UI de orchestrare testabilă
+Documentație funcție UI de orchestrare
+UI/CLI shell minimal
 UI profesional simplu
 Installer Windows
 ```
@@ -128,6 +130,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 12. README.md principal reflectă statusul tehnic curent și nu mai conține status vechi de pre-cod.
 13. Contractul UI -> engine limitează UI-ul la colectare input, apel engine și afișare succes/eroare.
 14. Funcția UI de orchestrare nu citește direct sursele și nu conține logică de business.
+15. Documentația UI explică explicit `UiGenerationRequest`, `UiGenerationResult` și `generate_report_from_ui_request()`.
 
 ## Teste virtuale acceptate
 
@@ -468,13 +471,19 @@ convertească unități de măsură
 deducă trasabilitate amonte/aval
 ```
 
-## Funcție UI de orchestrare testabilă implementată
+## Funcție UI de orchestrare testabilă implementată și documentată
 
 Implementare:
 
 ```text
 src/ui/orchestrator.py
 src/ui/__init__.py
+```
+
+Documentație:
+
+```text
+src/ui/README.md
 ```
 
 Test dedicat:
@@ -509,6 +518,17 @@ UiGenerationResult:
 - error
 ```
 
+Documentația UI explică:
+
+```text
+rolul orchestration-only al UI-ului
+inputul și outputul funcției
+exemplu de utilizare Python
+comportamentul pentru câmpuri lipsă
+comportamentul pentru eroare engine
+interdicția logicii de business în UI
+```
+
 Testele verifică:
 
 ```text
@@ -533,7 +553,7 @@ nu generează DOCX direct din surse
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo, README principal sincronizat, contract UI -> engine definit și funcție UI de orchestrare testabilă.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo, README principal sincronizat, contract UI -> engine definit și funcție UI de orchestrare testabilă documentată.
 
 Nu există încă:
 
@@ -541,6 +561,7 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
+UI/CLI shell minimal
 UI vizual
 installer
 ```
@@ -570,11 +591,12 @@ docs/UI_ENGINE_CONTRACT.md
 src/ui/README.md
 ```
 
-Funcție UI de orchestrare integrată:
+Funcție UI de orchestrare integrată și documentată:
 
 ```text
 src/ui/orchestrator.py
 src/ui/__init__.py
+src/ui/README.md
 tests/test_ui_orchestrator.py
 ```
 
@@ -585,7 +607,7 @@ La reluarea proiectului, NU se începe cu UI vizual complex.
 Următorul pas corect este:
 
 ```text
-adăugarea unei documentații scurte pentru funcția UI de orchestrare sau pregătirea unui CLI/UI shell minimal peste orchestrator
+pregătirea unui CLI/UI shell minimal peste orchestrator
 ```
 
 Primul cod permis:
@@ -593,25 +615,30 @@ Primul cod permis:
 ```text
 src/ui/
 tests/
-docs/
 README.md
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-actualizarea documentației UI pentru a explica UiGenerationRequest, UiGenerationResult și generate_report_from_ui_request(), apoi pregătirea unui shell minimal care doar apelează orchestratorul.
+adăugarea unui shell minimal care:
+- primește source_directory, code, lot, output_docx_path
+- construiește UiGenerationRequest
+- apelează generate_report_from_ui_request()
+- afișează mesajul rezultatului
+- nu citește direct surse operaționale
+- nu conține logică de business
 ```
 
 Regulă importantă:
 
 ```text
 Nu se începe cu UI vizual complex.
-Funcția UI de orchestrare nu citește direct surse operaționale.
-Funcția UI de orchestrare nu conține logică de business.
+Shell-ul UI/CLI minimal nu citește direct surse operaționale.
+Shell-ul UI/CLI minimal nu conține logică de business.
+Funcția UI de orchestrare rămâne singurul punct de legătură UI -> engine.
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
-UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de business.
 ```
 
 ## Fraza de reluare recomandată
@@ -619,5 +646,5 @@ UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de busine
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu documentarea funcției UI de orchestrare sau cu un CLI/UI shell minimal peste orchestrator.
+Continuăm de la CHECKPOINT.md cu un CLI/UI shell minimal peste orchestrator, fără UI vizual complex.
 ```
