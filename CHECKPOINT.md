@@ -32,6 +32,7 @@ Faza 7.2 — Verificare build Windows: script PowerShell + documentație integra
 Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + documentație integrate
 Faza 7.4 — Checklist validare Windows: integrat
 Faza 7.5 — Șablon rezultat validare Windows: integrat
+Faza 7.6 — Issue GitHub validare Windows reală: #37 deschis și documentat
 Installer Windows complet: pregătit tehnic, dar NEVALIDAT încă pe Windows real
 ```
 
@@ -62,6 +63,7 @@ Verificare build Windows
 Pregătire installer Inno Setup
 Checklist validare Windows
 Șablon rezultat validare Windows
+Issue GitHub validare Windows reală
 Validare reală Windows
 Icon / semnare / CI Windows
 ```
@@ -91,6 +93,7 @@ Icon / semnare / CI Windows
 21. Scriptul Inno Setup împachetează executabilul PyInstaller existent și nu introduce logică de business.
 22. Checklistul de validare Windows definește pașii reali de acceptare fără workaround-uri în UI sau installer.
 23. Șablonul rezultatului de validare documentează verdictul ACCEPTED / REJECTED fără a marca validarea ca efectuată.
+24. Issue-ul #37 urmărește validarea reală Windows fără a marca validarea ca finalizată.
 
 ## Structura repo la checkpoint
 
@@ -161,6 +164,13 @@ installer/windows/README.md
 README.md
 ```
 
+Issue tracking validare reală:
+
+```text
+#37 — Validate Windows build and installer on a real Windows machine
+https://github.com/cesty00/TraceAI-Control/issues/37
+```
+
 Build executabil PyInstaller:
 
 ```powershell
@@ -215,32 +225,6 @@ Output installer așteptat:
 installer\windows\output\TraceAI-Control-Setup.exe
 ```
 
-Checklistul acoperă:
-
-```text
-test suite
-build executabil PyInstaller
-verificare artefact build
-smoke test executabil direct
-generare raport DOCX din executabil direct
-build installer Inno Setup
-instalare aplicație
-smoke test aplicație instalată
-dezinstalare
-verdict final ACCEPTAT / RESPINS
-```
-
-Șablonul rezultatului include:
-
-```text
-mediu validare
-artefacte așteptate
-rezultate pe pași
-probleme găsite
-verdict final ACCEPTED / REJECTED
-reguli confirmate
-```
-
 Limitări installer curente:
 
 ```text
@@ -248,6 +232,7 @@ nu există încă semnare executabil
 nu există icon final
 nu există pipeline CI Windows
 nu există validare reală finalizată pe o mașină Windows
+issue-ul #37 este deschis pentru validarea reală
 ```
 
 ## Testare curentă
@@ -278,7 +263,7 @@ pipeline CI Windows
 Următorul pas corect este:
 
 ```text
-rularea checklistului de validare pe o mașină Windows reală și completarea șablonului de rezultat cu ACCEPTED / REJECTED
+rularea issue-ului #37 pe o mașină Windows reală și completarea șablonului de rezultat cu ACCEPTED / REJECTED
 ```
 
 Primul cod permis după validare:
@@ -303,5 +288,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 ## Fraza de reluare recomandată
 
 ```text
-Continuăm de la CHECKPOINT.md cu rularea checklistului pe Windows real și completarea șablonului de rezultat cu ACCEPTED / REJECTED.
+Continuăm de la CHECKPOINT.md cu issue-ul #37: validare reală Windows și completarea șablonului de rezultat cu ACCEPTED / REJECTED.
 ```
