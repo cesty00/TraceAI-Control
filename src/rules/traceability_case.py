@@ -43,6 +43,18 @@ PACKAGING_HINTS = (
     "pallet",
 )
 
+FINISHED_GOODS_DELIVERY_HINTS = (
+    "livrare",
+    "livrat",
+    "livrari",
+    "livrări",
+    "iesire",
+    "ieșire",
+    "document comanda",
+    "document comandă",
+    "client",
+)
+
 RAW_MATERIAL_ROLE = "materie primă alimentară"
 PACKAGING_ROLE = "ambalaj"
 
@@ -162,6 +174,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
 
     tables = build_empty_report_tables()
     production_rows: list[TraceabilityTableRow] = []
+    delivery_rows: list[TraceabilityTableRow] = []
     raw_material_rows: list[TraceabilityTableRow] = []
     packaging_rows: list[TraceabilityTableRow] = []
     auxiliary_rows: list[TraceabilityTableRow] = []
@@ -178,6 +191,8 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
             raw_material_rows.append(add_classification_role(row, RAW_MATERIAL_ROLE))
         elif record.source_key == "production":
             production_rows.append(row)
+        elif record.source_key == "wms" and is_finished_goods_delivery_record(record):
+            delivery_rows.append(row)
         elif record.source_key == "wms":
             wms_rows.append(row)
         elif record.source_key == "stock":
@@ -185,7 +200,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
 
     return TraceabilityReportTables(
         production=replace_table_rows(tables.production, production_rows),
-        finished_goods_deliveries=tables.finished_goods_deliveries,
+        finished_goods_deliveries=replace_table_rows(tables.finished_goods_deliveries, delivery_rows),
         raw_materials=replace_table_rows(tables.raw_materials, raw_material_rows),
         packaging=replace_table_rows(tables.packaging, packaging_rows),
         auxiliaries_gas=replace_table_rows(tables.auxiliaries_gas, auxiliary_rows),
@@ -229,6 +244,15 @@ def is_packaging_record(record: Any) -> bool:
 
     text = normalized_record_text(record)
     return any(hint in text for hint in PACKAGING_HINTS)
+
+
+def is_finished_goods_delivery_record(record: Any) -> bool:
+    """Return True for explicit WMS finished goods delivery hints only."""
+
+    if record.source_key != "wms":
+        return False
+    text = normalized_record_text(record)
+    return any(hint in text for hint in FINISHED_GOODS_DELIVERY_HINTS)
 
 
 def normalized_record_text(record: Any) -> str:
