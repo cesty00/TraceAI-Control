@@ -31,19 +31,40 @@ Raportul include:
 - interpretarea tipului de caz;
 - dovezi folosite;
 - observații tehnice;
+- tabele operaționale din `TraceabilityCase`;
 - secțiuni fără date;
 - concluzie preliminară;
 - recomandare operațională;
 - documente de pregătit pentru audit;
 - semnături.
 
+## Tabele operaționale
+
+Generatorul randează tabelele existente în `TraceabilityCase.report_tables`:
+
+- producție;
+- livrări produs finit;
+- materii prime alimentare;
+- ambalaje;
+- materiale auxiliare / gaz;
+- recepții WMS;
+- consumuri PRD;
+- stoc la moment.
+
+Pentru fiecare tabel, raportul afișează:
+
+- titlul tabelului;
+- coloanele definite în `TraceabilityCase`;
+- rândurile disponibile;
+- mesajul explicit de lipsă date când tabelul este gol.
+
 ## Reguli
 
 - DOCX se generează din `TraceabilityCase`, nu direct din fișierele sursă.
-- Secțiunile fără date sunt marcate explicit cu `FARA DATE IDENTIFICATE`.
+- Secțiunile fără date sunt marcate explicit cu `FARA DATE IDENTIFICATE` sau cu mesajul dedicat tabelului.
 - Raportul este narativ și auditabil, nu un dump de date brute.
 - Generatorul nu conține UI și nu modifică regulile Core / Rules Engine.
 
 ## Limită intenționată
 
-Raportul nu are încă șablon vizual profesional și nu conține încă tabele detaliate pentru toate cazurile. Acestea vor fi adăugate după extinderea `TraceabilityCase` cu date operaționale detaliate.
+Raportul nu are încă șablon vizual profesional. Tabelele sunt randate textual în această etapă; transformarea lor în tabele Word vizuale va fi un pas ulterior.
