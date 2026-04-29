@@ -31,7 +31,10 @@ Report Engine DOCX cu tabele Word reale: integrat
 Randare bilanț preliminar în DOCX: integrată
 Flux E2E controlat DOCX: integrat
 Runner demonstrativ DOCX controlat: integrat, testat și documentat
-UI profesional simplu: nu a început încă
+Contract UI -> engine: integrat
+Funcție UI de orchestrare: integrată și testată
+CLI/UI shell minimal peste orchestrator: integrat și testat
+UI vizual profesional simplu: nu a început încă
 Installer Windows: nu a început încă
 ```
 
@@ -92,12 +95,22 @@ Core Engine
 -> Report Engine DOCX
 ```
 
+Stratul UI/CLI minimal este doar orchestration-only:
+
+```text
+UI/CLI shell
+-> UiGenerationRequest
+-> generate_report_from_ui_request()
+-> engine existent
+```
+
 Module principale:
 
 ```text
 src/core/
 src/rules/
 src/report/
+src/ui/
 samples/
 tests/
 ```
@@ -178,6 +191,50 @@ nu deduce trasabilitate amonte/aval
 nu convertește automat unități de măsură
 ```
 
+## CLI/UI shell minimal
+
+CLI-ul minimal apelează funcția UI de orchestrare și nu conține logică de business.
+
+Fișier:
+
+```text
+src/ui/cli.py
+```
+
+Rulare:
+
+```bash
+python -m src.ui.cli "cale/catre/date" --code DS099903883 --lot 105.26 --output raport_trasabilitate.docx
+```
+
+CLI-ul minimal:
+
+```text
+parsează argumente
+construiește UiGenerationRequest
+apelează generate_report_from_ui_request()
+afișează mesajul rezultatului
+returnează cod 0 la succes
+returnează cod 1 la eroare
+```
+
+Limitări:
+
+```text
+nu citește direct surse operaționale
+nu clasifică tipuri de caz
+nu calculează bilanțuri
+nu generează DOCX direct din CSV/XLSX
+nu conține logică de business
+```
+
+Documentație UI:
+
+```text
+docs/UI_ENGINE_CONTRACT.md
+src/ui/README.md
+```
+
 ## Testare
 
 Rulare test suite:
@@ -189,7 +246,7 @@ python -m pytest -q
 Status curent:
 
 ```text
-36 passed
+38 passed
 ```
 
 Testele acoperă:
@@ -202,6 +259,8 @@ bilanț preliminar conservator
 Report Engine DOCX
 flux E2E controlat
 runner demonstrativ DOCX
+funcție UI de orchestrare
+CLI/UI shell minimal
 ```
 
 ## Limitări curente
@@ -212,7 +271,7 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-UI
+UI vizual profesional simplu
 installer
 ```
 
