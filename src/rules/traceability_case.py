@@ -3,7 +3,7 @@ TraceabilityCase contract for TraceAI Control.
 
 This module defines the internal object that feeds the DOCX report. It maps the
 available RulesPipelineResult metadata into a stable, audit-friendly structure
-and reserves explicit report tables for later operational population.
+and populates a small first set of report tables from Core selected records.
 
 It intentionally does not calculate upstream/downstream traceability details and
 does not generate DOCX.
@@ -40,12 +40,7 @@ class TraceabilityCaseEvidence:
 
 @dataclass(frozen=True)
 class TraceabilityTableRow:
-    """One audit-friendly table row.
-
-    Values are stored as display strings because TraceabilityCase is a reporting
-    contract, not a calculation engine. Original source context is preserved
-    when available.
-    """
+    """One audit-friendly table row."""
 
     values: dict[str, str]
     source_key: str | None = None
@@ -121,7 +116,64 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
         evidence=evidence,
         observations=list(detection.observations),
         sections=sections,
-        report_tables=build_empty_report_tables(),
+        report_tables=build_report_tables_from_rules_result(result),
+    )
+
+
+def build_report_tables_from_rules_result(result: RulesPipelineResult) -> TraceabilityReportTables:
+    """Populate first report tables from selected Core records only.
+
+    This is an initial controlled population step. It maps selected rows into
+    reportable strings and does not infer upstream/downstream traceability.
+    """
+
+    tables = build_empty_report_tables()
+    production_rows: list[TraceabilityTableRow] = []
+    wms_rows: list[TraceabilityTableRow] = []
+    stock_rows: list[TraceabilityTableRow] = []
+
+    for record in result.core.selection.records:
+        row = table_row_from_selected_record(record)
+        if record.source_key == "production":
+            production_rows.append(row)
+        elif record.source_key == "wms":
+            wms_rows.append(row)
+        elif record.source_key == "stock":
+            stock_rows.append(row)
+
+    return TraceabilityReportTables(
+        production=replace_table_rows(tables.production, production_rows),
+        finished_goods_deliveries=tables.finished_goods_deliveries,
+        raw_materials=tables.raw_materials,
+        packaging=tables.packaging,
+        auxiliaries_gas=tables.auxiliaries_gas,
+        wms_receipts=replace_table_rows(tables.wms_receipts, wms_rows),
+        prd_consumptions=tables.prd_consumptions,
+        stock=replace_table_rows(tables.stock, stock_rows),
+    )
+
+
+def table_row_from_selected_record(record: Any) -> TraceabilityTableRow:
+    """Convert one selected Core record into a generic report table row."""
+
+    return TraceabilityTableRow(
+        values={key: value for key, value in record.values.items()},
+        source_key=record.source_key,
+        source_name=record.source_name,
+        sheet_name=record.sheet_name,
+        row_number=record.row_number,
+    )
+
+
+def replace_table_rows(table: TraceabilityReportTable, rows: list[TraceabilityTableRow]) -> TraceabilityReportTable:
+    """Return the same report table definition with new rows."""
+
+    return TraceabilityReportTable(
+        key=table.key,
+        title=table.title,
+        columns=table.columns,
+        rows=rows,
+        empty_message=table.empty_message,
     )
 
 
