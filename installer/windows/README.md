@@ -1,6 +1,6 @@
 # Installer Windows — TraceAI Control
 
-Acest folder pregătește pașii pentru construirea, verificarea și împachetarea unui executabil Windows pentru TraceAI Control.
+Acest folder pregătește pașii pentru construirea, verificarea, împachetarea și validarea unui executabil Windows pentru TraceAI Control.
 
 ## Status
 
@@ -13,6 +13,7 @@ verificare existență entry point înainte de build
 script PowerShell de verificare artefact build
 script Inno Setup pentru installer complet
 script PowerShell pentru rularea Inno Setup Compiler
+checklist de validare reală Windows
 instrucțiuni de rulare
 reguli de validare manuală
 fără schimbări în Core/Rules/Report/UI business boundary
@@ -143,6 +144,40 @@ poate crea shortcut pe Desktop
 poate lansa aplicația după instalare
 ```
 
+## 4. Checklist validare Windows
+
+Checklistul de validare este în:
+
+```text
+installer/windows/VALIDATION_CHECKLIST.md
+```
+
+Checklistul acoperă:
+
+```text
+test suite
+build executabil PyInstaller
+verificare artefact build
+smoke test executabil direct
+generare raport DOCX din executabil direct
+build installer Inno Setup
+instalare aplicație
+smoke test aplicație instalată
+dezinstalare
+verdict final ACCEPTAT / RESPINS
+```
+
+Fluxul de validare documentat:
+
+```text
+build_windows.ps1
+-> verify_windows_build.ps1
+-> build_inno_setup.ps1
+-> instalare aplicație
+-> pornire UI vizual
+-> generare raport DOCX
+```
+
 ## Ce face scriptul de build PyInstaller
 
 Scriptul `build_windows.ps1`:
@@ -170,6 +205,14 @@ dist\TraceAI-Control\TraceAI-Control.exe
 ```
 
 ## Validare manuală după build
+
+Pentru validare completă se folosește:
+
+```text
+installer/windows/VALIDATION_CHECKLIST.md
+```
+
+Pașii rapizi sunt:
 
 1. Pornește executabilul sau aplicația instalată.
 2. Verifică faptul că apare formularul UI.
@@ -213,5 +256,5 @@ semnare executabil
 icon final
 pipeline CI pentru build Windows
 verificare automată pe Windows prin CI
-validare reală pe o mașină Windows
+validare reală finalizată pe o mașină Windows
 ```
