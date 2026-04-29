@@ -39,6 +39,7 @@ Pregătire installer Windows: script PyInstaller + documentație integrate
 Verificare build Windows: script PowerShell integrat
 Pregătire installer Inno Setup: script .iss + build PowerShell integrate
 Checklist validare Windows: integrat
+Șablon rezultat validare Windows: integrat
 Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
 ```
 
@@ -260,6 +261,7 @@ installer/windows/verify_windows_build.ps1
 installer/windows/TraceAI-Control.iss
 installer/windows/build_inno_setup.ps1
 installer/windows/VALIDATION_CHECKLIST.md
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
 ```
 
 Build executabil PyInstaller:
@@ -298,7 +300,15 @@ Checklistul de validare Windows este în:
 installer/windows/VALIDATION_CHECKLIST.md
 ```
 
+Șablonul pentru rezultatul validării este în:
+
+```text
+installer/windows/VALIDATION_RESULT_TEMPLATE.md
+```
+
 Checklistul acoperă test suite, build executabil, verificare artefact, smoke test, generare DOCX, build installer, instalare, test aplicație instalată, dezinstalare și verdict final.
+
+Șablonul de rezultat include mediul de validare, artefactele așteptate, rezultatele pe pași, problemele găsite și verdictul final ACCEPTED / REJECTED.
 
 Scriptul de build rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
 
