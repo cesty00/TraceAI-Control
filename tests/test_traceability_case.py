@@ -9,8 +9,12 @@ from src.rules.traceability_case import (
     ALISOL_AUXILIARY_OBSERVATION,
     PACKAGING_ROLE,
     RAW_MATERIAL_ROLE,
+    TraceabilityReportTable,
+    TraceabilityTableRow,
     build_empty_report_tables,
+    build_preliminary_balance,
     build_traceability_case,
+    parse_clear_decimal,
     report_tables_as_list,
     traceability_case_to_dict,
 )
@@ -64,6 +68,7 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
     assert traceability_case["sections"]["selected_record_count"] == 1
     assert traceability_case["report_tables"]["production"]["title"] == "Producția lotului"
     assert traceability_case["report_tables"]["stock"]["empty_message"]
+    assert "preliminary_balance" in traceability_case
 
 
 def test_build_empty_report_tables_contains_expected_sections_in_display_order() -> None:
@@ -216,3 +221,74 @@ def test_wms_delivery_rows_are_mapped_to_finished_goods_deliveries() -> None:
     assert delivery_rows[0]["source_key"] == "wms"
     assert receipt_rows[0]["values"]["document intrare"] == "NIR-1"
     assert receipt_rows[0]["source_key"] == "wms"
+
+
+def test_preliminary_balance_groups_clear_numeric_values_by_unit_without_conversion() -> None:
+    tables = build_empty_report_tables()
+    production = TraceabilityReportTable(
+        key="production",
+        title="Producția lotului",
+        columns=["Cod", "Lot", "Cantitate", "UM"],
+        rows=[
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Cantitate": "10", "UM": "kg"}),
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Cantitate": "2,5", "UM": "kg"}),
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Cantitate": "3", "UM": "buc"}),
+        ],
+        empty_message="Nu au fost identificate date detaliate de producție în TraceabilityCase.",
+    )
+    report_tables = type(tables)(
+        production=production,
+        finished_goods_deliveries=tables.finished_goods_deliveries,
+        raw_materials=tables.raw_materials,
+        packaging=tables.packaging,
+        auxiliaries_gas=tables.auxiliaries_gas,
+        wms_receipts=tables.wms_receipts,
+        prd_consumptions=tables.prd_consumptions,
+        stock=tables.stock,
+    )
+
+    balance = build_preliminary_balance(report_tables)
+
+    totals = {(line.table_key, line.unit): line.total for line in balance.lines}
+    assert totals[("production", "kg")] == "12.5"
+    assert totals[("production", "buc")] == "3"
+    assert any("nu se fac conversii automate" in message for message in balance.messages)
+
+
+def test_preliminary_balance_skips_unclear_values_and_reports_message() -> None:
+    tables = build_empty_report_tables()
+    stock = TraceabilityReportTable(
+        key="stock",
+        title="Stoc la moment",
+        columns=["Cod", "Lot", "Stoc", "UM"],
+        rows=[
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Stoc": "5", "UM": "kg"}),
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Stoc": "1.234,50", "UM": "kg"}),
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Stoc": "abc", "UM": "kg"}),
+            TraceabilityTableRow(values={"Cod": "DS0001", "Lot": "L001", "Stoc": "2", "UM": ""}),
+        ],
+        empty_message="Articolul nu apare explicit în stocul la moment în TraceabilityCase.",
+    )
+    report_tables = type(tables)(
+        production=tables.production,
+        finished_goods_deliveries=tables.finished_goods_deliveries,
+        raw_materials=tables.raw_materials,
+        packaging=tables.packaging,
+        auxiliaries_gas=tables.auxiliaries_gas,
+        wms_receipts=tables.wms_receipts,
+        prd_consumptions=tables.prd_consumptions,
+        stock=stock,
+    )
+
+    balance = build_preliminary_balance(report_tables)
+
+    assert balance.lines[0].total == "5"
+    assert balance.lines[0].skipped_row_count == 3
+    assert any("3 rând(uri) ignorate" in message for message in balance.messages)
+
+
+def test_parse_clear_decimal_rejects_mixed_separators_and_text() -> None:
+    assert str(parse_clear_decimal("10")) == "10"
+    assert str(parse_clear_decimal("2,5")) == "2.5"
+    assert parse_clear_decimal("1.234,50") is None
+    assert parse_clear_decimal("abc") is None
