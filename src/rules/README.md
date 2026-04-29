@@ -72,7 +72,14 @@ Obiectul conține:
   - consumuri PRD;
   - stoc la moment.
 
-Tabelele sunt introduse ca structură de contract și au mesaje explicite când nu conțin rânduri.
+Popularea controlată existentă:
+
+- rândurile `production` selectate de Core sunt mapate în tabelul `production`;
+- rândurile `wms` selectate de Core sunt mapate în tabelul `wms_receipts`;
+- rândurile `stock` selectate de Core sunt mapate în tabelul `stock`;
+- tabelele rămase nepopulate păstrează mesajele explicite de lipsă date.
+
+Această populare este o mapare de rânduri selectate și nu calculează încă trasabilitate amonte/aval.
 
 ## `run_traceability_case.py`
 

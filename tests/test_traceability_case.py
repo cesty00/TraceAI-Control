@@ -13,23 +13,26 @@ from src.rules.traceability_case import (
 )
 
 
-def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
-    table = NormalizedTable(
-        source_key="production",
-        source_name="rapoarte productie.csv",
+def make_table(source_key: str, source_name: str, values: dict[str, str]) -> NormalizedTable:
+    return NormalizedTable(
+        source_key=source_key,
+        source_name=source_name,
         sheet_name=None,
-        columns=[NormalizedColumn("cod", "cod"), NormalizedColumn("lot", "lot")],
+        columns=[NormalizedColumn(name, name) for name in values.keys()],
         rows=[
             NormalizedRow(
                 row_number=2,
-                values={"cod": "DS0001", "lot": "L001"},
-                original_values={"cod": "DS0001", "lot": "L001"},
-                code_lot_hints={"code": "DS0001", "lot": "L001"},
+                values=values,
+                original_values=values,
+                code_lot_hints={"code": values.get("cod", ""), "lot": values.get("lot", "")},
             )
         ],
         row_count=1,
     )
-    dataset = NormalizedDataSet(source_directory="/tmp/data", tables=[table])
+
+
+def make_rules_result(tables: list[NormalizedTable]) -> RulesPipelineResult:
+    dataset = NormalizedDataSet(source_directory="/tmp/data", tables=tables)
     selection = select_records_by_code_lot(dataset, "DS0001", "L001")
     detection = detect_case_type(dataset, selection, "DS0001", "L001")
     core = CorePipelineResult(
@@ -38,7 +41,13 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
         validation=ValidationReport(status="VALID"),
         selection=selection,
     )
-    rules = RulesPipelineResult(core=core, case_type_detection=detection)
+    return RulesPipelineResult(core=core, case_type_detection=detection)
+
+
+def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
+    rules = make_rules_result(
+        [make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001"})]
+    )
 
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
 
@@ -70,3 +79,39 @@ def test_build_empty_report_tables_contains_expected_sections_in_display_order()
     assert all(table.columns for table in tables)
     assert all(table.empty_message for table in tables)
     assert all(table.rows == [] for table in tables)
+
+
+def test_build_traceability_case_populates_selected_report_tables() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "production",
+                "rapoarte productie.csv",
+                {"cod": "DS0001", "lot": "L001", "cantitate": "10", "um": "kg"},
+            ),
+            make_table(
+                "wms",
+                "trasabilitate_wms.csv",
+                {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "cantitate": "10"},
+            ),
+            make_table(
+                "stock",
+                "stoc la moment original.xlsx",
+                {"cod": "DS0001", "lot": "L001", "stoc": "5", "um": "kg"},
+            ),
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    production_rows = traceability_case["report_tables"]["production"]["rows"]
+    wms_rows = traceability_case["report_tables"]["wms_receipts"]["rows"]
+    stock_rows = traceability_case["report_tables"]["stock"]["rows"]
+
+    assert production_rows[0]["values"]["cantitate"] == "10"
+    assert production_rows[0]["source_key"] == "production"
+    assert wms_rows[0]["values"]["document intrare"] == "NIR-1"
+    assert wms_rows[0]["source_key"] == "wms"
+    assert stock_rows[0]["values"]["stoc"] == "5"
+    assert stock_rows[0]["source_key"] == "stock"
+    assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
