@@ -20,7 +20,7 @@ Faza 1 — Schelet repo: finalizată
 Faza 2 — Core Engine: implementată tehnic v1
 Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare implementate
-Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + randare tabele
+Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -239,7 +239,7 @@ Tabelele rămase nepopulate păstrează mesajele explicite când nu conțin rân
 
 ## Report Engine DOCX narativ implementat
 
-Faza 5 este implementată tehnic v1 narativ cu randare de tabele:
+Faza 5 este implementată tehnic v1 narativ cu tabele Word reale:
 
 ```text
 TraceabilityCase -> docx_minimal
@@ -255,12 +255,24 @@ surse utilizate
 interpretarea tipului de caz
 dovezi folosite
 observații tehnice
-tabele operaționale din TraceabilityCase
+tabele operaționale din TraceabilityCase ca tabele WordprocessingML reale
 secțiuni fără date
 concluzie preliminară
 recomandare operațională
 documente de pregătit pentru audit
 semnături
+```
+
+Tabelele DOCX includ:
+
+```text
+<w:tbl>
+header de tabel
+rânduri de valori
+rând separat cu contextul sursă
+mesaj explicit pentru tabele goale
+stil TableGrid
+borduri simple
 ```
 
 Reguli respectate:
@@ -274,21 +286,21 @@ Generatorul nu conține UI și nu schimbă regulile Core / Rules Engine.
 
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, DOCX-ul le afișează, iar tabelele principale sunt populate controlat din rândurile selectate de Core.
+TraceabilityCase are structurile de tabele, DOCX-ul le afișează ca tabele Word reale, iar tabelele principale sunt populate controlat din rândurile selectate de Core.
 
 Nu există încă:
 
 ```text
 trasabilitate amonte/aval calculată
 bilanțuri detaliate
-șablon vizual profesional / tabele Word reale
+șablon vizual profesional complet cu branding / antet / subsol
 UI
 installer
 ```
 
 ## Testare curentă
 
-Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele:
+Testele unitare existente acoperă modulele Core, Rules, TraceabilityCase și Report Engine DOCX cu tabele Word reale:
 
 ```text
 python -m pytest -q
@@ -302,23 +314,34 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-îmbunătățirea randării DOCX în tabele Word vizuale
+alegerea următorului pas între bilanț preliminar și șablon DOCX profesional
 ```
 
-Primul cod permis:
+Primul cod permis, dacă se continuă pe raport:
 
 ```text
 src/report/docx_minimal.py
 ```
 
-Primul obiectiv tehnic următor:
+Primul cod permis, dacă se continuă pe logică operațională:
 
 ```text
-randarea report_tables ca tabele WordprocessingML reale, cu:
-- header de tabel
-- rânduri de valori
-- mesaj explicit pentru tabele goale
-- fără citire directă a surselor operaționale
+src/rules/traceability_case.py
+```
+
+Primul obiectiv tehnic posibil pentru raport:
+
+```text
+adăugarea unui șablon vizual profesional minimal:
+- antet/subsol
+- secțiune metadate raport
+- stiluri mai clare pentru titluri și tabele
+```
+
+Primul obiectiv tehnic posibil pentru logică operațională:
+
+```text
+bilanț preliminar pe tabelele deja populate, fără conversii automate de unități
 ```
 
 Regulă importantă:
@@ -332,5 +355,5 @@ DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu îmbunătățirea randării DOCX în tabele Word vizuale.
+Continuăm de la CHECKPOINT.md cu alegerea între bilanț preliminar și șablon DOCX profesional minimal.
 ```
