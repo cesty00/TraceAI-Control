@@ -1,40 +1,43 @@
 param(
-    [string]$AppName = "TraceAI-Control",
+    [string]$AppName = 'TraceAI-Control',
     [switch]$SkipTests
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
-Write-Host "TraceAI Control — Windows build" -ForegroundColor Cyan
+Write-Host 'TraceAI Control - Windows build' -ForegroundColor Cyan
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 Set-Location $RepoRoot
 
-$EntryPoint = Join-Path $RepoRoot "src\ui\visual.py"
+$EntryPoint = Join-Path $RepoRoot 'src\ui\visual.py'
 if (-not (Test-Path $EntryPoint)) {
     throw "Entry point not found: $EntryPoint"
 }
 
 if (-not $SkipTests) {
-    Write-Host "Running tests..." -ForegroundColor Cyan
+    Write-Host 'Running tests...' -ForegroundColor Cyan
     python -m pytest -q
 }
 
-Write-Host "Checking PyInstaller..." -ForegroundColor Cyan
+Write-Host 'Checking PyInstaller...' -ForegroundColor Cyan
 python -m PyInstaller --version | Out-Host
 
-Write-Host "Cleaning previous build artifacts..." -ForegroundColor Cyan
-Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ".\build", ".\dist\$AppName", ".\$AppName.spec"
+Write-Host 'Cleaning previous build artifacts...' -ForegroundColor Cyan
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue '.\build', ".\dist\$AppName", ".\$AppName.spec"
 
-Write-Host "Building executable..." -ForegroundColor Cyan
-python -m PyInstaller `
-    --name $AppName `
-    --onedir `
-    --windowed `
-    --clean `
-    --noconfirm `
-    --collect-submodules src `
+Write-Host 'Building executable...' -ForegroundColor Cyan
+$PyInstallerArgs = @(
+    '--name', $AppName,
+    '--onedir',
+    '--windowed',
+    '--clean',
+    '--noconfirm',
+    '--collect-submodules', 'src',
     $EntryPoint
+)
+
+python -m PyInstaller @PyInstallerArgs
 
 $ExePath = Join-Path $RepoRoot "dist\$AppName\$AppName.exe"
 
@@ -42,5 +45,5 @@ if (-not (Test-Path $ExePath)) {
     throw "Build failed. Executable not found: $ExePath"
 }
 
-Write-Host "Build completed successfully." -ForegroundColor Green
+Write-Host 'Build completed successfully.' -ForegroundColor Green
 Write-Host "Executable: $ExePath" -ForegroundColor Green
