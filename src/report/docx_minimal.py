@@ -223,18 +223,74 @@ def build_report_tables_section(traceability_case: TraceabilityCase) -> list[str
 
 
 def build_report_table(table: TraceabilityReportTable) -> list[str]:
-    paragraphs = [paragraph(table.title, style="Heading2")]
-    paragraphs.append(paragraph(f"Coloane: {', '.join(table.columns)}"))
+    """Render a report table as a real WordprocessingML table."""
+
+    parts = [paragraph(table.title, style="Heading2")]
+    parts.append(word_table(table))
+    return parts
+
+
+def word_table(table: TraceabilityReportTable) -> str:
+    """Return one WordprocessingML table for a TraceabilityReportTable."""
+
+    rows = [word_table_row(table.columns, is_header=True)]
 
     if not table.rows:
-        paragraphs.append(paragraph(table.empty_message))
-        return paragraphs
+        rows.append(word_table_row([table.empty_message], grid_span=max(1, len(table.columns))))
+    else:
+        for row in table.rows:
+            rows.append(word_table_row([value_or_missing(row.values.get(column)) for column in table.columns]))
+            rows.append(
+                word_table_row(
+                    [f"Sursă: {format_row_source(row.source_key, row.source_name, row.sheet_name, row.row_number)}"],
+                    grid_span=max(1, len(table.columns)),
+                )
+            )
 
-    for index, row in enumerate(table.rows, start=1):
-        displayed_values = [f"{column}: {value_or_missing(row.values.get(column))}" for column in table.columns]
-        source = format_row_source(row.source_key, row.source_name, row.sheet_name, row.row_number)
-        paragraphs.append(paragraph(f"Rând {index}: {'; '.join(displayed_values)}. Sursă: {source}"))
-    return paragraphs
+    return (
+        "<w:tbl>"
+        "<w:tblPr>"
+        "<w:tblStyle w:val=\"TableGrid\"/>"
+        "<w:tblW w:w=\"0\" w:type=\"auto\"/>"
+        "<w:tblBorders>"
+        "<w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "<w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"auto\"/>"
+        "</w:tblBorders>"
+        "</w:tblPr>"
+        f"{''.join(rows)}"
+        "</w:tbl>"
+    )
+
+
+def word_table_row(values: Iterable[object], is_header: bool = False, grid_span: int | None = None) -> str:
+    """Return one WordprocessingML table row."""
+
+    cells = []
+    for index, value in enumerate(values):
+        span = grid_span if index == 0 else None
+        cells.append(word_table_cell(value, is_header=is_header, grid_span=span))
+    return f"<w:tr>{''.join(cells)}</w:tr>"
+
+
+def word_table_cell(value: object, is_header: bool = False, grid_span: int | None = None) -> str:
+    """Return one WordprocessingML table cell."""
+
+    grid_span_xml = f'<w:gridSpan w:val="{grid_span}"/>' if grid_span and grid_span > 1 else ""
+    shading_xml = '<w:shd w:fill="D9EAF7"/>' if is_header else ""
+    bold_start = "<w:b/>" if is_header else ""
+    return (
+        "<w:tc>"
+        f"<w:tcPr>{grid_span_xml}{shading_xml}</w:tcPr>"
+        "<w:p><w:r>"
+        f"<w:rPr>{bold_start}</w:rPr>"
+        f"<w:t>{escape_text(value_or_missing(value))}</w:t>"
+        "</w:r></w:p>"
+        "</w:tc>"
+    )
 
 
 def format_row_source(

@@ -51,11 +51,12 @@ Generatorul randează tabelele existente în `TraceabilityCase.report_tables`:
 - consumuri PRD;
 - stoc la moment.
 
-Pentru fiecare tabel, raportul afișează:
+Pentru fiecare tabel, raportul afișează ca tabel Word real:
 
 - titlul tabelului;
-- coloanele definite în `TraceabilityCase`;
+- header cu coloanele definite în `TraceabilityCase`;
 - rândurile disponibile;
+- contextul sursă pentru fiecare rând;
 - mesajul explicit de lipsă date când tabelul este gol.
 
 ## Reguli
@@ -67,4 +68,4 @@ Pentru fiecare tabel, raportul afișează:
 
 ## Limită intenționată
 
-Raportul nu are încă șablon vizual profesional. Tabelele sunt randate textual în această etapă; transformarea lor în tabele Word vizuale va fi un pas ulterior.
+Raportul folosește tabele WordprocessingML reale, dar nu are încă un șablon vizual profesional complet cu branding, stiluri avansate, antet/subsol sau paginare dedicată.
