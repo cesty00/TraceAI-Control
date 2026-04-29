@@ -20,6 +20,11 @@ from .record_selection import (
     select_records_by_code_lot,
     selection_result_to_dict,
 )
+from .run_pipeline import (
+    CorePipelineResult,
+    pipeline_result_to_dict,
+    run_core_pipeline,
+)
 from .source_inventory import (
     OFFICIAL_SOURCES,
     InventoryReport,
@@ -31,6 +36,7 @@ from .source_inventory import (
 
 __all__ = [
     "OFFICIAL_SOURCES",
+    "CorePipelineResult",
     "InventoryReport",
     "NormalizedColumn",
     "NormalizedDataSet",
@@ -45,7 +51,9 @@ __all__ = [
     "build_inventory_report",
     "build_normalized_dataset",
     "dataset_to_dict",
+    "pipeline_result_to_dict",
     "report_to_dict",
+    "run_core_pipeline",
     "select_records_by_code_lot",
     "selection_result_to_dict",
     "validate_normalized_dataset",
