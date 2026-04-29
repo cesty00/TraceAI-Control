@@ -24,12 +24,13 @@ Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word rea
 Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
 Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
 Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demonstrativ
-Faza 6 — UI profesional simplu: NU a început încă
+Faza 6.0 — Contract minim UI -> engine: definit și documentat
+Faza 6 — UI profesional simplu: NU este implementat vizual încă
 ```
 
 ## Decizie principală
 
-Nu dezvoltăm aplicația direct în UI.
+Nu dezvoltăm aplicația direct în UI vizual complex.
 
 Ordinea proiectului este:
 
@@ -44,6 +45,8 @@ Flux E2E controlat
 Runner demonstrativ DOCX
 Documentație runner demonstrativ
 README principal sincronizat
+Contract UI -> engine
+Funcție UI de orchestrare testabilă
 UI profesional simplu
 Installer Windows
 ```
@@ -124,6 +127,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 10. Runnerul demonstrativ folosește dataset sintetic controlat și nu schimbă regulile de business.
 11. Documentația runnerului explică explicit că demo-ul nu citește surse operaționale reale.
 12. README.md principal reflectă statusul tehnic curent și nu mai conține status vechi de pre-cod.
+13. Contractul UI -> engine limitează UI-ul la colectare input, apel engine și afișare succes/eroare.
 
 ## Teste virtuale acceptate
 
@@ -144,11 +148,13 @@ TraceAI-Control/
   README.md
   CHECKPOINT.md
   docs/
+    UI_ENGINE_CONTRACT.md
   src/
     core/
     rules/
     report/
     ui/
+      README.md
   tests/
     README.md
     test_source_inventory.py
@@ -412,9 +418,56 @@ python samples/demo_docx_runner.py --output samples/output/demo_traceability_rep
 python -m pytest -q
 ```
 
+## Contract minim UI -> engine definit
+
+Contractul este documentat în:
+
+```text
+docs/UI_ENGINE_CONTRACT.md
+src/ui/README.md
+```
+
+Input UI minim:
+
+```text
+source_directory
+code
+lot
+output_docx_path
+```
+
+Apel engine permis:
+
+```text
+run_traceability_case(source_directory, code, lot)
+-> generate_minimal_docx_report(traceability_case, output_docx_path)
+```
+
+UI-ul are voie doar să:
+
+```text
+colecteze inputul minim
+apeleze engine-ul existent
+afișeze progres simplu
+afișeze succes/eroare
+```
+
+UI-ul nu are voie să:
+
+```text
+citească direct CSV/XLSX pentru logică de business
+clasifice tipuri de caz
+calculeze bilanțuri
+modifice TraceabilityCase
+recalculeze tabele raportabile
+genereze DOCX direct din surse operaționale
+convertească unități de măsură
+deducă trasabilitate amonte/aval
+```
+
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo și README principal sincronizat.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat, runner demonstrativ controlat, test automat dedicat pentru runner, documentație de utilizare pentru demo, README principal sincronizat și contract UI -> engine definit.
 
 Nu există încă:
 
@@ -422,7 +475,8 @@ Nu există încă:
 trasabilitate amonte/aval calculată
 bilanțuri detaliate / reconciliere operațională completă
 branding complet / logo / paginare avansată / cuprins automat
-UI
+funcție UI de orchestrare testată
+UI vizual
 installer
 ```
 
@@ -444,20 +498,26 @@ tests/test_demo_docx_runner.py
 README.md
 ```
 
+Contract UI -> engine integrat:
+
+```text
+docs/UI_ENGINE_CONTRACT.md
+src/ui/README.md
+```
+
 ## Următorul pas la reluare
 
-La reluarea proiectului, NU se începe cu UI fără o verificare scurtă.
+La reluarea proiectului, NU se începe cu UI vizual complex.
 
 Următorul pas corect este:
 
 ```text
-pregătirea fazei UI prin definirea contractului minim UI -> engine, fără implementare vizuală complexă
+implementarea unei funcții UI de orchestrare testabile, fără interfață grafică
 ```
 
 Primul cod permis:
 
 ```text
-docs/
 src/ui/
 tests/
 ```
@@ -465,21 +525,27 @@ tests/
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unei documentații/contract UI minimal care stabilește:
-- input UI: source_directory, code, lot, output_docx_path
-- apel unic către pipeline existent
-- UI fără logică de business
-- mesaje de succes/eroare
-- fără schimbări în Core/Rules/Report Engine
+adăugarea unei funcții de orchestrare care primește:
+- source_directory
+- code
+- lot
+- output_docx_path
+
+și returnează un status controlat:
+- success
+- output_path
+- message
+- error, dacă există
 ```
 
 Regulă importantă:
 
 ```text
 Nu se începe cu UI vizual complex.
+Funcția UI de orchestrare nu citește direct surse operaționale.
+Funcția UI de orchestrare nu conține logică de business.
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
-Runnerul demo rămâne controlat și nu citește surse operaționale reale.
 UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de business.
 ```
 
@@ -488,5 +554,5 @@ UI-ul viitor trebuie să fie doar strat de orchestrare, fără logică de busine
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu definirea contractului minim UI -> engine, fără UI vizual complex.
+Continuăm de la CHECKPOINT.md cu funcția UI de orchestrare testabilă, fără UI vizual complex.
 ```
