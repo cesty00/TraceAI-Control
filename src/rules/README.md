@@ -32,6 +32,26 @@ Utilizare:
 python -m src.rules.case_type_detection "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output case_type.json
 ```
 
+## `run_rules_pipeline.py`
+
+Rulează Core Engine și adaugă rezultatul Rules Engine disponibil în această etapă:
+
+```text
+core_pipeline -> case_type_detection
+```
+
+Output:
+
+- rezultatul complet Core Engine;
+- detectarea `case_type`;
+- dovezi și observații.
+
+Utilizare:
+
+```bash
+python -m src.rules.run_rules_pipeline "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output rules_pipeline.json
+```
+
 ## Limită intenționată
 
-Acest modul nu calculează trasabilitate, nu aplică bilanțuri, nu construiește `TraceabilityCase` și nu generează DOCX.
+Rules Engine, în această etapă, nu calculează trasabilitate, nu aplică bilanțuri, nu construiește `TraceabilityCase` și nu generează DOCX.
