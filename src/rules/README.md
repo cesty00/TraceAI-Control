@@ -63,6 +63,16 @@ Definește scheletul obiectului intern `TraceabilityCase`, care va alimenta viit
 - observații;
 - metadate tehnice minimale din Core Engine.
 
+## `run_traceability_case.py`
+
+Rulează pipeline-ul Rules Engine și produce direct `TraceabilityCase` minimal.
+
+Utilizare:
+
+```bash
+python -m src.rules.run_traceability_case "cale/catre/folder/date" --code DS099903883 --lot 105.26 --output traceability_case.json
+```
+
 ## Limită intenționată
 
 Rules Engine, în această etapă, nu calculează trasabilitate, nu aplică bilanțuri detaliate și nu generează DOCX.
