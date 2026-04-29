@@ -22,6 +22,7 @@ Faza 3 — Rules Engine: implementată tehnic v1
 Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
 Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
 Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
+Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic
 Faza 6 — UI profesional simplu: NU a început încă
 ```
 
@@ -39,6 +40,7 @@ TraceabilityCase
 Teste automate
 Report Engine DOCX
 Flux E2E controlat
+Runner demonstrativ DOCX
 UI profesional simplu
 Installer Windows
 ```
@@ -113,6 +115,7 @@ Detectarea acestor tipuri aparține Rules Engine.
 7. UI-ul nu conține logică de business.
 8. Bilanțul preliminar este conservator și nu deduce fluxuri lipsă.
 9. Fluxul E2E controlat folosește date sintetice de test, nu UI și nu fișiere operaționale reale.
+10. Runnerul demonstrativ folosește dataset sintetic controlat și nu schimbă regulile de business.
 
 ## Teste virtuale acceptate
 
@@ -152,6 +155,7 @@ TraceAI-Control/
     test_docx_minimal.py
     test_e2e_docx_controlled_flow.py
   samples/
+    demo_docx_runner.py
 ```
 
 ## Core Engine v1 implementat
@@ -323,9 +327,45 @@ validarea integrării tehnice dintre Rules Engine, TraceabilityCase și Report E
 fără UI și fără citirea directă a surselor operaționale reale în Report Engine.
 ```
 
+## Runner demonstrativ DOCX implementat
+
+Runnerul demonstrativ este implementat în:
+
+```text
+samples/demo_docx_runner.py
+```
+
+Flux runner:
+
+```text
+NormalizedDataSet sintetic controlat
+-> record_selection
+-> case_type_detection
+-> build_traceability_case
+-> generate_minimal_docx_report
+-> output DOCX demonstrativ
+```
+
+Rulare:
+
+```bash
+python samples/demo_docx_runner.py --output samples/output/demo_traceability_report.docx
+```
+
+Reguli runner:
+
+```text
+nu folosește UI
+nu citește fișiere operaționale reale
+nu schimbă Core Engine
+nu schimbă Rules Engine
+nu schimbă Report Engine
+nu deduce trasabilitate amonte/aval
+```
+
 ## Limită curentă
 
-TraceabilityCase are structurile de tabele, bilanț preliminar conservator și raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate și bilanț preliminar randat.
+TraceabilityCase are structurile de tabele, bilanț preliminar conservator, raport DOCX cu tabele Word reale, stiluri, antet, subsol, metadate, bilanț preliminar randat și runner demonstrativ controlat.
 
 Nu există încă:
 
@@ -346,6 +386,12 @@ python -m pytest -q
 35 passed
 ```
 
+Runner demonstrativ integrat:
+
+```text
+samples/demo_docx_runner.py
+```
+
 ## Următorul pas la reluare
 
 La reluarea proiectului, NU se începe cu UI.
@@ -353,7 +399,7 @@ La reluarea proiectului, NU se începe cu UI.
 Următorul pas corect este:
 
 ```text
-pregătirea unui sample controlat în samples/ sau a unui runner CLI E2E pentru generare raport DOCX controlată
+pregătirea documentației de utilizare pentru runnerul demonstrativ sau validarea runnerului prin test automat dedicat
 ```
 
 Primul cod permis:
@@ -361,13 +407,13 @@ Primul cod permis:
 ```text
 samples/
 tests/
-src/report/docx_minimal.py
+README.md
 ```
 
 Primul obiectiv tehnic posibil:
 
 ```text
-adăugarea unui sample controlat sau runner E2E care permite generarea unui DOCX demonstrativ reproductibil, fără UI și fără schimbarea regulilor de business.
+adăugarea unei documentații scurte de rulare demo sau a unui test care rulează samples/demo_docx_runner.py și verifică DOCX-ul generat.
 ```
 
 Regulă importantă:
@@ -376,6 +422,7 @@ Regulă importantă:
 Nu se începe încă UI.
 DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
 Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
+Runnerul demo rămâne controlat și nu citește surse operaționale reale.
 ```
 
 ## Fraza de reluare recomandată
@@ -383,5 +430,5 @@ Bilanțul preliminar rămâne conservator și nu convertește unități de măsu
 Când reluăm proiectul, mesajul corect este:
 
 ```text
-Continuăm de la CHECKPOINT.md cu sample controlat sau runner E2E pentru generare DOCX demonstrativă.
+Continuăm de la CHECKPOINT.md cu documentația sau testarea runnerului demonstrativ DOCX.
 ```
