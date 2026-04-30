@@ -162,16 +162,18 @@ Stock: $stock
 
       - name: Generate independent reference extraction when data is available
         if: steps.source-dir.outputs.selected != ''
+        continue-on-error: true
         shell: pwsh
         run: |
           $code = "${{ github.event.inputs.code }}"
           $lot = "${{ github.event.inputs.lot }}"
           if (-not $code) { $code = "DS099903883" }
           if (-not $lot) { $lot = "105.26" }
-          python samples\extract_reference_traceability.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_traceability.md --json-output diagnostics\reference_traceability.json
+          python samples\extract_reference_traceability.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_traceability.md --json-output diagnostics\reference_traceability.json 2>&1 | Tee-Object -FilePath diagnostics\reference-extraction-output.txt
 
       - name: Generate real diagnostic DOCX when data is available
         if: steps.source-dir.outputs.selected != ''
+        continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
@@ -179,7 +181,7 @@ Stock: $stock
           $lot = "${{ github.event.inputs.lot }}"
           if (-not $code) { $code = "DS099903883" }
           if (-not $lot) { $lot = "105.26" }
-          python -m src.report.docx_minimal "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_traceability_report.docx
+          python -m src.report.docx_minimal "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_traceability_report.docx 2>&1 | Tee-Object -FilePath diagnostics\real-docx-output.txt
 
       - name: Write diagnostic summary
         if: always()
@@ -197,8 +199,10 @@ Stock: $stock
           ## Artifacts
           - pytest-output.txt
           - demo_traceability_report.docx
-          - reference_traceability.md/json, only if complete source data was found
-          - real_traceability_report.docx, only if complete source data was found
+          - reference_traceability.md/json, only if complete source data was found and extraction succeeded
+          - real_traceability_report.docx, only if complete source data was found and DOCX generation succeeded
+          - reference-extraction-output.txt
+          - real-docx-output.txt
           - source-directory.txt
           - source-files-found.txt
           - source-files-found-after-unzip.txt
@@ -222,6 +226,8 @@ Stock: $stock
             diagnostics/reference_traceability.md
             diagnostics/reference_traceability.json
             diagnostics/real_traceability_report.docx
+            diagnostics/reference-extraction-output.txt
+            diagnostics/real-docx-output.txt
             diagnostics/source-directory.txt
             diagnostics/source-files-found.txt
             diagnostics/source-files-found-after-unzip.txt
