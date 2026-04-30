@@ -18,6 +18,7 @@ from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from src.rules.order_traceability_mapping import build_order_traceability_rows
 from src.rules.prd_table_mapping import build_source_specific_rows
 from src.rules.run_rules_pipeline import RulesPipelineResult
 
@@ -93,6 +94,7 @@ class TraceabilityReportTables:
     wms_receipts: TraceabilityReportTable
     prd_consumptions: TraceabilityReportTable
     stock: TraceabilityReportTable
+    order_traceability: TraceabilityReportTable | None = None
 
 
 @dataclass(frozen=True)
@@ -149,6 +151,7 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
 def build_report_tables_from_rules_result(result: RulesPipelineResult) -> TraceabilityReportTables:
     tables = build_empty_report_tables()
     mapped_rows = build_source_specific_rows(result)
+    order_traceability_rows = payloads_to_table_rows(build_order_traceability_rows(result))
 
     production_rows = payloads_to_table_rows(mapped_rows["production"])
     delivery_rows = payloads_to_table_rows(mapped_rows["finished_goods_deliveries"])
@@ -159,7 +162,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     prd_consumption_rows = payloads_to_table_rows(mapped_rows["prd_consumptions"])
     stock_rows = payloads_to_table_rows(mapped_rows["stock"])
 
-    if any([production_rows, raw_material_rows, packaging_rows, auxiliary_rows, prd_consumption_rows]):
+    if any([production_rows, raw_material_rows, packaging_rows, auxiliary_rows, prd_consumption_rows, order_traceability_rows]):
         return TraceabilityReportTables(
             production=replace_table_rows(tables.production, production_rows),
             finished_goods_deliveries=replace_table_rows(tables.finished_goods_deliveries, delivery_rows),
@@ -169,6 +172,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
             wms_receipts=replace_table_rows(tables.wms_receipts, wms_receipt_rows),
             prd_consumptions=replace_table_rows(tables.prd_consumptions, prd_consumption_rows),
             stock=replace_table_rows(tables.stock, stock_rows),
+            order_traceability=replace_table_rows(tables.order_traceability, order_traceability_rows),
         )
 
     return build_report_tables_from_generic_selected_records(result)
@@ -210,6 +214,7 @@ def build_report_tables_from_generic_selected_records(result: RulesPipelineResul
         wms_receipts=replace_table_rows(tables.wms_receipts, wms_rows),
         prd_consumptions=tables.prd_consumptions,
         stock=replace_table_rows(tables.stock, stock_rows),
+        order_traceability=tables.order_traceability,
     )
 
 
@@ -385,8 +390,32 @@ def add_classification_role(row: TraceabilityTableRow, role: str) -> Traceabilit
     return TraceabilityTableRow(values, row.source_key, row.source_name, row.sheet_name, row.row_number)
 
 
-def replace_table_rows(table: TraceabilityReportTable, rows: list[TraceabilityTableRow]) -> TraceabilityReportTable:
-    return TraceabilityReportTable(table.key, table.title, table.columns, rows, table.empty_message)
+def replace_table_rows(table: TraceabilityReportTable | None, rows: list[TraceabilityTableRow]) -> TraceabilityReportTable:
+    base_table = table or build_order_traceability_table()
+    return TraceabilityReportTable(base_table.key, base_table.title, base_table.columns, rows, base_table.empty_message)
+
+
+def build_order_traceability_table() -> TraceabilityReportTable:
+    return TraceabilityReportTable(
+        "order_traceability",
+        "Trasabilitate pe comenzi de producție",
+        [
+            "Comandă producție",
+            "Produs finit",
+            "Cantitate produs finit",
+            "UM produs finit",
+            "WMS production-out",
+            "Livrare produs finit asociată",
+            "Categorie consum",
+            "Cod consum",
+            "Lot consum",
+            "Denumire consum",
+            "Cantitate consum",
+            "UM consum",
+            "Livrări consum către terți",
+        ],
+        empty_message="Nu au fost identificate detalii pe comenzi de producție în TraceabilityCase.",
+    )
 
 
 def build_empty_report_tables() -> TraceabilityReportTables:
@@ -399,11 +428,15 @@ def build_empty_report_tables() -> TraceabilityReportTables:
         wms_receipts=TraceabilityReportTable("wms_receipts", "Recepții WMS", ["Numar comanda", "Document intrare", "Document comanda", "Furnizor", "Cantitate", "UM"], empty_message="Nu au fost identificate recepții WMS detaliate în TraceabilityCase."),
         prd_consumptions=TraceabilityReportTable("prd_consumptions", "Consumuri PRD", ["Cod", "Lot", "Comandă producție", "Cantitate", "UM"], empty_message="Nu au fost identificate consumuri PRD detaliate în TraceabilityCase."),
         stock=TraceabilityReportTable("stock", "Stoc la moment", ["Cod", "Lot", "Stoc", "UM", "Locație"], empty_message="Articolul nu apare explicit în stocul la moment în TraceabilityCase."),
+        order_traceability=build_order_traceability_table(),
     )
 
 
 def report_tables_as_list(report_tables: TraceabilityReportTables) -> list[TraceabilityReportTable]:
-    return [report_tables.production, report_tables.finished_goods_deliveries, report_tables.raw_materials, report_tables.packaging, report_tables.auxiliaries_gas, report_tables.wms_receipts, report_tables.prd_consumptions, report_tables.stock]
+    tables = [report_tables.production, report_tables.finished_goods_deliveries, report_tables.raw_materials, report_tables.packaging, report_tables.auxiliaries_gas, report_tables.wms_receipts, report_tables.prd_consumptions, report_tables.stock]
+    if report_tables.order_traceability is not None:
+        tables.append(report_tables.order_traceability)
+    return tables
 
 
 def traceability_case_to_dict(traceability_case: TraceabilityCase) -> dict[str, Any]:
