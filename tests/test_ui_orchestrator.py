@@ -10,6 +10,7 @@ from src.ui.orchestrator import (
 
 def test_generate_report_from_ui_request_orchestrates_existing_engine() -> None:
     calls: list[tuple[str, object]] = []
+    expected_output = str(Path("/tmp/report.docx"))
 
     def fake_runner(source_directory: str, code: str, lot: str) -> TraceabilityCase:
         calls.append(("runner", (source_directory, code, lot)))
@@ -31,7 +32,7 @@ def test_generate_report_from_ui_request_orchestrates_existing_engine() -> None:
     )
 
     assert result.success is True
-    assert result.output_path == "/tmp/report.docx"
+    assert result.output_path == expected_output
     assert result.error is None
     assert "Raport generat cu succes" in result.message
     assert calls == [
