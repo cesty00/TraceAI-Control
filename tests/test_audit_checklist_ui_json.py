@@ -23,6 +23,9 @@ EXPECTED_SECTION_KEYS = [
     "conclusion",
 ]
 
+EXPECTED_PRODUCT_NAME = "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL"
+EXPECTED_BALANCE_SUMMARY = "PRD produs coincide cu WMS PRODUCTION-OUT. Livrările sunt preluate din WMS și se evaluează în valoare absolută pentru reconciliere."
+
 
 def build_payload() -> dict:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
@@ -37,18 +40,18 @@ def test_audit_checklist_ui_payload_has_schema_version_subject_and_report() -> N
     assert payload["subject"] == {
         "code": "DS099904011",
         "lot": "103.26",
-        "product_name": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
+        "product_name": EXPECTED_PRODUCT_NAME,
         "case_type": "FINISHED_PRODUCT",
         "result": "PASS",
     }
     assert payload["report"]["exercise"] == {
         "code": "DS099904011",
         "lot": "103.26",
-        "product_name": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
+        "product_name": EXPECTED_PRODUCT_NAME,
         "case_type": "FINISHED_PRODUCT",
         "result": "PASS",
-        "generated_from_sources": ["prd", "stock", "wms"],
-        "balance_summary": "PRD produs coincide cu WMS PRODUCTION-OUT. Livrările sunt preluate din WMS și se evaluează în valoare absolută pentru reconciliere.",
+        "generated_from_sources": ["production", "wms"],
+        "balance_summary": EXPECTED_BALANCE_SUMMARY,
     }
     assert payload["report"]["balance"]["prd_produced"] == "168 BUCATA"
 
