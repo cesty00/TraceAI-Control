@@ -85,15 +85,26 @@ def test_normalized_dataset_preserves_values_and_builds_hints(tmp_path: Path) ->
 
     wms = dataset["tables"][0]
     assert wms["source_key"] == "wms"
-    assert [column["normalized_name"] for column in wms["columns"]] == [
-        "cod_articol",
-        "lot",
-        "cantitate",
-        "um",
-    ]
+    assert [column["normalized_name"] for column in wms["columns"]] == ["cod_articol", "lot", "cantitate", "um"]
     assert wms["rows"][0]["values"]["cantitate"] == "10,50"
     assert wms["rows"][0]["quantity_values"]["cantitate"] == "10.50"
     assert wms["rows"][0]["code_lot_hints"] == {"code": "DS0001", "lot": "L001"}
+
+
+def test_normalized_dataset_prefers_real_article_code_over_numeric_article_id(tmp_path: Path) -> None:
+    write_csv(tmp_path / "trasabilitate_wms.csv", ["Cod articol", "Lot"], ["DS0001", "L001"])
+    write_csv(
+        tmp_path / "rapoarte productie.csv",
+        ["PRE_ID Articol", "PRE_Cod Articol", "PRE_LOT"],
+        ["2070", "DS0001", "L001"],
+    )
+    write_minimal_xlsx(tmp_path / "nomenclator.xlsx", "Articole", ["Cod", "Lot"], ["DS0001", "L001"])
+    write_minimal_xlsx(tmp_path / "stoc la moment original.xlsx", "Stoc", ["Cod articol", "Lot"], ["DS0001", "L001"])
+
+    dataset = dataset_to_dict(build_normalized_dataset(tmp_path))
+    production = dataset["tables"][1]
+
+    assert production["rows"][0]["code_lot_hints"] == {"code": "DS0001", "lot": "L001"}
 
 
 def test_normalized_dataset_reports_missing_files(tmp_path: Path) -> None:
