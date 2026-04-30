@@ -5,6 +5,7 @@ Builds a report table that connects, per production order:
 - WMS production-out and finished-goods delivery evidence
 - PRD CON_* consumptions by category
 - WMS third-party deliveries for consumed raw-material lots, when any exist
+- WMS receipt and stock summaries for consumed component lots, when available
 """
 
 from __future__ import annotations
@@ -60,23 +61,51 @@ def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
     if not prd_rows:
         return []
 
-    wms_rows = list_wms_rows(dataset)
+    wms_rows = list_source_rows(dataset, "wms")
+    stock_rows = list_source_rows(dataset, "stock")
     production_by_order = build_production_by_order(prd_rows)
     component_rows = build_components_by_order(prd_rows, nomenclator)
     production_out_by_order = build_wms_production_out_by_order(wms_rows, product_code, product_lot)
     finished_delivery_by_order = assign_finished_deliveries(production_by_order, wms_rows, product_code, product_lot)
     raw_third_party = build_raw_material_third_party_delivery_index(wms_rows, component_rows)
+    component_receipts = build_component_receipt_index(wms_rows, component_rows)
+    component_stock = build_component_stock_index(stock_rows, component_rows)
 
     rows: list[ReportRowPayload] = []
     for order in sorted(production_by_order):
         production = production_by_order[order]
         components = component_rows.get(order, [])
         if not components:
-            rows.append(build_payload(order, production, production_out_by_order, finished_delivery_by_order, None, "", production["record"]))
+            rows.append(
+                build_payload(
+                    order,
+                    production,
+                    production_out_by_order,
+                    finished_delivery_by_order,
+                    None,
+                    "",
+                    "FARA DATE IDENTIFICATE",
+                    "FARA DATE IDENTIFICATE",
+                    production["record"],
+                )
+            )
             continue
         for component in sorted(components, key=lambda item: (item["category"], item["code"], item["lot"])):
-            delivery_summary = raw_third_party.get((component["code"], component["lot"]), "NU") if component["category"] == "raw_material" else "Nu se aplică"
-            rows.append(build_payload(order, production, production_out_by_order, finished_delivery_by_order, component, delivery_summary, component["record"]))
+            component_key = (component["code"], component["lot"])
+            delivery_summary = raw_third_party.get(component_key, "NU") if component["category"] == "raw_material" else "Nu se aplică"
+            rows.append(
+                build_payload(
+                    order,
+                    production,
+                    production_out_by_order,
+                    finished_delivery_by_order,
+                    component,
+                    delivery_summary,
+                    component_receipts.get(component_key, "FARA DATE IDENTIFICATE"),
+                    component_stock.get(component_key, "FARA DATE IDENTIFICATE"),
+                    component["record"],
+                )
+            )
     return rows
 
 
@@ -87,6 +116,8 @@ def build_payload(
     finished_delivery_by_order: dict[str, str],
     component: dict[str, Any] | None,
     third_party_summary: str,
+    receipt_summary: str,
+    stock_summary: str,
     record: SourceRow,
 ) -> ReportRowPayload:
     values = {
@@ -103,6 +134,8 @@ def build_payload(
         "Cantitate consum": component["quantity"] if component else "FARA DATE IDENTIFICATE",
         "UM consum": component["unit"] if component else "FARA DATE IDENTIFICATE",
         "Livrări consum către terți": third_party_summary or "NU",
+        "Recepții WMS consum": receipt_summary or "FARA DATE IDENTIFICATE",
+        "Stoc consum la moment": stock_summary or "FARA DATE IDENTIFICATE",
     }
     return ReportRowPayload(values, record.source_key, record.source_name, record.sheet_name, record.row_number)
 
@@ -125,10 +158,10 @@ def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list
     return rows
 
 
-def list_wms_rows(dataset: Any) -> list[SourceRow]:
+def list_source_rows(dataset: Any, source_key: str) -> list[SourceRow]:
     rows: list[SourceRow] = []
     for table in getattr(dataset, "tables", []):
-        if table.source_key != "wms":
+        if table.source_key != source_key:
             continue
         for row in table.rows:
             rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, dict(row.values), dict(getattr(row, "original_values", {}) or {})))
@@ -187,6 +220,10 @@ def build_components_by_order(prd_rows: list[SourceRow], nomenclator: dict[str, 
             }
         )
     return result
+
+
+def component_keys(component_rows: dict[str, list[dict[str, Any]]]) -> set[tuple[str, str]]:
+    return {(component["code"], component["lot"]) for components in component_rows.values() for component in components}
 
 
 def build_wms_production_out_by_order(wms_rows: list[SourceRow], product_code: str, product_lot: str) -> dict[str, str]:
@@ -270,6 +307,78 @@ def build_raw_material_third_party_delivery_index(wms_rows: list[SourceRow], com
         examples = [f"{order}/{document}/{client}: {format_decimal(quantity)}" for (order, document, client), quantity in sorted(deliveries.items())[:3]]
         suffix = "" if len(deliveries) <= 3 else f"; +{len(deliveries) - 3} alte livrări"
         result[key] = f"DA; total {format_decimal(total_quantity)}; " + "; ".join(examples) + suffix
+    return result
+
+
+def build_component_receipt_index(wms_rows: list[SourceRow], component_rows: dict[str, list[dict[str, Any]]]) -> dict[tuple[str, str], str]:
+    keys = component_keys(component_rows)
+    totals: dict[tuple[str, str], dict[tuple[str, str, str, str], Decimal]] = {key: defaultdict(lambda: Decimal("0")) for key in keys}
+    for row in wms_rows:
+        values = merged_values(row)
+        key = (value_by_alias(values, "cod_articol", "Cod articol"), value_by_alias(values, "lot", "Lot"))
+        if key not in totals:
+            continue
+        if value_by_alias(values, "tip_operatiune", "Tip operatiune").casefold() != "receptie":
+            continue
+        quantity = parse_decimal(value_by_alias(values, "cantitate", "Cantitate"))
+        if quantity is None:
+            continue
+        receipt_key = (
+            value_by_alias(values, "document_intrare", "Document intrare"),
+            value_by_alias(values, "document_comanda", "Document comanda"),
+            value_by_alias(values, "partener", "Partener"),
+            value_by_alias(values, "um", "UM"),
+        )
+        totals[key][receipt_key] += quantity
+
+    result: dict[tuple[str, str], str] = {}
+    for key, receipts in totals.items():
+        if not receipts:
+            continue
+        unit_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+        for (_document_in, _document_order, _supplier, unit), quantity in receipts.items():
+            unit_totals[unit] += quantity
+        totals_text = ", ".join(f"{format_decimal(quantity)} {unit}" for unit, quantity in sorted(unit_totals.items()))
+        examples = [format_receipt_example(document_in, document_order, supplier, quantity, unit) for (document_in, document_order, supplier, unit), quantity in sorted(receipts.items())[:3]]
+        suffix = "" if len(receipts) <= 3 else f"; +{len(receipts) - 3} alte recepții"
+        result[key] = f"total {totals_text}; " + "; ".join(examples) + suffix
+    return result
+
+
+def format_receipt_example(document_in: str, document_order: str, supplier: str, quantity: Decimal, unit: str) -> str:
+    reference = document_in or document_order or "fără document"
+    supplier_text = supplier or "fără furnizor"
+    return f"{reference}/{supplier_text}: {format_decimal(quantity)} {unit}"
+
+
+def build_component_stock_index(stock_rows: list[SourceRow], component_rows: dict[str, list[dict[str, Any]]]) -> dict[tuple[str, str], str]:
+    keys = component_keys(component_rows)
+    totals: dict[tuple[str, str], dict[tuple[str, str], Decimal]] = {key: defaultdict(lambda: Decimal("0")) for key in keys}
+    locations: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for row in stock_rows:
+        values = merged_values(row)
+        key = (value_by_alias(values, "cod_articol", "cod", "Cod articol", "Cod"), value_by_alias(values, "lot", "Lot"))
+        if key not in totals:
+            continue
+        quantity = parse_decimal(value_by_alias(values, "stoc", "Stoc", "cantitate_stoc"))
+        if quantity is None:
+            continue
+        unit = value_by_alias(values, "um", "u_m", "UM")
+        location = value_by_alias(values, "locatie", "locație", "depozit", "magazie", "Locație")
+        totals[key][(unit, location)] += quantity
+        if location:
+            locations[key].add(location)
+
+    result: dict[tuple[str, str], str] = {}
+    for key, stock_by_unit_location in totals.items():
+        if not stock_by_unit_location:
+            continue
+        unit_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+        for (unit, _location), quantity in stock_by_unit_location.items():
+            unit_totals[unit] += quantity
+        stock_text = ", ".join(f"{format_decimal(quantity)} {unit}" for unit, quantity in sorted(unit_totals.items()))
+        location_text = ", ".join(sorted(locations[key])) if locations[key] else "fără locație"
+        result[key] = f"{stock_text}; locații: {location_text}"
     return result
 
 
