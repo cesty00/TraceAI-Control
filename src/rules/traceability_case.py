@@ -3,15 +3,18 @@ TraceabilityCase contract for TraceAI Control.
 
 This module defines the internal object that feeds the DOCX report. It maps the
 available RulesPipelineResult metadata into a stable, audit-friendly structure
-and populates a small first set of report tables from Core selected records.
+and populates report tables from Core selected records.
 
-It intentionally does not calculate upstream/downstream traceability details and
-does not generate DOCX.
+It intentionally does not calculate upstream/downstream traceability and does
+not generate DOCX. Display aliases are normalization only: they expose source
+values under stable report-column names while preserving the original normalized
+keys for audit.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -61,6 +64,72 @@ UNIT_COLUMNS = ("UM", "U.M.", "Unitate", "Unitate masura", "Unitate măsură")
 
 RAW_MATERIAL_ROLE = "materie primă alimentară"
 PACKAGING_ROLE = "ambalaj"
+
+CANONICAL_REPORT_ALIASES: dict[str, tuple[str, ...]] = {
+    "Cod": ("cod", "code", "cod_articol", "cod_produs", "articol", "item", "sku"),
+    "Lot": ("lot", "batch", "nr_lot", "numar_lot", "număr_lot"),
+    "Denumire": (
+        "denumire",
+        "denumire_articol",
+        "denumire_produs",
+        "descriere",
+        "nume_produs",
+        "produs",
+    ),
+    "Cantitate": (
+        "cantitate",
+        "cant",
+        "qty",
+        "quantity",
+        "cantitate_miscare",
+        "cantitate_mișcare",
+        "cantitate_reala",
+        "cantitate_reală",
+        "stoc",
+    ),
+    "UM": ("um", "u_m", "unitate", "unitate_masura", "unitate_măsură", "unit"),
+    "Stoc": ("stoc", "cantitate_stoc", "stock"),
+    "Locație": ("locatie", "locație", "depozit", "warehouse", "magazie"),
+    "Numar comanda": (
+        "numar_comanda",
+        "număr_comandă",
+        "nr_comanda",
+        "nr_comandă",
+        "comanda",
+        "comandă",
+    ),
+    "Document intrare": (
+        "document_intrare",
+        "doc_intrare",
+        "nr_document_intrare",
+        "numar_document_intrare",
+        "document_receptie",
+        "document_recepție",
+        "nr_receptie",
+        "nr_recepție",
+        "nir",
+    ),
+    "Document comanda": (
+        "document_comanda",
+        "document_comandă",
+        "doc_comanda",
+        "doc_comandă",
+        "nr_document_comanda",
+        "numar_document_comanda",
+        "aviz",
+        "factura",
+        "factură",
+    ),
+    "Client": ("client", "beneficiar", "destinatar", "customer", "partener_client"),
+    "Furnizor": ("furnizor", "supplier", "vendor", "partener_furnizor"),
+    "Comandă": ("comanda", "comandă", "numar_comanda", "număr_comandă", "nr_comanda", "nr_comandă"),
+    "Comandă producție": (
+        "comanda_productie",
+        "comandă_producție",
+        "comanda_productie_prd",
+        "nr_comanda_productie",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -182,11 +251,7 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
     report_tables = build_report_tables_from_rules_result(result)
 
     return TraceabilityCase(
-        subject=TraceabilityCaseSubject(
-            code=code,
-            lot=lot,
-            case_type=detection.case_type,
-        ),
+        subject=TraceabilityCaseSubject(code=code, lot=lot, case_type=detection.case_type),
         evidence=evidence,
         observations=observations,
         sections=sections,
@@ -196,7 +261,7 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
 
 
 def build_report_tables_from_rules_result(result: RulesPipelineResult) -> TraceabilityReportTables:
-    """Populate first report tables from selected Core records only.
+    """Populate report tables from selected Core records only.
 
     This is a controlled population step. It maps selected rows into reportable
     strings and does not infer upstream/downstream traceability.
@@ -241,14 +306,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
 
 
 def build_preliminary_balance(report_tables: TraceabilityReportTables) -> TraceabilityPreliminaryBalance:
-    """Build conservative totals from already populated report tables.
-
-    Rules:
-    - use only explicit numeric values;
-    - group totals by unit of measure;
-    - never convert units;
-    - never infer upstream/downstream traceability.
-    """
+    """Build conservative totals from already populated report tables."""
 
     lines: list[TraceabilityBalanceLine] = []
     messages: list[str] = [
@@ -337,6 +395,10 @@ def get_value_case_insensitive(values: dict[str, str], key: str) -> str | None:
     for existing_key, value in values.items():
         if existing_key.casefold() == key_folded:
             return value
+    normalized_key = normalize_report_key(key)
+    for existing_key, value in values.items():
+        if normalize_report_key(existing_key) == normalized_key:
+            return value
     return None
 
 
@@ -377,10 +439,21 @@ def build_empty_preliminary_balance() -> TraceabilityPreliminaryBalance:
 
 
 def table_row_from_selected_record(record: Any) -> TraceabilityTableRow:
-    """Convert one selected Core record into a generic report table row."""
+    """Convert one selected Core record into a generic report table row.
+
+    Normalized Core values remain untouched. Original source headers, when
+    available, are appended without overwriting normalized keys. Canonical report
+    aliases are then added only as convenience display keys.
+    """
+
+    values = dict(record.values)
+    original_values = getattr(record, "original_values", {}) or {}
+    for key, value in original_values.items():
+        values.setdefault(key, value)
+    values = add_canonical_report_values(values)
 
     return TraceabilityTableRow(
-        values={key: value for key, value in record.values.items()},
+        values=values,
         source_key=record.source_key,
         source_name=record.source_name,
         sheet_name=record.sheet_name,
@@ -388,12 +461,62 @@ def table_row_from_selected_record(record: Any) -> TraceabilityTableRow:
     )
 
 
-def is_alisol_auxiliary_record(record: Any) -> bool:
-    """Return True when the selected record refers to ALISOL.
+def add_canonical_report_values(values: dict[str, str]) -> dict[str, str]:
+    """Expose source values under stable report-column names.
 
-    Business rule: ALISOL is auxiliary / technological gas and must never be
-    classified as food raw material.
+    This is presentation normalization only. It does not infer missing values and
+    does not overwrite existing source keys.
     """
+
+    enriched = dict(values)
+    for canonical, aliases in CANONICAL_REPORT_ALIASES.items():
+        if str(enriched.get(canonical, "")).strip():
+            continue
+        value = first_value_by_alias(enriched, aliases)
+        if value is not None and str(value).strip():
+            enriched[canonical] = value
+    return enriched
+
+
+def first_value_by_alias(values: dict[str, str], aliases: tuple[str, ...]) -> str | None:
+    alias_keys = {normalize_report_key(alias) for alias in aliases}
+    for key, value in values.items():
+        if normalize_report_key(key) in alias_keys and str(value).strip():
+            return value
+    return None
+
+
+def normalize_report_key(value: object) -> str:
+    text = remove_diacritics(str(value)).casefold().strip()
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    return re.sub(r"_+", "_", text).strip("_")
+
+
+def remove_diacritics(value: str) -> str:
+    return value.translate(
+        str.maketrans(
+            {
+                "ă": "a",
+                "â": "a",
+                "î": "i",
+                "ș": "s",
+                "ş": "s",
+                "ț": "t",
+                "ţ": "t",
+                "Ă": "A",
+                "Â": "A",
+                "Î": "I",
+                "Ș": "S",
+                "Ş": "S",
+                "Ț": "T",
+                "Ţ": "T",
+            }
+        )
+    )
+
+
+def is_alisol_auxiliary_record(record: Any) -> bool:
+    """Return True when the selected record refers to ALISOL."""
 
     return ALISOL_HINT in normalized_record_text(record)
 
@@ -422,9 +545,11 @@ def is_finished_goods_delivery_record(record: Any) -> bool:
 
 
 def normalized_record_text(record: Any) -> str:
-    """Build a normalized text blob from a selected record."""
+    """Build a normalized text blob from selected record values."""
 
-    return " ".join(str(value) for value in record.values.values()).casefold()
+    values = list(getattr(record, "values", {}).values())
+    values.extend((getattr(record, "original_values", {}) or {}).values())
+    return " ".join(str(value) for value in values).casefold()
 
 
 def add_alisol_auxiliary_note(row: TraceabilityTableRow) -> TraceabilityTableRow:
@@ -432,13 +557,7 @@ def add_alisol_auxiliary_note(row: TraceabilityTableRow) -> TraceabilityTableRow
 
     values = dict(row.values)
     values.setdefault("Observații", ALISOL_AUXILIARY_OBSERVATION)
-    return TraceabilityTableRow(
-        values=values,
-        source_key=row.source_key,
-        source_name=row.source_name,
-        sheet_name=row.sheet_name,
-        row_number=row.row_number,
-    )
+    return TraceabilityTableRow(values, row.source_key, row.source_name, row.sheet_name, row.row_number)
 
 
 def add_classification_role(row: TraceabilityTableRow, role: str) -> TraceabilityTableRow:
@@ -446,13 +565,7 @@ def add_classification_role(row: TraceabilityTableRow, role: str) -> Traceabilit
 
     values = dict(row.values)
     values.setdefault("Rol", role)
-    return TraceabilityTableRow(
-        values=values,
-        source_key=row.source_key,
-        source_name=row.source_name,
-        sheet_name=row.sheet_name,
-        row_number=row.row_number,
-    )
+    return TraceabilityTableRow(values, row.source_key, row.source_name, row.sheet_name, row.row_number)
 
 
 def replace_table_rows(table: TraceabilityReportTable, rows: list[TraceabilityTableRow]) -> TraceabilityReportTable:
