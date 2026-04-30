@@ -128,11 +128,7 @@ def build_normalized_dataset(source_directory: str | Path) -> NormalizedDataSet:
 
         problems.append(f"Extensie nesuportata pentru {source_name}: {path.suffix}")
 
-    return NormalizedDataSet(
-        source_directory=str(root),
-        tables=tables,
-        problems=problems,
-    )
+    return NormalizedDataSet(source_directory=str(root), tables=tables, problems=problems)
 
 
 def load_csv_table(source_key: str, source_name: str, path: Path) -> NormalizedTable:
@@ -142,26 +138,10 @@ def load_csv_table(source_key: str, source_name: str, path: Path) -> NormalizedT
     try:
         text = read_text_with_fallback(path)
     except (UnicodeDecodeError, OSError) as exc:
-        return NormalizedTable(
-            source_key=source_key,
-            source_name=source_name,
-            sheet_name=None,
-            columns=[],
-            rows=[],
-            row_count=0,
-            problems=[f"Nu se poate citi CSV-ul: {exc}"],
-        )
+        return NormalizedTable(source_key, source_name, None, [], [], 0, [f"Nu se poate citi CSV-ul: {exc}"])
 
     if not text.strip():
-        return NormalizedTable(
-            source_key=source_key,
-            source_name=source_name,
-            sheet_name=None,
-            columns=[],
-            rows=[],
-            row_count=0,
-            problems=["Fisier CSV gol."],
-        )
+        return NormalizedTable(source_key, source_name, None, [], [], 0, ["Fisier CSV gol."])
 
     try:
         dialect = csv.Sniffer().sniff(text[:8192], delimiters=",;\t|")
@@ -178,15 +158,7 @@ def load_csv_table(source_key: str, source_name: str, path: Path) -> NormalizedT
     rows = build_rows(columns, raw_rows[1:])
     problems.extend(validate_columns(columns))
 
-    return NormalizedTable(
-        source_key=source_key,
-        source_name=source_name,
-        sheet_name=None,
-        columns=columns,
-        rows=rows,
-        row_count=len(rows),
-        problems=problems,
-    )
+    return NormalizedTable(source_key, source_name, None, columns, rows, len(rows), problems)
 
 
 def load_xlsx_tables(source_key: str, source_name: str, path: Path) -> tuple[list[NormalizedTable], list[str]]:
@@ -204,14 +176,7 @@ def load_xlsx_tables(source_key: str, source_name: str, path: Path) -> tuple[lis
 
             for sheet_name, sheet_path in sheet_entries:
                 try:
-                    table = load_xlsx_sheet(
-                        source_key,
-                        source_name,
-                        sheet_name,
-                        sheet_path,
-                        workbook,
-                        shared_strings,
-                    )
+                    table = load_xlsx_sheet(source_key, source_name, sheet_name, sheet_path, workbook, shared_strings)
                     tables.append(table)
                 except KeyError:
                     problems.append(f"Sheet intern lipsa: {sheet_path}")
@@ -248,15 +213,7 @@ def load_xlsx_sheet(
     rows = build_rows(columns, matrix[1:])
     problems = validate_columns(columns)
 
-    return NormalizedTable(
-        source_key=source_key,
-        source_name=source_name,
-        sheet_name=sheet_name,
-        columns=columns,
-        rows=rows,
-        row_count=len(rows),
-        problems=problems,
-    )
+    return NormalizedTable(source_key, source_name, sheet_name, columns, rows, len(rows), problems)
 
 
 def read_xlsx_row(row: ET.Element, shared_strings: list[str]) -> list[str]:
@@ -299,6 +256,7 @@ def build_rows(columns: list[NormalizedColumn], raw_rows: list[list[str]]) -> li
         original_values: dict[str, str] = {}
         quantity_values: dict[str, str] = {}
         code_lot_hints: dict[str, str] = {}
+        identity_priorities: dict[str, int] = {}
         problems: list[str] = []
 
         for index, column in enumerate(columns):
@@ -314,9 +272,21 @@ def build_rows(columns: list[NormalizedColumn], raw_rows: list[list[str]]) -> li
                     problems.append(f"Cantitate neparsabila in coloana {column.original_name}: {value}")
 
             if is_code_column(column.normalized_name) and value:
-                code_lot_hints.setdefault("code", value)
+                set_identity_hint(
+                    code_lot_hints,
+                    identity_priorities,
+                    "code",
+                    value,
+                    code_hint_priority(column.normalized_name),
+                )
             if is_lot_column(column.normalized_name) and value:
-                code_lot_hints.setdefault("lot", value)
+                set_identity_hint(
+                    code_lot_hints,
+                    identity_priorities,
+                    "lot",
+                    value,
+                    lot_hint_priority(column.normalized_name),
+                )
 
         rows.append(
             NormalizedRow(
@@ -330,6 +300,52 @@ def build_rows(columns: list[NormalizedColumn], raw_rows: list[list[str]]) -> li
         )
 
     return rows
+
+
+def set_identity_hint(
+    hints: dict[str, str],
+    priorities: dict[str, int],
+    key: str,
+    value: str,
+    priority: int,
+) -> None:
+    """Set a code/lot hint only when the candidate is more reliable.
+
+    Production exports can contain both numeric article IDs and real article
+    codes. A column such as PRE_ID Articol must not win over PRE_Cod Articol.
+    Equal priorities keep the first source-order value for backward compatibility.
+    """
+
+    current_priority = priorities.get(key)
+    if current_priority is None or priority < current_priority:
+        hints[key] = value
+        priorities[key] = priority
+
+
+def code_hint_priority(name: str) -> int:
+    """Return lower priority for stronger article-code columns."""
+
+    if "cod" in name:
+        return 0
+    if name in {"sku", "item"} or name.endswith("_sku") or name.endswith("_item"):
+        return 1
+    if "produs" in name:
+        return 2
+    if "id" in name and "articol" in name:
+        return 9
+    if "articol" in name:
+        return 8
+    return 10
+
+
+def lot_hint_priority(name: str) -> int:
+    """Return lower priority for explicit lot columns."""
+
+    if "lot" in name:
+        return 0
+    if "batch" in name:
+        return 1
+    return 10
 
 
 def normalize_column_name(value: str) -> str:
@@ -430,18 +446,12 @@ def dataset_to_dict(dataset: NormalizedDataSet) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Construieste NormalizedDataSet pentru sursele oficiale TraceAI Control."
-    )
+    parser = argparse.ArgumentParser(description="Construieste NormalizedDataSet pentru sursele oficiale TraceAI Control.")
     parser.add_argument("source_directory", help="Folderul cu sursele oficiale.")
     parser.add_argument("--output", "-o", help="Cale optionala pentru output JSON.")
     args = parser.parse_args(argv)
 
-    payload = json.dumps(
-        dataset_to_dict(build_normalized_dataset(args.source_directory)),
-        ensure_ascii=False,
-        indent=2,
-    )
+    payload = json.dumps(dataset_to_dict(build_normalized_dataset(args.source_directory)), ensure_ascii=False, indent=2)
 
     if args.output:
         Path(args.output).write_text(payload + "\n", encoding="utf-8")

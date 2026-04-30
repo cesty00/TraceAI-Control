@@ -52,17 +52,9 @@ def make_rules_result(tables: list[NormalizedTable]) -> RulesPipelineResult:
 
 
 def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
-    rules = make_rules_result(
-        [make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001"})]
-    )
-
+    rules = make_rules_result([make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001"})])
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-
-    assert traceability_case["subject"] == {
-        "code": "DS0001",
-        "lot": "L001",
-        "case_type": CASE_FINISHED_PRODUCT,
-    }
+    assert traceability_case["subject"] == {"code": "DS0001", "lot": "L001", "case_type": CASE_FINISHED_PRODUCT}
     assert traceability_case["evidence"]
     assert traceability_case["sections"]["core_validation_status"] == "VALID"
     assert traceability_case["sections"]["selected_record_count"] == 1
@@ -73,7 +65,6 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
 
 def test_build_empty_report_tables_contains_expected_sections_in_display_order() -> None:
     tables = report_tables_as_list(build_empty_report_tables())
-
     assert [table.key for table in tables] == [
         "production",
         "finished_goods_deliveries",
@@ -92,56 +83,59 @@ def test_build_empty_report_tables_contains_expected_sections_in_display_order()
 def test_build_traceability_case_populates_selected_report_tables() -> None:
     rules = make_rules_result(
         [
-            make_table(
-                "production",
-                "rapoarte productie.csv",
-                {"cod": "DS0001", "lot": "L001", "cantitate": "10", "um": "kg"},
-            ),
-            make_table(
-                "wms",
-                "trasabilitate_wms.csv",
-                {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "cantitate": "10"},
-            ),
-            make_table(
-                "stock",
-                "stoc la moment original.xlsx",
-                {"cod": "DS0001", "lot": "L001", "stoc": "5", "um": "kg"},
-            ),
+            make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001", "cantitate": "10", "um": "kg"}),
+            make_table("wms", "trasabilitate_wms.csv", {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "cantitate": "10"}),
+            make_table("stock", "stoc la moment original.xlsx", {"cod": "DS0001", "lot": "L001", "stoc": "5", "um": "kg"}),
         ]
     )
-
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-
     production_rows = traceability_case["report_tables"]["production"]["rows"]
     wms_rows = traceability_case["report_tables"]["wms_receipts"]["rows"]
     stock_rows = traceability_case["report_tables"]["stock"]["rows"]
-
     assert production_rows[0]["values"]["cantitate"] == "10"
     assert production_rows[0]["source_key"] == "production"
     assert wms_rows[0]["values"]["document intrare"] == "NIR-1"
+    assert wms_rows[0]["values"]["Document intrare"] == "NIR-1"
     assert wms_rows[0]["source_key"] == "wms"
     assert stock_rows[0]["values"]["stoc"] == "5"
     assert stock_rows[0]["source_key"] == "stock"
     assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
 
 
-def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
+def test_wms_aliases_are_exposed_for_docx_without_overwriting_source_keys() -> None:
     rules = make_rules_result(
         [
             make_table(
-                "production",
-                "rapoarte productie.csv",
-                {"cod": "DS0001", "lot": "L001", "denumire": "Gaz ALISOL", "cantitate": "2", "um": "kg"},
+                "wms",
+                "trasabilitate_wms.csv",
+                {
+                    "cod": "DS0001",
+                    "lot": "L001",
+                    "nr_document_intrare": "NIR-77",
+                    "doc_comanda": "AVZ-77",
+                    "beneficiar": "Client alias",
+                    "supplier": "Furnizor alias",
+                    "qty": "12",
+                    "unitate_masura": "Kilogram",
+                },
             )
         ]
     )
-
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+    delivery_values = traceability_case["report_tables"]["finished_goods_deliveries"]["rows"][0]["values"]
+    assert delivery_values["Document comanda"] == "AVZ-77"
+    assert delivery_values["Client"] == "Client alias"
+    assert delivery_values["Cantitate"] == "12"
+    assert delivery_values["UM"] == "Kilogram"
+    assert delivery_values["doc_comanda"] == "AVZ-77"
 
+
+def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
+    rules = make_rules_result([make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001", "denumire": "Gaz ALISOL", "cantitate": "2", "um": "kg"})])
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
     auxiliary_rows = traceability_case["report_tables"]["auxiliaries_gas"]["rows"]
     raw_material_rows = traceability_case["report_tables"]["raw_materials"]["rows"]
     production_rows = traceability_case["report_tables"]["production"]["rows"]
-
     assert auxiliary_rows[0]["values"]["denumire"] == "Gaz ALISOL"
     assert auxiliary_rows[0]["values"]["Observații"] == ALISOL_AUXILIARY_OBSERVATION
     assert raw_material_rows == []
@@ -152,25 +146,14 @@ def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
 def test_selected_rows_with_explicit_hints_are_classified_as_raw_materials_and_packaging() -> None:
     rules = make_rules_result(
         [
-            make_table(
-                "production",
-                "rapoarte productie.csv",
-                {"cod": "DS0001", "lot": "L001", "denumire": "Materie primă zahăr", "cantitate": "3", "um": "kg"},
-            ),
-            make_table(
-                "production",
-                "rapoarte productie.csv",
-                {"cod": "DS0001", "lot": "L001", "denumire": "Folie ambalaj", "cantitate": "4", "um": "buc"},
-            ),
+            make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001", "denumire": "Materie primă zahăr", "cantitate": "3", "um": "kg"}),
+            make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001", "denumire": "Folie ambalaj", "cantitate": "4", "um": "buc"}),
         ]
     )
-
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-
     raw_rows = traceability_case["report_tables"]["raw_materials"]["rows"]
     packaging_rows = traceability_case["report_tables"]["packaging"]["rows"]
     production_rows = traceability_case["report_tables"]["production"]["rows"]
-
     assert raw_rows[0]["values"]["denumire"] == "Materie primă zahăr"
     assert raw_rows[0]["values"]["Rol"] == RAW_MATERIAL_ROLE
     assert packaging_rows[0]["values"]["denumire"] == "Folie ambalaj"
@@ -179,18 +162,8 @@ def test_selected_rows_with_explicit_hints_are_classified_as_raw_materials_and_p
 
 
 def test_alisol_priority_over_raw_material_hint() -> None:
-    rules = make_rules_result(
-        [
-            make_table(
-                "production",
-                "rapoarte productie.csv",
-                {"cod": "DS0001", "lot": "L001", "denumire": "ALISOL materie primă", "cantitate": "2", "um": "kg"},
-            )
-        ]
-    )
-
+    rules = make_rules_result([make_table("production", "rapoarte productie.csv", {"cod": "DS0001", "lot": "L001", "denumire": "ALISOL materie primă", "cantitate": "2", "um": "kg"})])
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-
     assert traceability_case["report_tables"]["auxiliaries_gas"]["rows"]
     assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
 
@@ -198,28 +171,18 @@ def test_alisol_priority_over_raw_material_hint() -> None:
 def test_wms_delivery_rows_are_mapped_to_finished_goods_deliveries() -> None:
     rules = make_rules_result(
         [
-            make_table(
-                "wms",
-                "trasabilitate_wms.csv",
-                {"cod": "DS0001", "lot": "L001", "document comanda": "CMD-OUT-1", "client": "Client test", "cantitate": "7"},
-            ),
-            make_table(
-                "wms",
-                "trasabilitate_wms.csv",
-                {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "furnizor": "Furnizor test", "cantitate": "10"},
-            ),
+            make_table("wms", "trasabilitate_wms.csv", {"cod": "DS0001", "lot": "L001", "document comanda": "CMD-OUT-1", "client": "Client test", "cantitate": "7"}),
+            make_table("wms", "trasabilitate_wms.csv", {"cod": "DS0001", "lot": "L001", "document intrare": "NIR-1", "furnizor": "Furnizor test", "cantitate": "10"}),
         ]
     )
-
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-
     delivery_rows = traceability_case["report_tables"]["finished_goods_deliveries"]["rows"]
     receipt_rows = traceability_case["report_tables"]["wms_receipts"]["rows"]
-
     assert delivery_rows[0]["values"]["document comanda"] == "CMD-OUT-1"
     assert delivery_rows[0]["values"]["client"] == "Client test"
     assert delivery_rows[0]["source_key"] == "wms"
     assert receipt_rows[0]["values"]["document intrare"] == "NIR-1"
+    assert receipt_rows[0]["values"]["Document intrare"] == "NIR-1"
     assert receipt_rows[0]["source_key"] == "wms"
 
 
@@ -236,19 +199,8 @@ def test_preliminary_balance_groups_clear_numeric_values_by_unit_without_convers
         ],
         empty_message="Nu au fost identificate date detaliate de producție în TraceabilityCase.",
     )
-    report_tables = type(tables)(
-        production=production,
-        finished_goods_deliveries=tables.finished_goods_deliveries,
-        raw_materials=tables.raw_materials,
-        packaging=tables.packaging,
-        auxiliaries_gas=tables.auxiliaries_gas,
-        wms_receipts=tables.wms_receipts,
-        prd_consumptions=tables.prd_consumptions,
-        stock=tables.stock,
-    )
-
+    report_tables = type(tables)(production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, tables.stock)
     balance = build_preliminary_balance(report_tables)
-
     totals = {(line.table_key, line.unit): line.total for line in balance.lines}
     assert totals[("production", "kg")] == "12.5"
     assert totals[("production", "buc")] == "3"
@@ -269,19 +221,8 @@ def test_preliminary_balance_skips_unclear_values_and_reports_message() -> None:
         ],
         empty_message="Articolul nu apare explicit în stocul la moment în TraceabilityCase.",
     )
-    report_tables = type(tables)(
-        production=tables.production,
-        finished_goods_deliveries=tables.finished_goods_deliveries,
-        raw_materials=tables.raw_materials,
-        packaging=tables.packaging,
-        auxiliaries_gas=tables.auxiliaries_gas,
-        wms_receipts=tables.wms_receipts,
-        prd_consumptions=tables.prd_consumptions,
-        stock=stock,
-    )
-
+    report_tables = type(tables)(tables.production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, stock)
     balance = build_preliminary_balance(report_tables)
-
     assert balance.lines[0].total == "5"
     assert balance.lines[0].skipped_row_count == 3
     assert any("3 rând(uri) ignorate" in message for message in balance.messages)
