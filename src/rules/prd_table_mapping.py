@@ -16,6 +16,12 @@ from typing import Any
 
 ALISOL_AUXILIARY_OBSERVATION = "ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară."
 RAW_MATERIAL_ROLE = "materie primă alimentară"
+MISSING = "FARA DATE IDENTIFICATE"
+DATE_ALIASES = (
+    "data", "data_operatiune", "data_operațiune", "data_miscare", "data_mișcare",
+    "data_document", "data_doc", "data_livrare", "data_receptie", "data_recepție",
+    "created_at", "date", "Data", "Data document", "Data livrare", "Data receptie",
+)
 
 PACKAGING_TERMS = (
     "ambalaj", "ambalaje", "etichete", "eticheta", "etichetă", "folie", "film",
@@ -33,7 +39,7 @@ AUXILIARY_TERMS = ("alisol", "gaz")
 class ReportRowPayload:
     values: dict[str, str]
     source_key: str | None
-    source_name: str | None
+    source_name: str
     sheet_name: str | None
     row_number: int | None
 
@@ -95,6 +101,8 @@ def build_prd_production_rows(records: list[Any]) -> list[ReportRowPayload]:
         order = value_by_alias(values, "numar_comanda", "Numar Comanda")
         quantity = value_by_alias(values, "pre_cantitate_predare", "PRE_Cantitate Predare")
         unit = value_by_alias(values, "pre_u_m", "PRE_U.M.")
+        production_date = first_non_empty(value_by_alias(values, "data_productie", "data_producție", "data", "Data"), MISSING)
+        ddm = first_non_empty(value_by_alias(values, "ddm", "data_durabilitatii_minimale", "data_durabilității_minimale", "Data durabilitatii minimale"), MISSING)
         if not code or not lot or not order:
             continue
         key = (code, lot, order, quantity, unit)
@@ -108,6 +116,8 @@ def build_prd_production_rows(records: list[Any]) -> list[ReportRowPayload]:
                     "Comandă": order,
                     "Cantitate": quantity,
                     "UM": unit,
+                    "Data producției": production_date,
+                    "DDM": ddm,
                     "Observații": "PRD PRE_Cantitate Predare; rând unic pe comandă producție.",
                 },
                 record.source_key,
@@ -181,7 +191,7 @@ def build_prd_component_rows(records: list[Any], nomenclator: dict[str, str], ca
 
 
 def build_wms_delivery_rows(records: list[Any]) -> list[ReportRowPayload]:
-    buckets: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    buckets: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
     for record in records:
         if record.source_key != "wms":
             continue
@@ -196,18 +206,35 @@ def build_wms_delivery_rows(records: list[Any]) -> list[ReportRowPayload]:
         document = value_by_alias(values, "document_comanda", "Document comanda")
         client = value_by_alias(values, "partener", "Partener")
         unit = value_by_alias(values, "um", "UM")
-        key = (order, document, client, unit)
+        delivery_date = first_non_empty(value_by_alias(values, *DATE_ALIASES), MISSING)
+        key = (order, document, client, unit, delivery_date)
         bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record})
         bucket["quantity"] += quantity
     rows = []
-    for (order, document, client, unit), bucket in sorted(buckets.items()):
+    for (order, document, client, unit, delivery_date), bucket in sorted(buckets.items()):
         record = bucket["record"]
-        rows.append(ReportRowPayload({"Numar comanda": order, "Document comanda": document, "Client": client, "Cantitate": format_decimal(bucket["quantity"]), "UM": unit}, record.source_key, record.source_name, record.sheet_name, record.row_number))
+        rows.append(
+            ReportRowPayload(
+                {
+                    "Numar comanda": order,
+                    "Document comanda": document,
+                    "Client": client,
+                    "Data livrare": delivery_date,
+                    "Data document": delivery_date,
+                    "Cantitate": format_decimal(bucket["quantity"]),
+                    "UM": unit,
+                },
+                record.source_key,
+                record.source_name,
+                record.sheet_name,
+                record.row_number,
+            )
+        )
     return rows
 
 
 def build_wms_receipt_rows(records: list[Any]) -> list[ReportRowPayload]:
-    buckets: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
+    buckets: dict[tuple[str, str, str, str, str, str], dict[str, Any]] = {}
     for record in records:
         if record.source_key != "wms":
             continue
@@ -223,13 +250,31 @@ def build_wms_receipt_rows(records: list[Any]) -> list[ReportRowPayload]:
         document_order = value_by_alias(values, "document_comanda", "Document comanda")
         supplier = value_by_alias(values, "partener", "Partener")
         unit = value_by_alias(values, "um", "UM")
-        key = (order, document_in, document_order, supplier, unit)
+        receipt_date = first_non_empty(value_by_alias(values, *DATE_ALIASES), MISSING)
+        key = (order, document_in, document_order, supplier, unit, receipt_date)
         bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record})
         bucket["quantity"] += quantity
     rows = []
-    for (order, document_in, document_order, supplier, unit), bucket in sorted(buckets.items()):
+    for (order, document_in, document_order, supplier, unit, receipt_date), bucket in sorted(buckets.items()):
         record = bucket["record"]
-        rows.append(ReportRowPayload({"Numar comanda": order, "Document intrare": document_in, "Document comanda": document_order, "Furnizor": supplier, "Cantitate": format_decimal(bucket["quantity"]), "UM": unit}, record.source_key, record.source_name, record.sheet_name, record.row_number))
+        rows.append(
+            ReportRowPayload(
+                {
+                    "Numar comanda": order,
+                    "Document intrare": document_in,
+                    "Document comanda": document_order,
+                    "Furnizor": supplier,
+                    "Data recepție": receipt_date,
+                    "Data document": receipt_date,
+                    "Cantitate": format_decimal(bucket["quantity"]),
+                    "UM": unit,
+                },
+                record.source_key,
+                record.source_name,
+                record.sheet_name,
+                record.row_number,
+            )
+        )
     return rows
 
 
@@ -275,6 +320,14 @@ def merged_values(record: Any) -> dict[str, str]:
     for key, value in (getattr(record, "original_values", {}) or {}).items():
         values.setdefault(key, value)
     return values
+
+
+def first_non_empty(*values: object) -> str:
+    for value in values:
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
 
 
 def value_by_alias(values: dict[str, str], *aliases: str) -> str:
