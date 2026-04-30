@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, Iterable
 
 from src.rules.traceability_case import TraceabilityCase, TraceabilityReportTable, TraceabilityTableRow
 
@@ -151,9 +151,10 @@ class AuditTraceabilityReport:
 def build_audit_traceability_report(traceability_case: TraceabilityCase) -> AuditTraceabilityReport:
     """Build the audit DTO from a TraceabilityCase.
 
-    This first implementation consumes the stable report_tables already produced
-    by the rules layer. It does not re-read source files and does not invent
-    unavailable document data.
+    The audit DTO must preserve all details already extracted by the rules layer.
+    The order traceability table is the richest source for upstream audit data
+    because it contains per-order consumptions and third-party delivery status.
+    Aggregated raw/packaging/auxiliary tables are kept as fallback only.
     """
 
     exercise = AuditExercise(
@@ -165,8 +166,8 @@ def build_audit_traceability_report(traceability_case: TraceabilityCase) -> Audi
         traceability_result=detect_report_status(traceability_case),
     )
     downstream = build_downstream(traceability_case.report_tables.finished_goods_deliveries)
-    upstream = build_upstream(traceability_case)
-    production_orders = build_production_orders(traceability_case, upstream)
+    production_orders = build_production_orders(traceability_case)
+    upstream = build_upstream(traceability_case, production_orders)
     balance = build_finished_product_balance(traceability_case, downstream, production_orders)
     source_lot_flows = build_source_lot_flows(upstream)
     documents = build_physical_document_requirements(exercise, downstream, upstream, production_orders)
@@ -207,12 +208,63 @@ def build_downstream(table: TraceabilityReportTable) -> list[FinishedProductDeli
     return deliveries
 
 
-def build_upstream(traceability_case: TraceabilityCase) -> list[UpstreamMaterialLine]:
+def build_upstream(traceability_case: TraceabilityCase, production_orders: list[ProductionOrderTrace]) -> list[UpstreamMaterialLine]:
+    order_upstream = aggregate_upstream_from_orders(production_orders)
+    if order_upstream:
+        return order_upstream
+
     rows: list[UpstreamMaterialLine] = []
     rows.extend(upstream_from_table(traceability_case.report_tables.raw_materials, "raw_material", include_third_party=True))
     rows.extend(upstream_from_table(traceability_case.report_tables.packaging, "packaging", include_third_party=False))
     rows.extend(upstream_from_table(traceability_case.report_tables.auxiliaries_gas, "auxiliary_gas", include_third_party=False))
     return rows
+
+
+def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]) -> list[UpstreamMaterialLine]:
+    lines: list[UpstreamMaterialLine] = []
+    for order in production_orders:
+        lines.extend(order.raw_materials)
+        lines.extend(order.packaging)
+        lines.extend(order.auxiliaries_gas)
+    if not lines:
+        return []
+
+    grouped: dict[tuple[str, str, str, str, str], list[UpstreamMaterialLine]] = defaultdict(list)
+    for line in lines:
+        grouped[(line.category, line.code, line.lot, line.name, line.um)].append(line)
+
+    aggregated: list[UpstreamMaterialLine] = []
+    for (category, code, lot, name, um), group in sorted(grouped.items()):
+        totals = sum_by_unit((line.quantity_consumed, line.um) for line in group)
+        quantity, normalized_um = single_total_or_missing(totals)
+        if normalized_um == "FARA DATE IDENTIFICATE":
+            normalized_um = um
+        status = merge_third_party_status(line.third_party_delivery_status for line in group)
+        details = merge_third_party_details(status, [line.third_party_delivery_details for line in group])
+        observations = dedupe([observation for line in group for observation in line.observations])
+        if status == THIRD_PARTY_NO and category == "raw_material":
+            observations.append("Nu au fost identificate livrări către terți pentru lotul de materie primă în datele disponibile.")
+        if status == THIRD_PARTY_NOT_APPLICABLE and category != "raw_material" and not observations:
+            observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
+        aggregated.append(
+            UpstreamMaterialLine(
+                category=category,
+                code=code,
+                lot=lot,
+                name=name,
+                quantity_consumed=quantity,
+                um=normalized_um,
+                receipt_summary="FARA DATE IDENTIFICATE",
+                supplier_summary="FARA DATE IDENTIFICATE",
+                document_summary="FARA DATE IDENTIFICATE",
+                third_party_delivery_status=status,
+                third_party_delivery_details=details,
+                stock_at_moment="FARA DATE IDENTIFICATE",
+                stock_um="FARA DATE IDENTIFICATE",
+                observations=dedupe(observations),
+            )
+        )
+    return aggregated
 
 
 def upstream_from_table(table: TraceabilityReportTable, category: str, include_third_party: bool) -> list[UpstreamMaterialLine]:
@@ -244,7 +296,7 @@ def upstream_from_table(table: TraceabilityReportTable, category: str, include_t
     return lines
 
 
-def build_production_orders(traceability_case: TraceabilityCase, upstream: list[UpstreamMaterialLine]) -> list[ProductionOrderTrace]:
+def build_production_orders(traceability_case: TraceabilityCase) -> list[ProductionOrderTrace]:
     order_table = traceability_case.report_tables.order_traceability
     if order_table is None or not order_table.rows:
         return production_orders_from_summary(traceability_case)
@@ -319,6 +371,11 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
     third_party_details = value(row, "Livrări consum către terți")
     third_party_status = normalize_third_party_status(third_party_details)
     category = category_from_order_label(value(row, "Categorie consum"))
+    observations: list[str] = []
+    if third_party_status == THIRD_PARTY_UNKNOWN:
+        observations.append("Status livrări către terți neclar în datele disponibile.")
+    elif third_party_status == THIRD_PARTY_NOT_APPLICABLE:
+        observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
     return UpstreamMaterialLine(
         category=category,
         code=value(row, "Cod consum"),
@@ -333,7 +390,7 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
         third_party_delivery_details=third_party_details,
         stock_at_moment="FARA DATE IDENTIFICATE",
         stock_um="FARA DATE IDENTIFICATE",
-        observations=[] if third_party_status != THIRD_PARTY_UNKNOWN else ["Status livrări către terți neclar în datele disponibile."],
+        observations=observations,
     )
 
 
@@ -550,6 +607,32 @@ def normalize_third_party_status(details: str) -> str:
     if text.startswith("da"):
         return THIRD_PARTY_YES
     return THIRD_PARTY_UNKNOWN
+
+
+def merge_third_party_status(statuses: Iterable[str]) -> str:
+    status_set = {status for status in statuses if status}
+    if not status_set:
+        return THIRD_PARTY_UNKNOWN
+    if THIRD_PARTY_YES in status_set:
+        return THIRD_PARTY_YES
+    if status_set == {THIRD_PARTY_NO}:
+        return THIRD_PARTY_NO
+    if status_set == {THIRD_PARTY_NOT_APPLICABLE}:
+        return THIRD_PARTY_NOT_APPLICABLE
+    if status_set <= {THIRD_PARTY_NO, THIRD_PARTY_NOT_APPLICABLE}:
+        return THIRD_PARTY_NO
+    return THIRD_PARTY_UNKNOWN
+
+
+def merge_third_party_details(status: str, details: list[str]) -> str:
+    meaningful = dedupe([detail for detail in details if detail and detail != "FARA DATE IDENTIFICATE"])
+    if status == THIRD_PARTY_NOT_APPLICABLE:
+        return "Nu se aplică"
+    if status == THIRD_PARTY_NO:
+        return "NU"
+    if status == THIRD_PARTY_YES:
+        return "; ".join(meaningful) if meaningful else "DA"
+    return "; ".join(meaningful) if meaningful else "FARA DATE IDENTIFICATE"
 
 
 def sum_by_unit(values: Any) -> dict[str, Decimal]:
