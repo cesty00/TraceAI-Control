@@ -5,10 +5,9 @@ This module defines the internal object that feeds the DOCX report. It maps the
 available RulesPipelineResult metadata into a stable, audit-friendly structure
 and populates report tables from Core selected records.
 
-It intentionally does not calculate upstream/downstream traceability and does
-not generate DOCX. Display aliases are normalization only: they expose source
-values under stable report-column names while preserving the original normalized
-keys for audit.
+It intentionally does not generate DOCX. Display aliases are normalization only:
+they expose source values under stable report-column names while preserving the
+original normalized keys for audit.
 """
 
 from __future__ import annotations
@@ -19,39 +18,14 @@ from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from src.rules.prd_table_mapping import build_source_specific_rows
 from src.rules.run_rules_pipeline import RulesPipelineResult
 
 ALISOL_HINT = "alisol"
 ALISOL_AUXILIARY_OBSERVATION = "ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară."
-
 RAW_MATERIAL_HINTS = ("materie prima", "materie primă", "materii prime", "ingredient")
-PACKAGING_HINTS = (
-    "ambalaj",
-    "ambalaje",
-    "folie",
-    "punga",
-    "pungă",
-    "cutie",
-    "carton",
-    "eticheta",
-    "etichetă",
-    "capac",
-    "borcan",
-    "palet",
-    "pallet",
-)
-FINISHED_GOODS_DELIVERY_HINTS = (
-    "livrare",
-    "livrat",
-    "livrari",
-    "livrări",
-    "iesire",
-    "ieșire",
-    "document comanda",
-    "document comandă",
-    "client",
-)
-
+PACKAGING_HINTS = ("ambalaj", "ambalaje", "folie", "punga", "pungă", "cutie", "carton", "eticheta", "etichetă", "capac", "borcan", "palet", "pallet")
+FINISHED_GOODS_DELIVERY_HINTS = ("livrare", "livrat", "livrari", "livrări", "iesire", "ieșire", "document comanda", "document comandă", "client")
 QUANTITY_COLUMNS = ("Cantitate", "Stoc")
 UNIT_COLUMNS = ("UM", "U.M.", "Unitate", "Unitate masura", "Unitate măsură")
 RAW_MATERIAL_ROLE = "materie primă alimentară"
@@ -60,59 +34,14 @@ PACKAGING_ROLE = "ambalaj"
 CANONICAL_REPORT_ALIASES: dict[str, tuple[str, ...]] = {
     "Cod": ("cod", "code", "cod_articol", "cod_produs", "pre_cod_articol", "con_cod_articol", "articol", "item", "sku"),
     "Lot": ("lot", "batch", "nr_lot", "numar_lot", "număr_lot", "pre_lot", "con_lot"),
-    "Denumire": (
-        "denumire",
-        "denumire_articol",
-        "denumire_produs",
-        "pre_denumire_articol",
-        "con_denumire_articol",
-        "descriere",
-        "nume_produs",
-        "produs",
-    ),
-    "Cantitate": (
-        "cantitate",
-        "cant",
-        "qty",
-        "quantity",
-        "cantitate_miscare",
-        "cantitate_mișcare",
-        "cantitate_reala",
-        "cantitate_reală",
-        "pre_cantitate_predare",
-        "con_cantitate_consumata",
-        "greutate_pre_articol_totala_kg",
-        "greutate_con_articol_totala_kg",
-        "stoc",
-    ),
+    "Denumire": ("denumire", "denumire_articol", "denumire_produs", "pre_denumire_articol", "con_denumire_articol", "descriere", "nume_produs", "produs"),
+    "Cantitate": ("cantitate", "cant", "qty", "quantity", "cantitate_miscare", "cantitate_mișcare", "cantitate_reala", "cantitate_reală", "pre_cantitate_predare", "con_cantitate_consumata", "greutate_pre_articol_totala_kg", "greutate_con_articol_totala_kg", "stoc"),
     "UM": ("um", "u_m", "pre_u_m", "con_u_m", "unitate", "unitate_masura", "unitate_măsură", "unit"),
     "Stoc": ("stoc", "cantitate_stoc", "stock"),
     "Locație": ("locatie", "locație", "locatie_sursa", "locatie_destinatie", "depozit", "warehouse", "magazie"),
     "Numar comanda": ("numar_comanda", "număr_comandă", "nr_comanda", "nr_comandă", "comanda", "comandă"),
-    "Document intrare": (
-        "document_intrare",
-        "doc_intrare",
-        "nr_document_intrare",
-        "numar_document_intrare",
-        "document_receptie",
-        "document_recepție",
-        "nr_receptie",
-        "nr_recepție",
-        "nir",
-    ),
-    "Document comanda": (
-        "document_comanda",
-        "document_comandă",
-        "doc_comanda",
-        "doc_comandă",
-        "nr_document_comanda",
-        "numar_document_comanda",
-        "serie_numar",
-        "serie_număr",
-        "aviz",
-        "factura",
-        "factură",
-    ),
+    "Document intrare": ("document_intrare", "doc_intrare", "nr_document_intrare", "numar_document_intrare", "document_receptie", "document_recepție", "nr_receptie", "nr_recepție", "nir"),
+    "Document comanda": ("document_comanda", "document_comandă", "doc_comanda", "doc_comandă", "nr_document_comanda", "numar_document_comanda", "serie_numar", "serie_număr", "aviz", "factura", "factură"),
     "Client": ("client", "beneficiar", "destinatar", "customer", "partener", "partener_client"),
     "Furnizor": ("furnizor", "supplier", "vendor", "partener", "partener_furnizor"),
     "Comandă": ("numar_comanda", "număr_comandă", "comanda", "comandă", "nr_comanda", "nr_comandă"),
@@ -219,6 +148,34 @@ def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) ->
 
 def build_report_tables_from_rules_result(result: RulesPipelineResult) -> TraceabilityReportTables:
     tables = build_empty_report_tables()
+    mapped_rows = build_source_specific_rows(result)
+
+    production_rows = payloads_to_table_rows(mapped_rows["production"])
+    delivery_rows = payloads_to_table_rows(mapped_rows["finished_goods_deliveries"])
+    raw_material_rows = payloads_to_table_rows(mapped_rows["raw_materials"])
+    packaging_rows = payloads_to_table_rows(mapped_rows["packaging"])
+    auxiliary_rows = payloads_to_table_rows(mapped_rows["auxiliaries_gas"])
+    wms_receipt_rows = payloads_to_table_rows(mapped_rows["wms_receipts"])
+    prd_consumption_rows = payloads_to_table_rows(mapped_rows["prd_consumptions"])
+    stock_rows = payloads_to_table_rows(mapped_rows["stock"])
+
+    if any([production_rows, raw_material_rows, packaging_rows, auxiliary_rows, prd_consumption_rows]):
+        return TraceabilityReportTables(
+            production=replace_table_rows(tables.production, production_rows),
+            finished_goods_deliveries=replace_table_rows(tables.finished_goods_deliveries, delivery_rows),
+            raw_materials=replace_table_rows(tables.raw_materials, raw_material_rows),
+            packaging=replace_table_rows(tables.packaging, packaging_rows),
+            auxiliaries_gas=replace_table_rows(tables.auxiliaries_gas, auxiliary_rows),
+            wms_receipts=replace_table_rows(tables.wms_receipts, wms_receipt_rows),
+            prd_consumptions=replace_table_rows(tables.prd_consumptions, prd_consumption_rows),
+            stock=replace_table_rows(tables.stock, stock_rows),
+        )
+
+    return build_report_tables_from_generic_selected_records(result)
+
+
+def build_report_tables_from_generic_selected_records(result: RulesPipelineResult) -> TraceabilityReportTables:
+    tables = build_empty_report_tables()
     production_rows: list[TraceabilityTableRow] = []
     delivery_rows: list[TraceabilityTableRow] = []
     raw_material_rows: list[TraceabilityTableRow] = []
@@ -256,12 +213,13 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     )
 
 
+def payloads_to_table_rows(payloads: list[Any]) -> list[TraceabilityTableRow]:
+    return [TraceabilityTableRow(payload.values, payload.source_key, payload.source_name, payload.sheet_name, payload.row_number) for payload in payloads]
+
+
 def build_preliminary_balance(report_tables: TraceabilityReportTables) -> TraceabilityPreliminaryBalance:
     lines: list[TraceabilityBalanceLine] = []
-    messages: list[str] = [
-        "Bilanț preliminar calculat doar din TraceabilityCase.report_tables.",
-        "Unitățile de măsură sunt grupate separat; nu se fac conversii automate.",
-    ]
+    messages: list[str] = ["Bilanț preliminar calculat doar din TraceabilityCase.report_tables.", "Unitățile de măsură sunt grupate separat; nu se fac conversii automate."]
     for table in report_tables_as_list(report_tables):
         table_lines, table_messages = build_balance_lines_for_table(table)
         lines.extend(table_lines)
@@ -295,10 +253,7 @@ def build_balance_lines_for_table(table: TraceabilityReportTable) -> tuple[list[
         source_counts[unit] = source_counts.get(unit, 0) + 1
     if not totals:
         return [], [f"{table.title}: nu există valori numerice clare pentru totalizare."]
-    lines = [
-        TraceabilityBalanceLine(table.key, table.title, quantity_column, unit, format_decimal(total), source_counts[unit], skipped, "Total preliminar pe UM, fără conversie automată.")
-        for unit, total in sorted(totals.items())
-    ]
+    lines = [TraceabilityBalanceLine(table.key, table.title, quantity_column, unit, format_decimal(total), source_counts[unit], skipped, "Total preliminar pe UM, fără conversie automată.") for unit, total in sorted(totals.items())]
     messages = []
     if skipped:
         messages.append(f"{table.title}: {skipped} rând(uri) ignorate din cauza cantității/UM neclare.")
