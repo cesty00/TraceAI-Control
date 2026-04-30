@@ -1,0 +1,150 @@
+name: TraceAI Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_directory:
+        description: "Optional source data directory inside repository"
+        required: false
+        default: ""
+      code:
+        description: "Article code"
+        required: false
+        default: "DS099903883"
+      lot:
+        description: "Lot"
+        required: false
+        default: "105.26"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "samples/**"
+      - ".github/workflows/traceai-diagnostics.yml"
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+
+jobs:
+  diagnostics:
+    name: Tests and diagnostic report
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest python-docx openpyxl pandas
+          python --version
+          python -m pip list
+
+      - name: Run pytest
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force diagnostics | Out-Null
+          python -m pytest -q 2>&1 | Tee-Object -FilePath diagnostics\pytest-output.txt
+
+      - name: Generate controlled demo DOCX
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force diagnostics | Out-Null
+          python samples\demo_docx_runner.py --output diagnostics\demo_traceability_report.docx
+
+      - name: Locate source directory
+        id: source-dir
+        shell: pwsh
+        run: |
+          $manual = "${{ github.event.inputs.source_directory }}"
+          $candidates = @()
+          if ($manual -and (Test-Path $manual)) { $candidates += $manual }
+          $candidates += @(
+            "data",
+            "date",
+            "input",
+            "inputs",
+            "sources",
+            "surse",
+            "samples\data",
+            "samples\date",
+            "samples\input",
+            "tests\data",
+            "tests\fixtures",
+            "fixtures"
+          )
+
+          $selected = ""
+          foreach ($candidate in $candidates) {
+            if (-not (Test-Path $candidate)) { continue }
+            $hasWms = Test-Path (Join-Path $candidate "trasabilitate_wms.csv")
+            $hasPrd = Test-Path (Join-Path $candidate "rapoarte productie.csv")
+            $hasNomenclator = Test-Path (Join-Path $candidate "nomenclator.xlsx")
+            $hasStock = Test-Path (Join-Path $candidate "stoc la moment original.xlsx")
+            if ($hasWms -and $hasPrd -and $hasNomenclator -and $hasStock) {
+              $selected = $candidate
+              break
+            }
+          }
+
+          "selected=$selected" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if ($selected) {
+            "Selected source directory: $selected" | Tee-Object -FilePath diagnostics\source-directory.txt
+          } else {
+            "No complete source directory found. Provide workflow_dispatch input source_directory or commit files with official names." | Tee-Object -FilePath diagnostics\source-directory.txt
+          }
+
+      - name: Generate real diagnostic DOCX when data is available
+        if: steps.source-dir.outputs.selected != ''
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force diagnostics | Out-Null
+          $code = "${{ github.event.inputs.code }}"
+          $lot = "${{ github.event.inputs.lot }}"
+          if (-not $code) { $code = "DS099903883" }
+          if (-not $lot) { $lot = "105.26" }
+          python -m src.report.docx_minimal "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_traceability_report.docx
+
+      - name: Write diagnostic summary
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force diagnostics | Out-Null
+          @"
+          # TraceAI Diagnostics
+
+          Commit: $env:GITHUB_SHA
+          Workflow: $env:GITHUB_WORKFLOW
+          Code: ${{ github.event.inputs.code }}
+          Lot: ${{ github.event.inputs.lot }}
+
+          ## Artifacts
+          - pytest-output.txt
+          - demo_traceability_report.docx
+          - real_traceability_report.docx, only if a complete source directory was found
+
+          ## Source data rule
+          Expected file names:
+          - trasabilitate_wms.csv
+          - rapoarte productie.csv
+          - nomenclator.xlsx
+          - stoc la moment original.xlsx
+          "@ | Set-Content -Path diagnostics\diagnostic-summary.md -Encoding UTF8
+
+      - name: Upload diagnostics artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TraceAI-Diagnostics
+          path: diagnostics/**
+          if-no-files-found: warn
