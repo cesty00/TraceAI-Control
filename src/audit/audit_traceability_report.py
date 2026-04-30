@@ -24,6 +24,7 @@ THIRD_PARTY_NO = "NU"
 THIRD_PARTY_YES = "DA"
 THIRD_PARTY_UNKNOWN = "NECLAR"
 THIRD_PARTY_NOT_APPLICABLE = "NU_SE_APLICA"
+MISSING = "FARA DATE IDENTIFICATE"
 
 
 @dataclass(frozen=True)
@@ -153,7 +154,8 @@ def build_audit_traceability_report(traceability_case: TraceabilityCase) -> Audi
 
     The audit DTO must preserve all details already extracted by the rules layer.
     The order traceability table is the richest source for upstream audit data
-    because it contains per-order consumptions and third-party delivery status.
+    because it contains per-order consumptions, third-party delivery status,
+    WMS receipt summaries and stock summaries.
     Aggregated raw/packaging/auxiliary tables are kept as fallback only.
     """
 
@@ -198,7 +200,7 @@ def build_downstream(table: TraceabilityReportTable) -> list[FinishedProductDeli
                 order_number=value(row, "Numar comanda"),
                 document_number=value(row, "Document comanda"),
                 client=value(row, "Client"),
-                delivery_date="FARA DATE IDENTIFICATE",
+                delivery_date=MISSING,
                 quantity=value(row, "Cantitate"),
                 um=value(row, "UM"),
                 rows="1",
@@ -237,13 +239,19 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
     for (category, code, lot, name, um), group in sorted(grouped.items()):
         totals = sum_by_unit((line.quantity_consumed, line.um) for line in group)
         quantity, normalized_um = single_total_or_missing(totals)
-        if normalized_um == "FARA DATE IDENTIFICATE":
+        if normalized_um == MISSING:
             normalized_um = um
         status = merge_third_party_status(line.third_party_delivery_status for line in group)
         details = merge_third_party_details(status, [line.third_party_delivery_details for line in group])
+        receipt_summary = merge_text_summaries(line.receipt_summary for line in group)
+        stock_summary = merge_text_summaries(line.stock_at_moment for line in group)
         observations = dedupe([observation for line in group for observation in line.observations])
         if status == THIRD_PARTY_NO and category == "raw_material":
             observations.append("Nu au fost identificate livrări către terți pentru lotul de materie primă în datele disponibile.")
+        if receipt_summary == MISSING:
+            observations.append("Nu au fost identificate recepții WMS pentru lotul sursă în datele disponibile.")
+        if stock_summary == MISSING:
+            observations.append("Lotul sursă nu apare în stocul la moment sau stocul nu a fost mapat încă.")
         if status == THIRD_PARTY_NOT_APPLICABLE and category != "raw_material" and not observations:
             observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
         aggregated.append(
@@ -254,13 +262,13 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
                 name=name,
                 quantity_consumed=quantity,
                 um=normalized_um,
-                receipt_summary="FARA DATE IDENTIFICATE",
-                supplier_summary="FARA DATE IDENTIFICATE",
-                document_summary="FARA DATE IDENTIFICATE",
+                receipt_summary=receipt_summary,
+                supplier_summary=receipt_summary,
+                document_summary=receipt_summary,
                 third_party_delivery_status=status,
                 third_party_delivery_details=details,
-                stock_at_moment="FARA DATE IDENTIFICATE",
-                stock_um="FARA DATE IDENTIFICATE",
+                stock_at_moment=stock_summary,
+                stock_um="",
                 observations=dedupe(observations),
             )
         )
@@ -272,7 +280,7 @@ def upstream_from_table(table: TraceabilityReportTable, category: str, include_t
     for row in table.rows:
         observations: list[str] = []
         third_party_status = THIRD_PARTY_UNKNOWN if include_third_party else THIRD_PARTY_NOT_APPLICABLE
-        third_party_details = "FARA DATE IDENTIFICATE" if include_third_party else "Nu se aplică"
+        third_party_details = MISSING if include_third_party else "Nu se aplică"
         if not include_third_party:
             observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
         lines.append(
@@ -283,13 +291,13 @@ def upstream_from_table(table: TraceabilityReportTable, category: str, include_t
                 name=value(row, "Denumire"),
                 quantity_consumed=value(row, "Cantitate"),
                 um=value(row, "UM"),
-                receipt_summary="FARA DATE IDENTIFICATE",
-                supplier_summary="FARA DATE IDENTIFICATE",
-                document_summary="FARA DATE IDENTIFICATE",
+                receipt_summary=MISSING,
+                supplier_summary=MISSING,
+                document_summary=MISSING,
                 third_party_delivery_status=third_party_status,
                 third_party_delivery_details=third_party_details,
-                stock_at_moment="FARA DATE IDENTIFICATE",
-                stock_um="FARA DATE IDENTIFICATE",
+                stock_at_moment=MISSING,
+                stock_um="",
                 observations=observations,
             )
         )
@@ -358,9 +366,9 @@ def production_orders_from_summary(traceability_case: TraceabilityCase) -> list[
                 finished_product_name=value(row, "Denumire"),
                 prd_quantity=value(row, "Cantitate"),
                 prd_um=value(row, "UM"),
-                wms_production_out_quantity="FARA DATE IDENTIFICATE",
-                wms_production_out_um="FARA DATE IDENTIFICATE",
-                associated_delivery="FARA DATE IDENTIFICATE",
+                wms_production_out_quantity=MISSING,
+                wms_production_out_um=MISSING,
+                associated_delivery=MISSING,
                 observations=["Detalierea pe comenzi nu este disponibilă în TraceabilityCase."],
             )
         )
@@ -371,11 +379,17 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
     third_party_details = value(row, "Livrări consum către terți")
     third_party_status = normalize_third_party_status(third_party_details)
     category = category_from_order_label(value(row, "Categorie consum"))
+    receipt_summary = value(row, "Recepții WMS consum")
+    stock_summary = value(row, "Stoc consum la moment")
     observations: list[str] = []
     if third_party_status == THIRD_PARTY_UNKNOWN:
         observations.append("Status livrări către terți neclar în datele disponibile.")
     elif third_party_status == THIRD_PARTY_NOT_APPLICABLE:
         observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
+    if receipt_summary == MISSING:
+        observations.append("Nu au fost identificate recepții WMS pentru acest lot consumat.")
+    if stock_summary == MISSING:
+        observations.append("Lotul consumat nu apare în stocul la moment sau stocul nu este disponibil.")
     return UpstreamMaterialLine(
         category=category,
         code=value(row, "Cod consum"),
@@ -383,13 +397,13 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
         name=value(row, "Denumire consum"),
         quantity_consumed=value(row, "Cantitate consum"),
         um=value(row, "UM consum"),
-        receipt_summary="FARA DATE IDENTIFICATE",
-        supplier_summary="FARA DATE IDENTIFICATE",
-        document_summary="FARA DATE IDENTIFICATE",
+        receipt_summary=receipt_summary,
+        supplier_summary=receipt_summary,
+        document_summary=receipt_summary,
         third_party_delivery_status=third_party_status,
         third_party_delivery_details=third_party_details,
-        stock_at_moment="FARA DATE IDENTIFICATE",
-        stock_um="FARA DATE IDENTIFICATE",
+        stock_at_moment=stock_summary,
+        stock_um="",
         observations=observations,
     )
 
@@ -411,14 +425,14 @@ def build_finished_product_balance(
 
     observations: list[str] = []
     status = STATUS_INCOMPLETE
-    if prd_quantity != "FARA DATE IDENTIFICATE" and out_quantity != "FARA DATE IDENTIFICATE":
+    if prd_quantity != MISSING and out_quantity != MISSING:
         if quantities_equal(prd_quantity, out_quantity) and prd_um == out_um:
             status = STATUS_PASS
             observations.append("PRD produs coincide cu WMS PRODUCTION-OUT.")
         else:
             status = STATUS_PASS_WITH_OBSERVATIONS
             observations.append("PRD produs diferă de WMS PRODUCTION-OUT; verificare manuală necesară.")
-    if delivered_quantity != "FARA DATE IDENTIFICATE":
+    if delivered_quantity != MISSING:
         observations.append("Livrările sunt preluate din WMS și se evaluează în valoare absolută pentru reconciliere.")
     return FinishedProductBalance(
         prd_produced_quantity=prd_quantity,
@@ -429,10 +443,10 @@ def build_finished_product_balance(
         wms_delivered_um=delivered_um,
         stock_quantity=stock_quantity,
         stock_um=stock_um,
-        adjustments_quantity="FARA DATE IDENTIFICATE",
-        adjustments_um="FARA DATE IDENTIFICATE",
+        adjustments_quantity=MISSING,
+        adjustments_um=MISSING,
         balance_status=status,
-        balance_observation=" ".join(observations) if observations else "FARA DATE IDENTIFICATE",
+        balance_observation=" ".join(observations) if observations else MISSING,
     )
 
 
@@ -448,12 +462,12 @@ def build_source_lot_flows(upstream: list[UpstreamMaterialLine]) -> list[SourceL
                 receipt_total=line.receipt_summary,
                 receipt_documents=line.document_summary,
                 consumed_in_audited_lot=f"{line.quantity_consumed} {line.um}",
-                consumed_in_other_orders="FARA DATE IDENTIFICATE",
+                consumed_in_other_orders=MISSING,
                 third_party_delivered_total=line.third_party_delivery_details,
-                adjustments_total="FARA DATE IDENTIFICATE",
-                stock_at_moment=f"{line.stock_at_moment} {line.stock_um}" if line.stock_at_moment != "FARA DATE IDENTIFICATE" else "FARA DATE IDENTIFICATE",
-                flow_status="documentat parțial" if line.receipt_summary == "FARA DATE IDENTIFICATE" else "documentat",
-                observation="; ".join(line.observations) if line.observations else "FARA DATE IDENTIFICATE",
+                adjustments_total=MISSING,
+                stock_at_moment=format_stock_summary(line.stock_at_moment, line.stock_um),
+                flow_status="documentat parțial" if line.receipt_summary == MISSING else "documentat",
+                observation="; ".join(line.observations) if line.observations else MISSING,
             )
         )
     return flows
@@ -500,7 +514,7 @@ def build_physical_document_requirements(
                 document_reference=line.document_summary,
                 related_code=line.code,
                 related_lot=line.lot,
-                related_order="FARA DATE IDENTIFICATE",
+                related_order=MISSING,
                 why_needed="Confirmă intrarea lotului sursă folosit în lotul auditat.",
                 status="required" if line.category in {"raw_material", "packaging"} else "recommended",
             )
@@ -515,11 +529,15 @@ def collect_observations(
     balance: FinishedProductBalance,
 ) -> list[str]:
     observations = list(traceability_case.observations)
-    if balance.balance_observation != "FARA DATE IDENTIFICATE":
+    if balance.balance_observation != MISSING:
         observations.append(balance.balance_observation)
     if any(line.third_party_delivery_status == THIRD_PARTY_NO for line in upstream if line.category == "raw_material"):
         observations.append("Pentru cel puțin un lot de materie primă nu au fost identificate livrări către terți.")
-    if any(not order.associated_delivery or order.associated_delivery == "FARA DATE IDENTIFICATE" for order in production_orders):
+    if any(line.receipt_summary != MISSING for line in upstream):
+        observations.append("Recepțiile WMS disponibile pentru loturile consumate au fost preluate în tabelul amonte.")
+    if any(line.stock_at_moment != MISSING for line in upstream):
+        observations.append("Stocul la moment disponibil pentru loturile consumate a fost preluat în tabelul amonte.")
+    if any(not order.associated_delivery or order.associated_delivery == MISSING for order in production_orders):
         observations.append("Unele comenzi nu au livrare produs finit asociată explicit în TraceabilityCase.")
     return dedupe(observations)
 
@@ -531,10 +549,14 @@ def build_conclusion_summary(
     upstream: list[UpstreamMaterialLine],
     production_orders: list[ProductionOrderTrace],
 ) -> str:
+    upstream_with_receipts = sum(1 for line in upstream if line.receipt_summary != MISSING)
+    upstream_with_stock = sum(1 for line in upstream if line.stock_at_moment != MISSING)
     return (
         f"Pentru {exercise.code} / {exercise.lot}, raportul audit conține "
         f"{len(production_orders)} comandă/comenzi de producție, {len(downstream)} livrare/livrări aval "
-        f"și {len(upstream)} linie/linii amonte. Status bilanț: {balance.balance_status}."
+        f"și {len(upstream)} linie/linii amonte. "
+        f"Recepții WMS mapate: {upstream_with_receipts}. Stocuri mapate: {upstream_with_stock}. "
+        f"Status bilanț: {balance.balance_status}."
     )
 
 
@@ -552,15 +574,15 @@ def detect_product_name(traceability_case: TraceabilityCase) -> str:
     for row in traceability_case.report_tables.production.rows:
         for key in ("Denumire", "Denumire produs"):
             found = value(row, key)
-            if found != "FARA DATE IDENTIFICATE":
+            if found != MISSING:
                 return found
     order_table = traceability_case.report_tables.order_traceability
     if order_table:
         for row in order_table.rows:
             found = value(row, "Produs finit")
-            if found != "FARA DATE IDENTIFICATE":
+            if found != MISSING:
                 return found
-    return "FARA DATE IDENTIFICATE"
+    return MISSING
 
 
 def format_sources(traceability_case: TraceabilityCase) -> list[str]:
@@ -625,14 +647,31 @@ def merge_third_party_status(statuses: Iterable[str]) -> str:
 
 
 def merge_third_party_details(status: str, details: list[str]) -> str:
-    meaningful = dedupe([detail for detail in details if detail and detail != "FARA DATE IDENTIFICATE"])
+    meaningful = dedupe([detail for detail in details if detail and detail != MISSING])
     if status == THIRD_PARTY_NOT_APPLICABLE:
         return "Nu se aplică"
     if status == THIRD_PARTY_NO:
         return "NU"
     if status == THIRD_PARTY_YES:
         return "; ".join(meaningful) if meaningful else "DA"
-    return "; ".join(meaningful) if meaningful else "FARA DATE IDENTIFICATE"
+    return "; ".join(meaningful) if meaningful else MISSING
+
+
+def merge_text_summaries(values: Iterable[str]) -> str:
+    meaningful = dedupe([value_text.strip() for value_text in values if value_text and value_text.strip() and value_text.strip() != MISSING])
+    if not meaningful:
+        return MISSING
+    return "; ".join(meaningful)
+
+
+def format_stock_summary(stock_at_moment: str, stock_um: str) -> str:
+    if not stock_at_moment or stock_at_moment == MISSING:
+        return MISSING
+    if not stock_um or stock_um == MISSING:
+        return stock_at_moment
+    if stock_at_moment.endswith(stock_um):
+        return stock_at_moment
+    return f"{stock_at_moment} {stock_um}"
 
 
 def sum_by_unit(values: Any) -> dict[str, Decimal]:
@@ -640,7 +679,7 @@ def sum_by_unit(values: Any) -> dict[str, Decimal]:
     for quantity, unit in values:
         parsed = parse_decimal(quantity)
         unit_text = str(unit).strip()
-        if parsed is None or not unit_text or unit_text == "FARA DATE IDENTIFICATE":
+        if parsed is None or not unit_text or unit_text == MISSING:
             continue
         totals[unit_text] = totals.get(unit_text, Decimal("0")) + parsed
     return totals
@@ -648,7 +687,7 @@ def sum_by_unit(values: Any) -> dict[str, Decimal]:
 
 def single_total_or_missing(totals: dict[str, Decimal]) -> tuple[str, str]:
     if not totals:
-        return "FARA DATE IDENTIFICATE", "FARA DATE IDENTIFICATE"
+        return MISSING, MISSING
     if len(totals) == 1:
         unit, quantity = next(iter(totals.items()))
         return format_decimal(quantity), unit
@@ -656,11 +695,11 @@ def single_total_or_missing(totals: dict[str, Decimal]) -> tuple[str, str]:
 
 
 def split_quantity_unit(value_text: str) -> tuple[str, str]:
-    if value_text == "FARA DATE IDENTIFICATE":
+    if value_text == MISSING:
         return value_text, value_text
     parts = value_text.rsplit(" ", 1)
     if len(parts) != 2:
-        return value_text, "FARA DATE IDENTIFICATE"
+        return value_text, MISSING
     return parts[0], parts[1]
 
 
@@ -679,7 +718,7 @@ def value(row: TraceabilityTableRow, key: str) -> str:
     for existing_key, existing_value in row.values.items():
         if existing_key.casefold() == key_folded and str(existing_value).strip():
             return str(existing_value).strip()
-    return "FARA DATE IDENTIFICATE"
+    return MISSING
 
 
 def format_source(row: TraceabilityTableRow) -> str:
