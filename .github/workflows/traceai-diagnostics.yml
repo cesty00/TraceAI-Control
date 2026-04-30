@@ -160,6 +160,16 @@ jobs:
 
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
+      - name: Generate independent reference extraction when data is available
+        if: steps.source-dir.outputs.selected != ''
+        shell: pwsh
+        run: |
+          $code = "${{ github.event.inputs.code }}"
+          $lot = "${{ github.event.inputs.lot }}"
+          if (-not $code) { $code = "DS099903883" }
+          if (-not $lot) { $lot = "105.26" }
+          python samples\extract_reference_traceability.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_traceability.md --json-output diagnostics\reference_traceability.json
+
       - name: Generate real diagnostic DOCX when data is available
         if: steps.source-dir.outputs.selected != ''
         shell: pwsh
@@ -187,7 +197,8 @@ jobs:
           ## Artifacts
           - pytest-output.txt
           - demo_traceability_report.docx
-          - real_traceability_report.docx, only if a complete source directory was found
+          - reference_traceability.md/json, only if complete source data was found
+          - real_traceability_report.docx, only if complete source data was found
           - source-directory.txt
           - source-files-found.txt
 
