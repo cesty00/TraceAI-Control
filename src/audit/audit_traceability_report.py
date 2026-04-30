@@ -543,12 +543,12 @@ def normalize_third_party_status(details: str) -> str:
     text = details.strip().casefold()
     if not text or text == "fara date identificate":
         return THIRD_PARTY_UNKNOWN
+    if "nu se aplic" in text:
+        return THIRD_PARTY_NOT_APPLICABLE
     if text == "nu" or text.startswith("nu "):
         return THIRD_PARTY_NO
     if text.startswith("da"):
         return THIRD_PARTY_YES
-    if "nu se aplic" in text:
-        return THIRD_PARTY_NOT_APPLICABLE
     return THIRD_PARTY_UNKNOWN
 
 
