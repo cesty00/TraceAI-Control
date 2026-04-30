@@ -6,6 +6,7 @@ import argparse
 import html
 import re
 import zipfile
+from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from typing import Iterable
@@ -85,6 +86,8 @@ CASE_TYPE_LABELS = {
     "WMS_ONLY_PRODUCT": "produs fără flux de producție identificat",
     "UNKNOWN": "necunoscut / date insuficiente",
 }
+ORDER_TRACEABILITY_KEY = "order_traceability"
+MAX_EVIDENCE_ITEMS = 8
 
 
 def generate_minimal_docx_report(traceability_case: TraceabilityCase, output_path: str | Path) -> Path:
@@ -210,14 +213,21 @@ def build_case_type_interpretation(traceability_case: TraceabilityCase) -> list[
 
 def build_evidence_section(traceability_case: TraceabilityCase) -> list[str]:
     paragraphs = [paragraph("5. Dovezi folosite", style="Heading1")]
-    if traceability_case.evidence:
-        paragraphs.extend(
-            bullet_list(
-                [format_evidence(item.source_key, item.source_name, item.sheet_name, item.row_number, item.message) for item in traceability_case.evidence]
-            )
-        )
-    else:
-        paragraphs.append(paragraph("FARA DATE IDENTIFICATE"))
+    if not traceability_case.evidence:
+        return paragraphs + [paragraph("FARA DATE IDENTIFICATE")]
+    grouped: dict[tuple[str, str], int] = defaultdict(int)
+    samples: list[str] = []
+    for item in traceability_case.evidence:
+        grouped[(item.source_key, item.source_name)] += 1
+        if len(samples) < MAX_EVIDENCE_ITEMS:
+            samples.append(format_evidence(item.source_key, item.source_name, item.sheet_name, item.row_number, item.message))
+    paragraphs.append(paragraph("Rezumat dovezi", style="Heading2"))
+    paragraphs.extend(bullet_list([f"{source_key} / {source_name}: {count} rând(uri) relevante" for (source_key, source_name), count in sorted(grouped.items())]))
+    paragraphs.append(paragraph("Exemple de rânduri sursă", style="Heading2"))
+    paragraphs.extend(bullet_list(samples))
+    remaining = len(traceability_case.evidence) - len(samples)
+    if remaining > 0:
+        paragraphs.append(paragraph(f"... încă {remaining} rând(uri) de dovezi sunt păstrate în TraceabilityCase, dar nu sunt listate integral în raport pentru lizibilitate."))
     return paragraphs
 
 
@@ -236,8 +246,107 @@ def build_report_tables_section(traceability_case: TraceabilityCase) -> list[str
         paragraph("Tabelele de mai jos sunt randate exclusiv din TraceabilityCase. Report Engine nu citește fișierele sursă."),
     ]
     for table in report_tables_as_list(traceability_case.report_tables):
-        paragraphs.extend(build_report_table(table))
+        if table.key == ORDER_TRACEABILITY_KEY:
+            paragraphs.extend(build_order_traceability_report(table))
+        else:
+            paragraphs.extend(build_report_table(table))
     return paragraphs
+
+
+def build_order_traceability_report(table: TraceabilityReportTable) -> list[str]:
+    paragraphs = [paragraph(table.title, style="Heading2")]
+    if not table.rows:
+        return paragraphs + [paragraph(table.empty_message)]
+    paragraphs.append(paragraph("Secțiunea este grupată pe comandă de producție pentru lizibilitate. Livrările către terți se verifică pentru loturile de materie primă consumate."))
+    rows_by_order: dict[str, list[TraceabilityTableRow]] = defaultdict(list)
+    for row in table.rows:
+        order = value_or_missing(row.values.get("Comandă producție"))
+        rows_by_order[order].append(row)
+    for index, order in enumerate(sorted(rows_by_order), start=1):
+        rows = rows_by_order[order]
+        first = rows[0].values
+        paragraphs.append(paragraph(f"7.{index} Comanda producție {order}", style="Heading2"))
+        paragraphs.append(word_table(order_summary_table(order, first)))
+        paragraphs.extend(build_order_category_tables(rows))
+    return paragraphs
+
+
+def order_summary_table(order: str, values: dict[str, str]) -> TraceabilityReportTable:
+    return TraceabilityReportTable(
+        key="order_summary",
+        title=f"Comanda {order}",
+        columns=["Câmp", "Valoare"],
+        rows=[
+            metadata_row("Comandă producție", order),
+            metadata_row("Produs finit", values.get("Produs finit")),
+            metadata_row("Cantitate produs finit", join_quantity(values.get("Cantitate produs finit"), values.get("UM produs finit"))),
+            metadata_row("WMS production-out", values.get("WMS production-out")),
+            metadata_row("Livrare produs finit asociată", values.get("Livrare produs finit asociată")),
+        ],
+        empty_message="Nu există sumar pentru comanda de producție.",
+    )
+
+
+def build_order_category_tables(rows: list[TraceabilityTableRow]) -> list[str]:
+    by_category: dict[str, list[TraceabilityTableRow]] = defaultdict(list)
+    for row in rows:
+        category = value_or_missing(row.values.get("Categorie consum"))
+        by_category[category].append(row)
+    paragraphs: list[str] = []
+    category_order = ["Materie primă alimentară", "Ambalaj", "Auxiliar / gaz"]
+    for category in category_order:
+        category_rows = by_category.get(category, [])
+        if not category_rows:
+            continue
+        if category == "Materie primă alimentară":
+            paragraphs.append(paragraph("Materii prime", style="Heading2"))
+            paragraphs.append(word_table(compact_consumption_table("Materii prime", category_rows, include_third_party=True)))
+        elif category == "Ambalaj":
+            paragraphs.append(paragraph("Ambalaje", style="Heading2"))
+            paragraphs.append(word_table(compact_consumption_table("Ambalaje", category_rows, include_third_party=False)))
+        else:
+            paragraphs.append(paragraph("Materiale auxiliare / gaz", style="Heading2"))
+            paragraphs.append(word_table(compact_consumption_table("Materiale auxiliare / gaz", category_rows, include_third_party=False)))
+    other_rows = [row for category, category_rows in by_category.items() if category not in category_order for row in category_rows]
+    if other_rows:
+        paragraphs.append(paragraph("Alte consumuri", style="Heading2"))
+        paragraphs.append(word_table(compact_consumption_table("Alte consumuri", other_rows, include_third_party=True)))
+    return paragraphs
+
+
+def compact_consumption_table(title: str, rows: list[TraceabilityTableRow], include_third_party: bool) -> TraceabilityReportTable:
+    columns = ["Cod", "Lot", "Denumire", "Cantitate", "UM"]
+    if include_third_party:
+        columns.append("Livrări către terți")
+    compact_rows: list[TraceabilityTableRow] = []
+    for row in rows:
+        values = {
+            "Cod": row.values.get("Cod consum", ""),
+            "Lot": row.values.get("Lot consum", ""),
+            "Denumire": row.values.get("Denumire consum", ""),
+            "Cantitate": row.values.get("Cantitate consum", ""),
+            "UM": row.values.get("UM consum", ""),
+        }
+        if include_third_party:
+            values["Livrări către terți"] = row.values.get("Livrări consum către terți", "")
+        compact_rows.append(TraceabilityTableRow(values=values))
+    return TraceabilityReportTable(
+        key=f"order_{normalize_table_key(title)}",
+        title=title,
+        columns=columns,
+        rows=compact_rows,
+        empty_message=f"Nu au fost identificate rânduri pentru {title}.",
+    )
+
+
+def join_quantity(quantity: object, unit: object) -> str:
+    quantity_text = value_or_missing(quantity)
+    unit_text = value_or_missing(unit)
+    if quantity_text == "FARA DATE IDENTIFICATE":
+        return quantity_text
+    if unit_text == "FARA DATE IDENTIFICATE":
+        return quantity_text
+    return f"{quantity_text} {unit_text}"
 
 
 def build_preliminary_balance_section(traceability_case: TraceabilityCase) -> list[str]:
@@ -246,9 +355,10 @@ def build_preliminary_balance_section(traceability_case: TraceabilityCase) -> li
         paragraph("8. Bilanț preliminar", style="Heading1"),
         paragraph("Bilanțul preliminar este preluat din TraceabilityCase și este conservator. Nu se fac conversii automate de unități de măsură și nu se deduc fluxuri lipsă."),
     ]
-    if balance.messages:
+    messages = [message for message in balance.messages if not message.startswith("Trasabilitate pe comenzi de producție:")]
+    if messages:
         paragraphs.append(paragraph("Mesaje bilanț", style="Heading2"))
-        paragraphs.extend(bullet_list(balance.messages))
+        paragraphs.extend(bullet_list(messages))
     table = TraceabilityReportTable(
         key="preliminary_balance",
         title="Linii bilanț preliminar",
@@ -266,6 +376,7 @@ def build_preliminary_balance_section(traceability_case: TraceabilityCase) -> li
                 }
             )
             for line in balance.lines
+            if line.table_key != ORDER_TRACEABILITY_KEY
         ],
         empty_message="Nu există linii de bilanț preliminar calculate în TraceabilityCase.",
     )
@@ -432,7 +543,7 @@ def missing_data_messages(traceability_case: TraceabilityCase) -> list[str]:
     messages: list[str] = []
     if detect_product_name(traceability_case) == "FARA DATE IDENTIFICATE":
         messages.append("Denumire produs: FARA DATE IDENTIFICATE în TraceabilityCase.")
-    empty_tables = [table.title for table in report_tables_as_list(traceability_case.report_tables) if not table.rows]
+    empty_tables = [table.title for table in report_tables_as_list(traceability_case.report_tables) if not table.rows and table.key != ORDER_TRACEABILITY_KEY]
     messages.extend(f"{title}: FARA DATE IDENTIFICATE în TraceabilityCase." for title in empty_tables)
     if case_type == "FINISHED_PRODUCT" and not messages:
         messages.append("Nu au fost identificate secțiuni operaționale obligatorii fără date pentru produsul finit.")
