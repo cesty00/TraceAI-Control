@@ -91,6 +91,7 @@ def build_prd_production_rows(records: list[Any]) -> list[ReportRowPayload]:
         values = merged_values(record)
         code = value_by_alias(values, "pre_cod_articol", "PRE_Cod Articol")
         lot = value_by_alias(values, "pre_lot", "PRE_LOT")
+        name = value_by_alias(values, "pre_denumire_articol", "PRE_Denumire Articol")
         order = value_by_alias(values, "numar_comanda", "Numar Comanda")
         quantity = value_by_alias(values, "pre_cantitate_predare", "PRE_Cantitate Predare")
         unit = value_by_alias(values, "pre_u_m", "PRE_U.M.")
@@ -103,6 +104,7 @@ def build_prd_production_rows(records: list[Any]) -> list[ReportRowPayload]:
                 {
                     "Cod": code,
                     "Lot": lot,
+                    "Denumire": name,
                     "Comandă": order,
                     "Cantitate": quantity,
                     "UM": unit,
