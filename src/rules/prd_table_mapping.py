@@ -191,7 +191,7 @@ def build_prd_component_rows(records: list[Any], nomenclator: dict[str, str], ca
 
 
 def build_wms_delivery_rows(records: list[Any]) -> list[ReportRowPayload]:
-    buckets: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
+    buckets: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     for record in records:
         if record.source_key != "wms":
             continue
@@ -207,12 +207,15 @@ def build_wms_delivery_rows(records: list[Any]) -> list[ReportRowPayload]:
         client = value_by_alias(values, "partener", "Partener")
         unit = value_by_alias(values, "um", "UM")
         delivery_date = first_non_empty(value_by_alias(values, *DATE_ALIASES), MISSING)
-        key = (order, document, client, unit, delivery_date)
-        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record})
+        key = (order, document, client, unit)
+        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record, "dates": set()})
         bucket["quantity"] += quantity
+        if delivery_date != MISSING:
+            bucket["dates"].add(delivery_date)
     rows = []
-    for (order, document, client, unit, delivery_date), bucket in sorted(buckets.items()):
+    for (order, document, client, unit), bucket in sorted(buckets.items()):
         record = bucket["record"]
+        delivery_date = "; ".join(sorted(bucket["dates"])) if bucket["dates"] else MISSING
         rows.append(
             ReportRowPayload(
                 {
