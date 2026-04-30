@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict, deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -31,6 +31,7 @@ CATEGORY_LABELS = {
     "packaging": "Ambalaj",
     "auxiliary": "Auxiliar / gaz",
 }
+MISSING = "FARA DATE IDENTIFICATE"
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,7 @@ class SourceRow:
     row_number: int
     values: dict[str, str]
     original_values: dict[str, str]
+    code_lot_hints: dict[str, str] = field(default_factory=dict)
 
 
 def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
@@ -84,8 +86,8 @@ def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
                     finished_delivery_by_order,
                     None,
                     "",
-                    "FARA DATE IDENTIFICATE",
-                    "FARA DATE IDENTIFICATE",
+                    MISSING,
+                    MISSING,
                     production["record"],
                 )
             )
@@ -101,8 +103,8 @@ def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
                     finished_delivery_by_order,
                     component,
                     delivery_summary,
-                    component_receipts.get(component_key, "FARA DATE IDENTIFICATE"),
-                    component_stock.get(component_key, "FARA DATE IDENTIFICATE"),
+                    component_receipts.get(component_key, MISSING),
+                    component_stock.get(component_key, MISSING),
                     component["record"],
                 )
             )
@@ -125,17 +127,17 @@ def build_payload(
         "Produs finit": production["name"],
         "Cantitate produs finit": production["quantity"],
         "UM produs finit": production["unit"],
-        "WMS production-out": production_out_by_order.get(order, "FARA DATE IDENTIFICATE"),
-        "Livrare produs finit asociată": finished_delivery_by_order.get(order, "FARA DATE IDENTIFICATE"),
-        "Categorie consum": CATEGORY_LABELS.get(component["category"], component["category"]) if component else "FARA DATE IDENTIFICATE",
-        "Cod consum": component["code"] if component else "FARA DATE IDENTIFICATE",
-        "Lot consum": component["lot"] if component else "FARA DATE IDENTIFICATE",
-        "Denumire consum": component["name"] if component else "FARA DATE IDENTIFICATE",
-        "Cantitate consum": component["quantity"] if component else "FARA DATE IDENTIFICATE",
-        "UM consum": component["unit"] if component else "FARA DATE IDENTIFICATE",
+        "WMS production-out": production_out_by_order.get(order, MISSING),
+        "Livrare produs finit asociată": finished_delivery_by_order.get(order, MISSING),
+        "Categorie consum": CATEGORY_LABELS.get(component["category"], component["category"]) if component else MISSING,
+        "Cod consum": component["code"] if component else MISSING,
+        "Lot consum": component["lot"] if component else MISSING,
+        "Denumire consum": component["name"] if component else MISSING,
+        "Cantitate consum": component["quantity"] if component else MISSING,
+        "UM consum": component["unit"] if component else MISSING,
         "Livrări consum către terți": third_party_summary or "NU",
-        "Recepții WMS consum": receipt_summary or "FARA DATE IDENTIFICATE",
-        "Stoc consum la moment": stock_summary or "FARA DATE IDENTIFICATE",
+        "Recepții WMS consum": receipt_summary or MISSING,
+        "Stoc consum la moment": stock_summary or MISSING,
     }
     return ReportRowPayload(values, record.source_key, record.source_name, record.sheet_name, record.row_number)
 
@@ -154,7 +156,7 @@ def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list
                 continue
             if normalize_match_value(value_by_alias(merged, "pre_lot", "PRE_LOT")) != normalize_match_value(product_lot):
                 continue
-            rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values))
+            rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values, dict(getattr(row, "code_lot_hints", {}) or {})))
     return rows
 
 
@@ -164,7 +166,7 @@ def list_source_rows(dataset: Any, source_key: str) -> list[SourceRow]:
         if table.source_key != source_key:
             continue
         for row in table.rows:
-            rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, dict(row.values), dict(getattr(row, "original_values", {}) or {})))
+            rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, dict(row.values), dict(getattr(row, "original_values", {}) or {}), dict(getattr(row, "code_lot_hints", {}) or {})))
     return rows
 
 
@@ -224,6 +226,14 @@ def build_components_by_order(prd_rows: list[SourceRow], nomenclator: dict[str, 
 
 def component_keys(component_rows: dict[str, list[dict[str, Any]]]) -> set[tuple[str, str]]:
     return {(component["code"], component["lot"]) for components in component_rows.values() for component in components}
+
+
+def normalized_component_key(code: object, lot: object) -> tuple[str, str]:
+    return normalize_match_value(code), normalize_match_value(lot)
+
+
+def component_key_lookup(component_rows: dict[str, list[dict[str, Any]]]) -> dict[tuple[str, str], tuple[str, str]]:
+    return {normalized_component_key(code, lot): (code, lot) for code, lot in component_keys(component_rows)}
 
 
 def build_wms_production_out_by_order(wms_rows: list[SourceRow], product_code: str, product_lot: str) -> dict[str, str]:
@@ -352,19 +362,33 @@ def format_receipt_example(document_in: str, document_order: str, supplier: str,
 
 
 def build_component_stock_index(stock_rows: list[SourceRow], component_rows: dict[str, list[dict[str, Any]]]) -> dict[tuple[str, str], str]:
-    keys = component_keys(component_rows)
-    totals: dict[tuple[str, str], dict[tuple[str, str], Decimal]] = {key: defaultdict(lambda: Decimal("0")) for key in keys}
+    lookup = component_key_lookup(component_rows)
+    totals: dict[tuple[str, str], dict[tuple[str, str], Decimal]] = {key: defaultdict(lambda: Decimal("0")) for key in component_keys(component_rows)}
     locations: dict[tuple[str, str], set[str]] = defaultdict(set)
     for row in stock_rows:
         values = merged_values(row)
-        key = (value_by_alias(values, "cod_articol", "cod", "Cod articol", "Cod"), value_by_alias(values, "lot", "Lot"))
-        if key not in totals:
+        code = first_non_empty(
+            value_by_alias(values, "cod_articol", "cod", "cod_produs", "articol_cod", "item_code", "sku", "Cod articol", "Cod"),
+            row.code_lot_hints.get("code", ""),
+        )
+        lot = first_non_empty(
+            value_by_alias(values, "lot", "lot_articol", "lot_produs", "batch", "batch_no", "Lot"),
+            row.code_lot_hints.get("lot", ""),
+        )
+        key = lookup.get(normalized_component_key(code, lot))
+        if key is None:
             continue
-        quantity = parse_decimal(value_by_alias(values, "stoc", "Stoc", "cantitate_stoc"))
+        quantity = parse_decimal(
+            value_by_alias(
+                values,
+                "stoc", "stoc_la_moment", "stoc_disponibil", "cantitate_stoc", "cantitate", "cantitate_disponibila",
+                "sold", "sold_final", "qty", "quantity", "Stoc", "Cantitate",
+            )
+        )
         if quantity is None:
             continue
-        unit = value_by_alias(values, "um", "u_m", "UM")
-        location = value_by_alias(values, "locatie", "locație", "depozit", "magazie", "Locație")
+        unit = first_non_empty(value_by_alias(values, "um", "u_m", "unitate_masura", "unit", "UM", "U.M."), "")
+        location = value_by_alias(values, "locatie", "locație", "depozit", "gestiune", "magazie", "warehouse", "location", "Locație")
         totals[key][(unit, location)] += quantity
         if location:
             locations[key].add(location)
@@ -376,7 +400,7 @@ def build_component_stock_index(stock_rows: list[SourceRow], component_rows: dic
         unit_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
         for (unit, _location), quantity in stock_by_unit_location.items():
             unit_totals[unit] += quantity
-        stock_text = ", ".join(f"{format_decimal(quantity)} {unit}" for unit, quantity in sorted(unit_totals.items()))
+        stock_text = ", ".join(f"{format_decimal(quantity)} {unit}".strip() for unit, quantity in sorted(unit_totals.items()))
         location_text = ", ".join(sorted(locations[key])) if locations[key] else "fără locație"
         result[key] = f"{stock_text}; locații: {location_text}"
     return result
@@ -418,6 +442,14 @@ def merged_values(record: Any) -> dict[str, str]:
     for key, value in (getattr(record, "original_values", {}) or {}).items():
         values.setdefault(key, value)
     return values
+
+
+def first_non_empty(*values: object) -> str:
+    for value in values:
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
 
 
 def value_by_alias(values: dict[str, str], *aliases: str) -> str:
