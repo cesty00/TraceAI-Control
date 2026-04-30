@@ -204,15 +204,16 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
 
 
 def map_downstream_delivery(delivery: FinishedProductDelivery) -> ChecklistDownstreamDelivery:
+    client, address = split_client_and_address(delivery.client)
     return ChecklistDownstreamDelivery(
-        client=delivery.client,
-        address=parse_client_address(delivery.client),
+        client=client,
+        address=address,
         delivery_date=delivery.delivery_date,
         delivered_quantity=join_quantity(delivery.quantity, delivery.um),
         delivery_document_type="WMS document livrare",
         delivery_document_number=delivery.document_number,
         wms_order=delivery.order_number,
-        observation="Document livrare preluat din WMS; data/adresa se completează dacă există în sursă.",
+        observation="Document livrare preluat din WMS.",
     )
 
 
@@ -303,24 +304,31 @@ def parse_receipt_summary(summary: str) -> dict[str, str]:
         return empty_receipt_fields()
     first_example = summary.split(";", 1)[1].strip() if ";" in summary else summary.strip()
     first_example = first_example.split(";", 1)[0].strip()
-    # Expected examples from WMS summaries look like:
+    # Supported examples:
     # 300005747/Fish Invest LTD: 5000 Kilogram
-    # 7162847/DUNAPACK RAMBOX PRODIMPEX SRL: 4000 BUCATA
-    document = first_example
-    supplier = MISSING
-    if ":" in document:
-        document = document.split(":", 1)[0].strip()
-    if "/" in document:
-        document_number, supplier = document.split("/", 1)
-    else:
-        document_number = document
+    # 300005747/Fish Invest LTD/2026-04-10: 5000 Kilogram
+    # 300005747/Fish Invest LTD | data 2026-04-10: 5000 Kilogram
+    document = first_example.split(":", 1)[0].strip() if ":" in first_example else first_example
+    document = document.replace(" | data ", "/")
+    parts = [part.strip() for part in document.split("/") if part.strip()]
+    document_number = parts[0] if parts else MISSING
+    supplier = parts[1] if len(parts) >= 2 else MISSING
+    detected_date = first_date(parts[2:]) if len(parts) >= 3 else MISSING
     return {
-        "receipt_date": MISSING,
-        "supplier": supplier.strip() or MISSING,
+        "receipt_date": detected_date,
+        "supplier": supplier or MISSING,
         "document_type": "WMS recepție",
-        "document_number": document_number.strip() or MISSING,
-        "document_date": MISSING,
+        "document_number": document_number or MISSING,
+        "document_date": detected_date,
     }
+
+
+def first_date(values: list[str]) -> str:
+    for value_text in values:
+        match = re.search(r"\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b|\b\d{4}-\d{1,2}-\d{1,2}\b", value_text)
+        if match:
+            return match.group(0)
+    return MISSING
 
 
 def empty_receipt_fields() -> dict[str, str]:
@@ -333,12 +341,23 @@ def empty_receipt_fields() -> dict[str, str]:
     }
 
 
-def parse_client_address(client: str) -> str:
+def split_client_and_address(client: str) -> tuple[str, str]:
     if not client or client == MISSING:
-        return MISSING
-    if " - " in client:
-        return client.split(" - ", 1)[1].strip() or MISSING
-    return MISSING
+        return MISSING, MISSING
+    text = client.strip()
+    separators = ["_-", " - ", "_", "-"]
+    for separator in separators:
+        if separator in text:
+            left, right = text.split(separator, 1)
+            left = left.strip(" _-")
+            right = right.strip(" _-")
+            if right:
+                return left or text, right
+    return text, MISSING
+
+
+def parse_client_address(client: str) -> str:
+    return split_client_and_address(client)[1]
 
 
 def join_quantity(quantity: object, unit: object) -> str:
