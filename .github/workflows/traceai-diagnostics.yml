@@ -179,6 +179,17 @@ jobs:
           if (-not $lot) { $lot = "105.26" }
           python samples\extract_reference_traceability.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_traceability.md --json-output diagnostics\reference_traceability.json 2>&1 | Tee-Object -FilePath diagnostics\reference-extraction-output.txt
 
+      - name: Compare app TraceabilityCase with independent reference
+        if: steps.source-dir.outputs.selected != ''
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $code = "${{ github.event.inputs.code }}"
+          $lot = "${{ github.event.inputs.lot }}"
+          if (-not $code) { $code = "DS099903883" }
+          if (-not $lot) { $lot = "105.26" }
+          python samples\compare_traceability_reference.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_comparison.md --json-output diagnostics\reference_comparison.json 2>&1 | Tee-Object -FilePath diagnostics\reference-comparison-output.txt
+
       - name: Generate real diagnostic DOCX when data is available
         if: steps.source-dir.outputs.selected != ''
         continue-on-error: true
@@ -210,10 +221,12 @@ jobs:
           $summary += "- multi_case_discovery.md/json, representative cases across PRD and WMS"
           $summary += "- reference_case_matrix.md/json, selected multi-case reference outputs"
           $summary += "- reference_traceability.md/json, if extraction succeeded"
+          $summary += "- reference_comparison.md/json, app vs independent reference comparison"
           $summary += "- real_traceability_report.docx, if DOCX generation succeeded"
           $summary += "- multi-case-discovery-output.txt"
           $summary += "- reference-case-matrix-output.txt"
           $summary += "- reference-extraction-output.txt"
+          $summary += "- reference-comparison-output.txt"
           $summary += "- real-docx-output.txt"
           $summary += "- source-directory.txt"
           $summary += "- source-files-found.txt"
@@ -242,6 +255,9 @@ jobs:
             diagnostics/reference-case-matrix-output.txt
             diagnostics/reference_traceability.md
             diagnostics/reference_traceability.json
+            diagnostics/reference_comparison.md
+            diagnostics/reference_comparison.json
+            diagnostics/reference-comparison-output.txt
             diagnostics/real_traceability_report.docx
             diagnostics/reference-extraction-output.txt
             diagnostics/real-docx-output.txt
