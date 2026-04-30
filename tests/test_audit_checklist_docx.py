@@ -4,6 +4,7 @@ from pathlib import Path
 from src.audit.audit_checklist_report import build_audit_checklist_report
 from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.report.audit_checklist_docx import (
+    AuditReportPolicy,
     build_document_xml,
     generate_audit_checklist_docx_report,
 )
@@ -63,7 +64,14 @@ def test_audit_checklist_docx_renders_split_receipt_fields_when_available() -> N
     assert "WMS recepție" in xml
     assert "300005747" in xml
     assert "Fish Invest LTD" in xml
-    assert "125 Kilogram; locații: Depozit Principal" in xml
+    assert "125 Kilogram; loc. Depozit Principal" in xml
+
+
+def test_audit_report_policy_compacts_stock_location_label() -> None:
+    policy = AuditReportPolicy()
+
+    assert policy.stock("125 Kilogram; locații: Depozit Principal") == "125 Kilogram; loc. Depozit Principal"
+    assert policy.stock("FARA DATE IDENTIFICATE") == "FARA DATE IDENTIFICATE"
 
 
 def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) -> None:
