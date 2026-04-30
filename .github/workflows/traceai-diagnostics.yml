@@ -62,14 +62,33 @@ jobs:
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           python samples\demo_docx_runner.py --output diagnostics\demo_traceability_report.docx
 
-      - name: Locate source directory
+      - name: Locate and normalize real source directory
         id: source-dir
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force diagnostics | Out-Null
           $manual = "${{ github.event.inputs.source_directory }}"
-          $candidates = @()
-          if ($manual -and (Test-Path $manual)) { $candidates += $manual }
-          $candidates += @(
+
+          function Find-FileInDirectory($directory, $names) {
+            foreach ($name in $names) {
+              $path = Join-Path $directory $name
+              if (Test-Path $path) { return $path }
+            }
+            return ""
+          }
+
+          function Try-UseDirectory($directory) {
+            if (-not $directory -or -not (Test-Path $directory)) { return $false }
+            $wms = Find-FileInDirectory $directory @("trasabilitate_wms.csv")
+            $prd = Find-FileInDirectory $directory @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")
+            $nomenclator = Find-FileInDirectory $directory @("nomenclator.xlsx")
+            $stock = Find-FileInDirectory $directory @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
+            return [bool]($wms -and $prd -and $nomenclator -and $stock)
+          }
+
+          $candidateDirectories = @()
+          if ($manual -and (Test-Path $manual)) { $candidateDirectories += (Resolve-Path $manual).Path }
+          $candidateDirectories += @(
             "data",
             "date",
             "input",
@@ -82,27 +101,47 @@ jobs:
             "tests\data",
             "tests\fixtures",
             "fixtures"
+          ) | Where-Object { Test-Path $_ } | ForEach-Object { (Resolve-Path $_).Path }
+
+          $root = (Get-Location).Path
+          $interestingNames = @(
+            "trasabilitate_wms.csv",
+            "rapoarte productie.csv",
+            "raport_productie.csv",
+            "rapoarte_productie.csv",
+            "nomenclator.xlsx",
+            "stoc la moment original.xlsx",
+            "stoc_la_moment_original.xlsx"
           )
+          $foundFiles = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $interestingNames -contains $_.Name } |
+            Select-Object FullName, DirectoryName, Name
+          $foundFiles | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found.txt -Encoding UTF8
+          $candidateDirectories += ($foundFiles | Select-Object -ExpandProperty DirectoryName -Unique)
+          $candidateDirectories = $candidateDirectories | Where-Object { $_ } | Select-Object -Unique
 
           $selected = ""
-          foreach ($candidate in $candidates) {
-            if (-not (Test-Path $candidate)) { continue }
-            $hasWms = Test-Path (Join-Path $candidate "trasabilitate_wms.csv")
-            $hasPrd = Test-Path (Join-Path $candidate "rapoarte productie.csv")
-            $hasNomenclator = Test-Path (Join-Path $candidate "nomenclator.xlsx")
-            $hasStock = Test-Path (Join-Path $candidate "stoc la moment original.xlsx")
-            if ($hasWms -and $hasPrd -and $hasNomenclator -and $hasStock) {
+          foreach ($candidate in $candidateDirectories) {
+            if (Try-UseDirectory $candidate) {
               $selected = $candidate
               break
             }
           }
 
-          "selected=$selected" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $normalized = ""
           if ($selected) {
-            "Selected source directory: $selected" | Tee-Object -FilePath diagnostics\source-directory.txt
+            $normalized = Join-Path $root "diagnostics\real-source"
+            New-Item -ItemType Directory -Force $normalized | Out-Null
+            Copy-Item (Find-FileInDirectory $selected @("trasabilitate_wms.csv")) (Join-Path $normalized "trasabilitate_wms.csv") -Force
+            Copy-Item (Find-FileInDirectory $selected @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")) (Join-Path $normalized "rapoarte productie.csv") -Force
+            Copy-Item (Find-FileInDirectory $selected @("nomenclator.xlsx")) (Join-Path $normalized "nomenclator.xlsx") -Force
+            Copy-Item (Find-FileInDirectory $selected @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")) (Join-Path $normalized "stoc la moment original.xlsx") -Force
+            "Selected source directory: $selected`nNormalized source directory: $normalized" | Tee-Object -FilePath diagnostics\source-directory.txt
           } else {
-            "No complete source directory found. Provide workflow_dispatch input source_directory or commit files with official names." | Tee-Object -FilePath diagnostics\source-directory.txt
+            "No complete source directory found. The workflow searched recursively for official and underscore filename variants." | Tee-Object -FilePath diagnostics\source-directory.txt
           }
+
+          "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Generate real diagnostic DOCX when data is available
         if: steps.source-dir.outputs.selected != ''
@@ -132,13 +171,15 @@ jobs:
           - pytest-output.txt
           - demo_traceability_report.docx
           - real_traceability_report.docx, only if a complete source directory was found
+          - source-directory.txt
+          - source-files-found.txt
 
           ## Source data rule
-          Expected file names:
+          The workflow accepts these source names and normalizes them at runtime:
           - trasabilitate_wms.csv
-          - rapoarte productie.csv
+          - rapoarte productie.csv OR raport_productie.csv OR rapoarte_productie.csv
           - nomenclator.xlsx
-          - stoc la moment original.xlsx
+          - stoc la moment original.xlsx OR stoc_la_moment_original.xlsx
           "@ | Set-Content -Path diagnostics\diagnostic-summary.md -Encoding UTF8
 
       - name: Upload diagnostics artifacts
