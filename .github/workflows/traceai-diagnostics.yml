@@ -161,6 +161,13 @@ jobs:
         run: |
           python samples\discover_traceability_cases.py "${{ steps.source-dir.outputs.selected }}" --output diagnostics\multi_case_discovery.md --json-output diagnostics\multi_case_discovery.json --limit 15 2>&1 | Tee-Object -FilePath diagnostics\multi-case-discovery-output.txt
 
+      - name: Generate multi-case reference matrix
+        if: steps.source-dir.outputs.selected != ''
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          python samples\generate_reference_case_matrix.py "${{ steps.source-dir.outputs.selected }}" --output diagnostics\reference_case_matrix.md --json-output diagnostics\reference_case_matrix.json --finished-limit 4 --component-limit 4 --wms-only-limit 4 2>&1 | Tee-Object -FilePath diagnostics\reference-case-matrix-output.txt
+
       - name: Generate independent reference extraction when data is available
         if: steps.source-dir.outputs.selected != ''
         continue-on-error: true
@@ -201,9 +208,11 @@ jobs:
           $summary += "- pytest-output.txt"
           $summary += "- demo_traceability_report.docx"
           $summary += "- multi_case_discovery.md/json, representative cases across PRD and WMS"
+          $summary += "- reference_case_matrix.md/json, selected multi-case reference outputs"
           $summary += "- reference_traceability.md/json, if extraction succeeded"
           $summary += "- real_traceability_report.docx, if DOCX generation succeeded"
           $summary += "- multi-case-discovery-output.txt"
+          $summary += "- reference-case-matrix-output.txt"
           $summary += "- reference-extraction-output.txt"
           $summary += "- real-docx-output.txt"
           $summary += "- source-directory.txt"
@@ -228,6 +237,9 @@ jobs:
             diagnostics/multi_case_discovery.md
             diagnostics/multi_case_discovery.json
             diagnostics/multi-case-discovery-output.txt
+            diagnostics/reference_case_matrix.md
+            diagnostics/reference_case_matrix.json
+            diagnostics/reference-case-matrix-output.txt
             diagnostics/reference_traceability.md
             diagnostics/reference_traceability.json
             diagnostics/real_traceability_report.docx
