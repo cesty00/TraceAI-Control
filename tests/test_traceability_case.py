@@ -60,6 +60,7 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
     assert traceability_case["sections"]["selected_record_count"] == 1
     assert traceability_case["report_tables"]["production"]["title"] == "Producția lotului"
     assert traceability_case["report_tables"]["stock"]["empty_message"]
+    assert "order_traceability" in traceability_case["report_tables"]
     assert "preliminary_balance" in traceability_case
 
 
@@ -74,6 +75,7 @@ def test_build_empty_report_tables_contains_expected_sections_in_display_order()
         "wms_receipts",
         "prd_consumptions",
         "stock",
+        "order_traceability",
     ]
     assert all(table.columns for table in tables)
     assert all(table.empty_message for table in tables)
@@ -199,7 +201,7 @@ def test_preliminary_balance_groups_clear_numeric_values_by_unit_without_convers
         ],
         empty_message="Nu au fost identificate date detaliate de producție în TraceabilityCase.",
     )
-    report_tables = type(tables)(production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, tables.stock)
+    report_tables = type(tables)(production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, tables.stock, tables.order_traceability)
     balance = build_preliminary_balance(report_tables)
     totals = {(line.table_key, line.unit): line.total for line in balance.lines}
     assert totals[("production", "kg")] == "12.5"
@@ -221,7 +223,7 @@ def test_preliminary_balance_skips_unclear_values_and_reports_message() -> None:
         ],
         empty_message="Articolul nu apare explicit în stocul la moment în TraceabilityCase.",
     )
-    report_tables = type(tables)(tables.production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, stock)
+    report_tables = type(tables)(tables.production, tables.finished_goods_deliveries, tables.raw_materials, tables.packaging, tables.auxiliaries_gas, tables.wms_receipts, tables.prd_consumptions, stock, tables.order_traceability)
     balance = build_preliminary_balance(report_tables)
     assert balance.lines[0].total == "5"
     assert balance.lines[0].skipped_row_count == 3
