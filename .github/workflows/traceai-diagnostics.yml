@@ -154,6 +154,13 @@ jobs:
           $sourceInfo | Set-Content -Path diagnostics\source-directory.txt -Encoding UTF8
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
+      - name: Discover representative traceability cases
+        if: steps.source-dir.outputs.selected != ''
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          python samples\discover_traceability_cases.py "${{ steps.source-dir.outputs.selected }}" --output diagnostics\multi_case_discovery.md --json-output diagnostics\multi_case_discovery.json --limit 15 2>&1 | Tee-Object -FilePath diagnostics\multi-case-discovery-output.txt
+
       - name: Generate independent reference extraction when data is available
         if: steps.source-dir.outputs.selected != ''
         continue-on-error: true
@@ -193,8 +200,10 @@ jobs:
           $summary += "## Artifacts"
           $summary += "- pytest-output.txt"
           $summary += "- demo_traceability_report.docx"
+          $summary += "- multi_case_discovery.md/json, representative cases across PRD and WMS"
           $summary += "- reference_traceability.md/json, if extraction succeeded"
           $summary += "- real_traceability_report.docx, if DOCX generation succeeded"
+          $summary += "- multi-case-discovery-output.txt"
           $summary += "- reference-extraction-output.txt"
           $summary += "- real-docx-output.txt"
           $summary += "- source-directory.txt"
@@ -216,6 +225,9 @@ jobs:
           path: |
             diagnostics/pytest-output.txt
             diagnostics/demo_traceability_report.docx
+            diagnostics/multi_case_discovery.md
+            diagnostics/multi_case_discovery.json
+            diagnostics/multi-case-discovery-output.txt
             diagnostics/reference_traceability.md
             diagnostics/reference_traceability.json
             diagnostics/real_traceability_report.docx
