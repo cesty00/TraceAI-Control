@@ -1,325 +1,437 @@
-# CHECKPOINT — TraceAI Control Modul Trasabilitate
+# CHECKPOINT — TraceAI Control / Audit Checklist Report & UI JSON
 
-Data checkpoint: 2026-04-29
+Data checkpoint: 2026-04-30
 
-## Status general
-
-Proiectul este în repo-ul:
+## Repo
 
 ```text
 cesty00/TraceAI-Control
 ```
 
-Stadiul curent este:
+## Starea curentă pe scurt
+
+Am trecut de la raportul DOCX tehnic la un flux audit checklist coerent, testat și pregătit pentru UI:
 
 ```text
-Faza 0 — Documentație și arhitectură inițială: finalizată
-Faza 1 — Schelet repo: finalizată
-Faza 2 — Core Engine: implementată tehnic v1
-Faza 3 — Rules Engine: implementată tehnic v1
-Faza 4 — TraceabilityCase: contract + report_tables + populare controlată + reguli clasificare + bilanț preliminar conservator implementate
-Faza 5 — Report Engine DOCX: implementată tehnic v1 narativ + tabele Word reale + șablon profesional minimal + bilanț preliminar randat
-Faza 5.1 — Flux E2E controlat DOCX: implementat tehnic
-Faza 5.2 — Runner demonstrativ DOCX controlat: implementat tehnic + test automat dedicat + documentație de utilizare
-Faza 5.3 — README principal sincronizat cu statusul curent și runnerul demonstrativ
-Faza 6.0 — Contract minim UI -> engine: definit și documentat
-Faza 6.1 — Funcție UI de orchestrare testabilă: implementată tehnic + documentată
-Faza 6.2 — CLI/UI shell minimal peste orchestrator: implementat tehnic + testat + documentat
-Faza 6.3 — UI vizual minimal peste orchestrator: implementat tehnic + testat + documentat
-Faza 7.0 — Pregătire installer Windows: script PyInstaller + documentație integrate
-Faza 7.1 — Script Windows build rafinat: entry point explicit + verificare înainte de build
-Faza 7.2 — Verificare build Windows: script PowerShell + documentație integrate
-Faza 7.3 — Pregătire installer Inno Setup: script .iss + build PowerShell + documentație integrate
-Faza 7.4 — Checklist validare Windows: integrat
-Faza 7.5 — Șablon rezultat validare Windows: integrat
-Faza 7.6 — Issue GitHub validare Windows reală: #37 deschis și documentat
-Faza 7.7 — GitHub Actions Windows installer artifact: workflow integrat
-Faza 7.8 — Installer Windows rulat de utilizator și raport real generat pentru DS099903883 / 105.26
-Faza 5.4 — Randare DOCX tabele cu lookup normalizat pentru coloane: integrată parțial
-Installer Windows complet: funcțional pentru generare raport, dar validarea formală #37 rămâne de completat
+surse reale
+ -> TraceabilityCase
+ -> AuditTraceabilityReport
+ -> AuditChecklistReport
+ -> DOCX audit checklist
+ -> JSON UI audit checklist
 ```
 
-## Decizie principală
+Decizia critică validată: **DOCX-ul și interfața trebuie să consume același model audit (`AuditChecklistReport`)**, nu să reconstruiască separat datele.
 
-UI-ul vizual există doar ca strat peste orchestrator. Installerul, verificarea buildului, workflow-ul GitHub Actions și documentele de validare nu introduc logică de business.
-
-Raportul real pentru `DS099903883 / 105.26` confirmă că aplicația instalată poate genera DOCX, iar bilanțul preliminar este prezent în raport.
-
-## Rezultat test real utilizator — DS099903883 / 105.26
-
-Utilizatorul a rulat aplicația instalată pe o mașină Windows reală și a generat raport DOCX pentru:
+## Ultimul commit creat înainte de pauză
 
 ```text
-Cod articol: DS099903883
-Lot: 105.26
+da1ecc2dfbeeb91c00e49b46cc1edf2d4ea438ae
+Upload audit checklist UI JSON in diagnostics
 ```
 
-Raportul generat conține:
+Acest commit leagă JSON-ul UI în workflow-ul `TraceAI Diagnostics` ca artifact separat:
 
 ```text
-Tip caz: WMS_ONLY_PRODUCT
-Status validare Core: INVALID
-Număr înregistrări selectate: 29
-Surse utilizate: WMS
-Bilanț preliminar prezent
+diagnostics/real_audit_checklist_ui.json
+diagnostics/real-audit-checklist-ui-json-output.txt
 ```
 
-Bilanțul preliminar vizibil în raport:
+## Ultimul diagnostic verde confirmat
+
+Commit verificat:
 
 ```text
-Livrări produs finit: -734 Kilogram
-Ambalaje: 1017 Kilogram
-Recepții WMS: 1919 Kilogram
+a2b7f514e01be75c3b65dba4d6acc09f708accd5
+Fix audit checklist UI JSON expected fixture sources
 ```
 
-După corecția `src/report/docx_minimal.py`, tabelele DOCX au început să afișeze valori reale din WMS:
+Rezultat:
 
 ```text
-Livrări produs finit:
-WME111147 / 38748 / -33 Kilogram
-WME111147 / 38748 / -176 Kilogram
-WME111146 / 38760 / -74 Kilogram
-WME111148 / 38770 / -109 Kilogram
-
-Recepții WMS:
-M31__F619CF60 / 168 Kilogram
-M31__F619CF60 / 74 Kilogram
-M9__28FD80CE / 209 Kilogram
-M9__212C98D2 / 242 Kilogram
+66 passed in 0.72s
+reference_comparison.md = PASS
 ```
 
-Mapping WMS este îmbunătățit parțial, dar nu este complet.
-
-Câmpuri încă incomplete în raport:
+Comparator independent pentru `DS099903883 / 105.26`:
 
 ```text
-Client
-Furnizor
-Document intrare
-unele coduri / denumiri pentru ambalaje
+Status: PASS
+production_order_count: PASS
+raw_material_count: PASS
+packaging_count: PASS
+auxiliary_count: PASS
+delivery_count: PASS
+production_totals: PASS
+raw_material_totals: PASS
+packaging_totals: PASS
+auxiliary_totals: PASS
+delivery_totals: PASS
 ```
 
-## Ordinea proiectului
+Surse detectate corect în diagnostic:
 
 ```text
-Documentație
-Core Engine
-Rules Engine
-TraceabilityCase
-Teste automate
-Report Engine DOCX
-Flux E2E controlat
-Runner demonstrativ DOCX
-Documentație runner demonstrativ
-README principal sincronizat
-Contract UI -> engine
-Funcție UI de orchestrare testabilă
-CLI/UI shell minimal
-UI vizual minimal
-Pregătire installer Windows
-Rafinare script Windows build
-Verificare build Windows
-Pregătire installer Inno Setup
-Checklist validare Windows
-Șablon rezultat validare Windows
-Issue GitHub validare Windows reală
-Workflow GitHub Actions pentru artifact installer
-Test real utilizator pe Windows
-Îmbunătățire mapping WMS în DOCX
-Validare formală #37
-Icon / semnare
+WMS: trasabilitate_wms.csv extras din trasabilitate_wms.zip
+PRD: raport_productie.csv
+Nomenclator: nomenclator.xlsx
+Stock: stoc_la_moment_original.xlsx
 ```
 
-## Reguli critice validate
+## Diagnostic care trebuie rulat la reluare
 
-1. Gazul ALISOL este auxiliar / consumabil tehnologic.
-2. Gazul nu intră niciodată la materii prime alimentare.
-3. Unitățile de măsură nu se convertesc automat.
-4. Dacă o secțiune nu are date, raportul trebuie să spună explicit acest lucru.
-5. Raportul DOCX trebuie să fie narativ și auditabil, nu un Excel copiat în Word.
-6. DOCX-ul se generează din TraceabilityCase, nu direct din fișiere.
-7. UI-ul nu conține logică de business.
-8. Bilanțul preliminar este conservator și nu deduce fluxuri lipsă.
-9. Fluxul E2E controlat folosește date sintetice de test, nu UI și nu fișiere operaționale reale.
-10. Runnerul demonstrativ folosește dataset sintetic controlat și nu schimbă regulile de business.
-11. Documentația runnerului explică explicit că demo-ul nu citește surse operaționale reale.
-12. README.md principal reflectă statusul tehnic curent și nu mai conține status vechi de pre-cod.
-13. Contractul UI -> engine limitează UI-ul la colectare input, apel engine și afișare succes/eroare.
-14. Funcția UI de orchestrare nu citește direct sursele și nu conține logică de business.
-15. Documentația UI explică explicit `UiGenerationRequest`, `UiGenerationResult` și `generate_report_from_ui_request()`.
-16. CLI/UI shell-ul minimal apelează doar orchestratorul și nu conține logică de business.
-17. UI-ul vizual minimal apelează doar orchestratorul și nu conține logică de business.
-18. Scriptul Windows build pornește de la UI-ul vizual minimal și nu schimbă engine-ul.
-19. Scriptul Windows build folosește entry point explicit `src\\ui\\visual.py` și verifică existența lui înainte de build.
-20. Scriptul de verificare Windows build verifică doar artefactul rezultat și nu pornește automat UI-ul / engine-ul.
-21. Scriptul Inno Setup împachetează executabilul PyInstaller existent și nu introduce logică de business.
-22. Checklistul de validare Windows definește pașii reali de acceptare fără workaround-uri în UI sau installer.
-23. Șablonul rezultatului de validare documentează verdictul ACCEPTED / REJECTED fără a marca validarea ca efectuată.
-24. Issue-ul #37 urmărește validarea reală Windows fără a marca validarea formală ca finalizată.
-25. Workflow-ul GitHub Actions construiește artifactul installer pe runner Windows și nu marchează validarea reală ca finalizată.
-26. Report Engine citește în continuare doar din TraceabilityCase; lookup-ul normalizat al coloanelor este randare, nu business logic.
-
-## Structura repo la checkpoint
+Primul lucru după pauză:
 
 ```text
-TraceAI-Control/
-  README.md
-  CHECKPOINT.md
-  .github/
-    workflows/
-      windows-installer.yml
-  docs/
-    UI_ENGINE_CONTRACT.md
-  installer/
-    windows/
-      README.md
-      TraceAI-Control.iss
-      VALIDATION_CHECKLIST.md
-      VALIDATION_RESULT_TEMPLATE.md
-      build_inno_setup.ps1
-      build_windows.ps1
-      verify_windows_build.ps1
-  src/
-    core/
-    rules/
-    report/
-      docx_minimal.py
-    ui/
-      README.md
-      __init__.py
-      cli.py
-      orchestrator.py
-      visual.py
-  tests/
-    README.md
-    test_source_inventory.py
-    test_normalized_dataset.py
-    test_dataset_validation.py
-    test_record_selection.py
-    test_run_pipeline.py
-    test_case_type_detection.py
-    test_run_rules_pipeline.py
-    test_traceability_case.py
-    test_run_traceability_case.py
-    test_docx_minimal.py
-    test_e2e_docx_controlled_flow.py
-    test_demo_docx_runner.py
-    test_ui_orchestrator.py
-    test_ui_cli.py
-    test_ui_visual.py
-  samples/
-    README.md
-    demo_docx_runner.py
+Rulează TraceAI Diagnostics pe commitul:
+da1ecc2dfbeeb91c00e49b46cc1edf2d4ea438ae
 ```
 
-## Build, installer și test Windows
-
-Implementare:
+Așteptare:
 
 ```text
-installer/windows/build_windows.ps1
-installer/windows/verify_windows_build.ps1
-installer/windows/TraceAI-Control.iss
-installer/windows/build_inno_setup.ps1
-.github/workflows/windows-installer.yml
+66 passed
+reference_comparison.md = PASS
+artifact nou: real_audit_checklist_ui.json
 ```
 
-Workflow GitHub Actions:
+Dacă acest diagnostic este verde, se poate începe `UI-AUDIT-02`.
+
+## Milestone-uri finalizate în sesiunea curentă
+
+### 1. AuditChecklistReport stabilizat
+
+Modelul `AuditChecklistReport` a fost creat și testat ca structură finală pentru raportul audit.
+
+Acoperă:
 
 ```text
-Actions -> Build Windows Installer -> Run workflow
+conformity
+exercise
+balance
+downstream
+upstream
+production_consumption
+lot_flows
+document_register
+conclusion
 ```
 
-Artifact descărcabil:
+Fișiere relevante:
 
 ```text
-TraceAI-Control-Windows-Installer
+src/audit/audit_checklist_report.py
+tests/test_audit_checklist_report.py
 ```
 
-Conține:
+### 2. Renderer DOCX checklist audit
+
+A fost creat rendererul separat:
 
 ```text
-TraceAI-Control-Setup.exe
+src/report/audit_checklist_docx.py
 ```
 
-Issue tracking validare formală:
+Artifact generat în workflow:
 
 ```text
-#37 — Validate Windows build and installer on a real Windows machine
-https://github.com/cesty00/TraceAI-Control/issues/37
+diagnostics/real_audit_checklist_report.docx
 ```
 
-Status practic:
+Status:
 
 ```text
-Utilizatorul a rulat installerul și a generat raport real.
-Validarea formală #37 trebuie încă completată în șablonul de rezultat.
+Raportul are structura checklist:
+- TEST DE TRASABILITATE PENTRU AUDIT
+- Rezumat de conformare checklist
+- 01_EXERCITIU
+- Bilanț produs finit
+- 03_TABEL_II_AVAL
+- 02_TABEL_I_AMONTE
+- 04_PRODUCTIE_CONSUM
+- 05_FLUX_LOTURI_SI_DOCUMENTE
+- Registru documente fizice
+- Concluzie audit intern
 ```
 
-## Testare curentă
-
-Pe GitHub Actions Windows, testele au raportat anterior:
+Au fost eliminate formulările de dezvoltare:
 
 ```text
-42 passed, 4 failed
+NU mai apare „test local”
+NU mai apare „prototip”
+NU mai apare „politică audit”
 ```
 
-Cele 4 eșecuri observate sunt cross-platform / randare și trebuie tratate separat:
+Au fost adăugate explicații formale, dar prietenoase, înaintea tabelelor.
+
+Fișiere relevante:
 
 ```text
-test_demo_docx_runner_generates_valid_demo_report
-test_e2e_controlled_traceability_case_to_docx
-test_normalized_dataset_preserves_values_and_builds_hints
-test_generate_report_from_ui_request_orchestrates_existing_engine
+src/report/audit_checklist_docx.py
+tests/test_audit_checklist_docx.py
 ```
 
-Workflow-ul de installer rulează testele ca diagnostic non-blocking pentru a permite generarea artifactului Windows.
+### 3. Politică de raportare audit
 
-## Limită curentă
-
-Nu există încă:
+A fost introdusă:
 
 ```text
-trasabilitate amonte/aval calculată
-bilanțuri detaliate / reconciliere operațională completă
-mapping WMS complet pentru Client / Furnizor / Document intrare
-branding complet / logo / paginare avansată / cuprins automat
-validare formală #37 completată
-semnare executabil
-icon final
+AuditReportPolicy
 ```
 
-## Următorul pas la reluare
-
-Următorul pas corect este:
+Rol:
 
 ```text
-continuarea mapping-ului WMS pentru raportul DS099903883 / 105.26: Client, Furnizor, Document intrare și coduri / denumiri ambalaje
+- compactare controlată a numelor / observațiilor / recepțiilor
+- selecție inteligentă a fluxurilor relevante
+- prioritizare documente în registru
+- păstrarea raportului auditabil, nu dump tehnic
 ```
 
-Primul cod permis la reluare:
+Important: politica afectează randarea raportului, nu datele brute din motor.
+
+### 4. Date completate parțial din surse
+
+Implementări făcute:
 
 ```text
-src/rules/traceability_case.py
-src/report/docx_minimal.py
-tests/
-README.md
-CHECKPOINT.md
+src/rules/prd_table_mapping.py
 ```
 
-Regulă importantă:
+Adăugat:
 
 ```text
-Nu se adaugă logică de business în UI sau installer.
-Installerul trebuie să pornească UI-ul vizual minimal existent.
-UI-ul vizual trebuie să apeleze același generate_report_from_ui_request().
-DOCX rămâne generat din TraceabilityCase, nu direct din fișierele sursă.
-Bilanțul preliminar rămâne conservator și nu convertește unități de măsură automat.
-Mapping-ul WMS trebuie testat controlat și documentat.
+- Data livrare în livrările WMS
+- Data document în livrările WMS
+- Data recepție în recepțiile WMS
+- Data document în recepțiile WMS
+- Data producției / DDM pregătite pentru PRD dacă apar în surse
 ```
 
-## Fraza de reluare recomandată
+Atenție: o regresie a fost reparată.
+
+Problemă apărută:
 
 ```text
-Continuăm de la CHECKPOINT.md cu raportul DS099903883 / 105.26: mapping WMS parțial reparat, urmează Client, Furnizor, Document intrare și coduri / denumiri ambalaje.
+Data livrare fusese inclusă în cheia de grupare WMS și a spart 3 livrări în 7.
+```
+
+Fix:
+
+```text
+02c7ad2ccef1628c1387aba133b419f32f468a72
+Keep WMS delivery dates without splitting delivery groups
+```
+
+Rezultat confirmat ulterior:
+
+```text
+delivery_count: PASS
+expected: 3
+actual: 3
+```
+
+### 5. Adresă/depozit pentru livrări aval
+
+În `audit_checklist_report.py` s-a adăugat separarea client / depozit din câmpul WMS `Partener`.
+
+Exemplu:
+
+```text
+REWE (ROMANIA) SRL_-DEPOZIT TURDA
+```
+
+devine:
+
+```text
+client = REWE (ROMANIA) SRL
+adresă/depozit = DEPOZIT TURDA
+```
+
+Confirmat în DOCX:
+
+```text
+DEPOZIT TURDA
+DEPOZIT FILIASI
+DEPOZIT STEFANESTI
+```
+
+### 6. Parser recepții WMS pregătit pentru date
+
+În `audit_checklist_report.py`, parserul recepțiilor poate interpreta:
+
+```text
+document/furnizor: cantitate
+document/furnizor/data: cantitate
+document/furnizor | data data: cantitate
+```
+
+Câmpuri pregătite pentru Tabel I:
+
+```text
+dată recepție
+furnizor
+tip document
+număr document
+dată document
+```
+
+### 7. JSON UI audit checklist
+
+A fost creat modulul:
+
+```text
+src/ui/audit_checklist_json.py
+```
+
+Contract:
+
+```text
+schema_version = audit-checklist-ui.v1
+```
+
+Payload:
+
+```text
+{
+  "schema_version": "audit-checklist-ui.v1",
+  "subject": {
+    "code": "...",
+    "lot": "...",
+    "product_name": "...",
+    "case_type": "...",
+    "result": "..."
+  },
+  "sections": [... ordine UI ...],
+  "report": { ... AuditChecklistReport complet ... }
+}
+```
+
+Ordine secțiuni UI blocată prin teste:
+
+```text
+conformity
+exercise
+balance
+downstream
+upstream
+production_consumption
+lot_flows
+document_register
+conclusion
+```
+
+Teste relevante:
+
+```text
+tests/test_audit_checklist_ui_json.py
+```
+
+## Commituri importante recente
+
+```text
+02c7ad2ccef1628c1387aba133b419f32f468a72
+Keep WMS delivery dates without splitting delivery groups
+
+9f21fa4d75f1e80c30d8ae72f56bc652e1c13978
+Expose audit checklist report as UI JSON
+
+d825c642dc63417e1426a799059c9fbb22f0267f
+Add audit checklist UI JSON contract tests
+
+26f5217fb6294845bc4fcb8bb45fec693825ca6c
+Fix audit checklist UI JSON expected product name
+
+a2b7f514e01be75c3b65dba4d6acc09f708accd5
+Fix audit checklist UI JSON expected fixture sources
+
+da1ecc2dfbeeb91c00e49b46cc1edf2d4ea438ae
+Upload audit checklist UI JSON in diagnostics
+```
+
+## Reguli de arhitectură care rămân obligatorii
+
+```text
+1. UI-ul nu conține logică de business.
+2. UI-ul trebuie să consume AuditChecklistReport / audit-checklist-ui.v1.
+3. DOCX-ul și UI-ul trebuie să aibă aceeași sursă de adevăr.
+4. Nu se parsează din DOCX pentru UI.
+5. Nu se reconstruiesc tabelele în UI din TraceabilityCase brut dacă există AuditChecklistReport.
+6. Unitățile de măsură nu se convertesc automat.
+7. Gazul / ALISOL rămâne auxiliar / gaz, nu materie primă alimentară.
+8. Dacă o informație nu există în surse, rămâne explicit FARA DATE IDENTIFICATE.
+9. Comparatorul independent trebuie să rămână PASS pe cazul default DS099903883 / 105.26.
+10. Testele trebuie rulate pe mai multe cazuri, nu doar pe DS099903883.
+```
+
+## Ce NU este încă finalizat
+
+```text
+1. UI-AUDIT-02 nu este început încă.
+2. Interfața vizuală nu consumă încă audit-checklist-ui.v1.
+3. real_audit_checklist_ui.json este legat în workflow, dar trebuie verificat prin diagnostic pe da1ecc2.
+4. Datele de livrare / recepție sunt expuse parțial, dar legarea completă în toate tabelele trebuie urmărită în continuare.
+5. Data producției și DDM sunt pregătite în mapping, dar trebuie validate în raport pe sursele reale.
+6. Raportul DOCX checklist nu este încă exportul implicit final al aplicației; este artifact separat de diagnostic.
+```
+
+## Următorul pas după pauză
+
+### Pas 1 — Diagnostic
+
+Rulează `TraceAI Diagnostics` pe:
+
+```text
+da1ecc2dfbeeb91c00e49b46cc1edf2d4ea438ae
+```
+
+Verifică:
+
+```text
+66 passed
+reference_comparison.md = PASS
+real_audit_checklist_ui.json există în artifact
+real-audit-checklist-ui-json-output.txt există sau este acceptabil dacă este gol
+```
+
+### Pas 2 — UI-AUDIT-02
+
+Dacă diagnosticul este verde:
+
+```text
+UI-AUDIT-02 — Map interface sections to AuditChecklistReport / audit-checklist-ui.v1
+```
+
+Obiectiv:
+
+```text
+Interfața aplicației să afișeze secțiunile din payload["sections"], nu din logica veche.
+```
+
+Ordinea afișării:
+
+```text
+1. Rezumat de conformare checklist
+2. 01_EXERCITIU — Fișa principală
+3. Bilanț produs finit
+4. 03_TABEL_II_AVAL — Livrări produs finit
+5. 02_TABEL_I_AMONTE — Materii prime, ambalaje și auxiliare
+6. 04_PRODUCTIE_CONSUM — Detaliere pe comenzi
+7. 05_FLUX_LOTURI_SI_DOCUMENTE — Fluxuri loturi
+8. Registru documente fizice
+9. Concluzie audit intern
+```
+
+### Pas 3 — UI-AUDIT-03
+
+După UI-AUDIT-02:
+
+```text
+Add regression test: JSON-ul folosit de UI conține aceleași valori ca DOCX-ul / AuditChecklistReport.
+```
+
+## Fraza recomandată de reluare
+
+```text
+Continuăm de la CHECKPOINT.md actualizat: ultimul diagnostic verde este a2b7f514 cu 66 passed și PASS comparator; primul pas este să verificăm da1ecc2 pentru artifactul real_audit_checklist_ui.json, apoi începem UI-AUDIT-02 ca interfața să consume audit-checklist-ui.v1.
 ```
