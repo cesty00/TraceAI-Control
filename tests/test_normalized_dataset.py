@@ -63,7 +63,7 @@ def test_normalized_dataset_preserves_values_and_builds_hints(tmp_path: Path) ->
     write_csv(
         tmp_path / "rapoarte productie.csv",
         ["Cod produs", "Lot produs", "Cantitate produsa"],
-        ["DS0001", "L001", "25", ""],
+        ["DS0001", "L001", "25"],
     )
     write_minimal_xlsx(
         tmp_path / "nomenclator.xlsx",
