@@ -13,8 +13,10 @@ from __future__ import annotations
 
 import argparse
 import html
+import re
 import zipfile
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Iterable
 
@@ -184,7 +186,7 @@ def build_upstream_section(report: AuditTraceabilityReport) -> list[str]:
             line.name,
             join_quantity(line.quantity_consumed, line.um),
             line.document_summary,
-            line.third_party_delivery_status,
+            display_third_party_status(line.third_party_delivery_status),
             line.stock_at_moment,
             observations_text(line),
         ]
@@ -202,7 +204,7 @@ def build_upstream_section(report: AuditTraceabilityReport) -> list[str]:
 
 def build_raw_material_third_party_check(report: AuditTraceabilityReport) -> list[str]:
     raw_lines = [line for line in report.upstream if line.category == "raw_material"]
-    rows = [[line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), line.third_party_delivery_status, line.third_party_delivery_details, line.stock_at_moment] for line in raw_lines]
+    rows = [[line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), display_third_party_status(line.third_party_delivery_status), line.third_party_delivery_details, line.stock_at_moment] for line in raw_lines]
     if not rows:
         return []
     return [
@@ -253,7 +255,7 @@ def material_lines_table(title: str, lines: list[UpstreamMaterialLine], include_
     rows: list[list[str]] = []
     for line in lines:
         if include_third_party:
-            rows.append([line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), line.third_party_delivery_status])
+            rows.append([line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), display_third_party_status(line.third_party_delivery_status)])
         else:
             rows.append([line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), observations_text(line) or "Nu se aplică"])
     return [paragraph(title, style="Heading2"), table(headers, rows)]
@@ -349,6 +351,11 @@ def display_category(category: str) -> str:
     return labels.get(category, category)
 
 
+def display_third_party_status(status: object) -> str:
+    labels = {"NU_SE_APLICA": "Nu se aplică", "NU": "NU", "DA": "DA", "NECLAR": "NECLAR"}
+    return labels.get(str(status).strip(), value_or_missing(status))
+
+
 def observations_text(line: UpstreamMaterialLine) -> str:
     return "; ".join(line.observations) if line.observations else ""
 
@@ -357,7 +364,49 @@ def value_or_missing(value: object) -> str:
     if value is None:
         return "FARA DATE IDENTIFICATE"
     text = str(value).strip()
-    return text if text else "FARA DATE IDENTIFICATE"
+    if not text:
+        return "FARA DATE IDENTIFICATE"
+    return format_audit_text(text)
+
+
+def format_audit_text(text: str) -> str:
+    """Format numeric fragments for human-readable audit output.
+
+    The DTO can contain precise Decimal/float-derived strings from WMS and stock.
+    The exported DOCX must be readable by an auditor, so values such as
+    18236.000000000004 or 176.84306000002636 are rendered compactly while the
+    internal calculation layer remains unchanged.
+    """
+
+    return re.sub(r"(?<![A-Za-z0-9])[-+]?\d+(?:[.,]\d+)?(?![A-Za-z0-9])", _format_numeric_match, text)
+
+
+def _format_numeric_match(match: re.Match[str]) -> str:
+    raw = match.group(0)
+    if not should_format_number(raw):
+        return raw
+    try:
+        value = Decimal(raw.replace(",", "."))
+    except InvalidOperation:
+        return raw
+    return format_audit_decimal(value)
+
+
+def should_format_number(raw: str) -> bool:
+    if "." not in raw and "," not in raw:
+        return False
+    # Preserve lot/date-like tokens such as 27.03.26 when the regex sees only a part.
+    if raw.count(".") > 1 or raw.count(",") > 1:
+        return False
+    return True
+
+
+def format_audit_decimal(value: Decimal) -> str:
+    if value == value.to_integral():
+        return str(value.quantize(Decimal("1")))
+    quantized = value.quantize(Decimal("0.001"))
+    text = format(quantized.normalize(), "f")
+    return text.rstrip("0").rstrip(".") if "." in text else text
 
 
 def escape(value: str) -> str:
