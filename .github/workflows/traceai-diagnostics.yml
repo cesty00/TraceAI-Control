@@ -62,7 +62,7 @@ jobs:
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           python samples\demo_docx_runner.py --output diagnostics\demo_traceability_report.docx
 
-      - name: Locate and normalize real source directory
+      - name: Locate and normalize real source files
         id: source-dir
         shell: pwsh
         run: |
@@ -72,40 +72,26 @@ jobs:
           $zipExtractRoot = Join-Path $root "diagnostics\unzipped-sources"
           New-Item -ItemType Directory -Force $zipExtractRoot | Out-Null
 
-          function Find-FileInDirectory($directory, $names) {
+          function Find-FirstFile($files, $names) {
             foreach ($name in $names) {
-              $path = Join-Path $directory $name
-              if (Test-Path $path) { return $path }
+              $match = $files | Where-Object { $_.Name -eq $name } | Select-Object -First 1
+              if ($match) { return $match.FullName }
             }
             return ""
           }
 
-          function Try-UseDirectory($directory) {
-            if (-not $directory -or -not (Test-Path $directory)) { return $false }
-            $wms = Find-FileInDirectory $directory @("trasabilitate_wms.csv")
-            $prd = Find-FileInDirectory $directory @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")
-            $nomenclator = Find-FileInDirectory $directory @("nomenclator.xlsx")
-            $stock = Find-FileInDirectory $directory @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
-            return [bool]($wms -and $prd -and $nomenclator -and $stock)
+          function Find-FileInDirectory($directory, $names) {
+            if (-not $directory -or -not (Test-Path $directory)) { return "" }
+            foreach ($name in $names) {
+              $path = Join-Path $directory $name
+              if (Test-Path $path) { return (Resolve-Path $path).Path }
+            }
+            return ""
           }
 
-          $candidateDirectories = @()
-          if ($manual -and (Test-Path $manual)) { $candidateDirectories += (Resolve-Path $manual).Path }
-          $candidateDirectories += @(
-            "data",
-            "date",
-            "input",
-            "inputs",
-            "sources",
-            "surse",
-            "samples\data",
-            "samples\date",
-            "samples\input",
-            "tests\data",
-            "tests\fixtures",
-            "fixtures",
-            "."
-          ) | Where-Object { Test-Path $_ } | ForEach-Object { (Resolve-Path $_).Path }
+          $searchRoots = @($root)
+          if ($manual -and (Test-Path $manual)) { $searchRoots = @((Resolve-Path $manual).Path) + $searchRoots }
+          $searchRoots = $searchRoots | Select-Object -Unique
 
           $interestingNames = @(
             "trasabilitate_wms.csv",
@@ -117,10 +103,14 @@ jobs:
             "stoc la moment original.xlsx",
             "stoc_la_moment_original.xlsx"
           )
-          $foundFiles = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { $interestingNames -contains $_.Name } |
-            Select-Object FullName, DirectoryName, Name
-          $foundFiles | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found.txt -Encoding UTF8
+
+          $foundFiles = @()
+          foreach ($searchRoot in $searchRoots) {
+            $foundFiles += Get-ChildItem -Path $searchRoot -Recurse -File -ErrorAction SilentlyContinue |
+              Where-Object { $interestingNames -contains $_.Name }
+          }
+          $foundFiles = $foundFiles | Sort-Object FullName -Unique
+          $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found.txt -Encoding UTF8
 
           $zipFiles = $foundFiles | Where-Object { $_.Name -eq "trasabilitate_wms.zip" }
           $zipIndex = 0
@@ -129,33 +119,41 @@ jobs:
             $destination = Join-Path $zipExtractRoot "wms-$zipIndex"
             New-Item -ItemType Directory -Force $destination | Out-Null
             Expand-Archive -Path $zip.FullName -DestinationPath $destination -Force
-            $candidateDirectories += $destination
-            $csvInside = Get-ChildItem -Path $destination -Recurse -File -Filter "trasabilitate_wms.csv" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($csvInside) { $candidateDirectories += $csvInside.DirectoryName }
+            $foundFiles += Get-ChildItem -Path $destination -Recurse -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -eq "trasabilitate_wms.csv" }
           }
+          $foundFiles = $foundFiles | Sort-Object FullName -Unique
+          $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found-after-unzip.txt -Encoding UTF8
 
-          $candidateDirectories += ($foundFiles | Select-Object -ExpandProperty DirectoryName -Unique)
-          $candidateDirectories = $candidateDirectories | Where-Object { $_ } | Select-Object -Unique
-
-          $selected = ""
-          foreach ($candidate in $candidateDirectories) {
-            if (Try-UseDirectory $candidate) {
-              $selected = $candidate
-              break
-            }
-          }
+          $wms = Find-FirstFile $foundFiles @("trasabilitate_wms.csv")
+          $prd = Find-FirstFile $foundFiles @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")
+          $nomenclator = Find-FirstFile $foundFiles @("nomenclator.xlsx")
+          $stock = Find-FirstFile $foundFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
 
           $normalized = ""
-          if ($selected) {
+          if ($wms -and $prd -and $nomenclator -and $stock) {
             $normalized = Join-Path $root "diagnostics\real-source"
             New-Item -ItemType Directory -Force $normalized | Out-Null
-            Copy-Item (Find-FileInDirectory $selected @("trasabilitate_wms.csv")) (Join-Path $normalized "trasabilitate_wms.csv") -Force
-            Copy-Item (Find-FileInDirectory $selected @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")) (Join-Path $normalized "rapoarte productie.csv") -Force
-            Copy-Item (Find-FileInDirectory $selected @("nomenclator.xlsx")) (Join-Path $normalized "nomenclator.xlsx") -Force
-            Copy-Item (Find-FileInDirectory $selected @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")) (Join-Path $normalized "stoc la moment original.xlsx") -Force
-            "Selected source directory: $selected`nNormalized source directory: $normalized" | Tee-Object -FilePath diagnostics\source-directory.txt
+            Copy-Item $wms (Join-Path $normalized "trasabilitate_wms.csv") -Force
+            Copy-Item $prd (Join-Path $normalized "rapoarte productie.csv") -Force
+            Copy-Item $nomenclator (Join-Path $normalized "nomenclator.xlsx") -Force
+            Copy-Item $stock (Join-Path $normalized "stoc la moment original.xlsx") -Force
+            @"
+Selected individual source files:
+WMS: $wms
+PRD: $prd
+Nomenclator: $nomenclator
+Stock: $stock
+Normalized source directory: $normalized
+"@ | Tee-Object -FilePath diagnostics\source-directory.txt
           } else {
-            "No complete source directory found. The workflow searched recursively for official, underscore and zipped WMS source variants." | Tee-Object -FilePath diagnostics\source-directory.txt
+            @"
+No complete source set found after recursive search and ZIP extraction.
+WMS: $wms
+PRD: $prd
+Nomenclator: $nomenclator
+Stock: $stock
+"@ | Tee-Object -FilePath diagnostics\source-directory.txt
           }
 
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -201,6 +199,7 @@ jobs:
           - real_traceability_report.docx, only if complete source data was found
           - source-directory.txt
           - source-files-found.txt
+          - source-files-found-after-unzip.txt
 
           ## Source data rule
           The workflow accepts these source names and normalizes them at runtime:
