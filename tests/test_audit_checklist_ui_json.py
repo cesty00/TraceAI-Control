@@ -37,11 +37,19 @@ def test_audit_checklist_ui_payload_has_schema_version_subject_and_report() -> N
     assert payload["subject"] == {
         "code": "DS099904011",
         "lot": "103.26",
-        "product_name": "PF-REFRIGERAT-P FILE SOMON 200G ATM PENNY",
+        "product_name": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
         "case_type": "FINISHED_PRODUCT",
         "result": "PASS",
     }
-    assert payload["report"]["exercise"]["code"] == "DS099904011"
+    assert payload["report"]["exercise"] == {
+        "code": "DS099904011",
+        "lot": "103.26",
+        "product_name": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
+        "case_type": "FINISHED_PRODUCT",
+        "result": "PASS",
+        "generated_from_sources": ["prd", "stock", "wms"],
+        "balance_summary": "PRD produs coincide cu WMS PRODUCTION-OUT. Livrările sunt preluate din WMS și se evaluează în valoare absolută pentru reconciliere.",
+    }
     assert payload["report"]["balance"]["prd_produced"] == "168 BUCATA"
 
 
