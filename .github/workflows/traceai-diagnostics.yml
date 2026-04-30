@@ -59,7 +59,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest python-docx openpyxl pandas
           python --version
-          python -m pip list
 
       - name: Run pytest
         shell: pwsh
@@ -108,8 +107,7 @@ jobs:
 
           $foundFiles = @()
           foreach ($searchRoot in $searchRoots) {
-            $foundFiles += Get-ChildItem -Path $searchRoot -Recurse -File -ErrorAction SilentlyContinue |
-              Where-Object { $interestingNames -contains $_.Name }
+            $foundFiles += Get-ChildItem -Path $searchRoot -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $interestingNames -contains $_.Name }
           }
           $foundFiles = $foundFiles | Sort-Object FullName -Unique
           $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found.txt -Encoding UTF8
@@ -121,8 +119,7 @@ jobs:
             $destination = Join-Path $zipExtractRoot "wms-$zipIndex"
             New-Item -ItemType Directory -Force $destination | Out-Null
             Expand-Archive -Path $zip.FullName -DestinationPath $destination -Force
-            $foundFiles += Get-ChildItem -Path $destination -Recurse -File -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -eq "trasabilitate_wms.csv" }
+            $foundFiles += Get-ChildItem -Path $destination -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq "trasabilitate_wms.csv" }
           }
           $foundFiles = $foundFiles | Sort-Object FullName -Unique
           $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found-after-unzip.txt -Encoding UTF8
@@ -133,6 +130,7 @@ jobs:
           $stock = Find-FirstFile $foundFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
 
           $normalized = ""
+          $sourceInfo = @()
           if ($wms -and $prd -and $nomenclator -and $stock) {
             $normalized = Join-Path $root "diagnostics\real-source"
             New-Item -ItemType Directory -Force $normalized | Out-Null
@@ -140,24 +138,20 @@ jobs:
             Copy-Item $prd (Join-Path $normalized "rapoarte productie.csv") -Force
             Copy-Item $nomenclator (Join-Path $normalized "nomenclator.xlsx") -Force
             Copy-Item $stock (Join-Path $normalized "stoc la moment original.xlsx") -Force
-            @"
-Selected individual source files:
-WMS: $wms
-PRD: $prd
-Nomenclator: $nomenclator
-Stock: $stock
-Normalized source directory: $normalized
-"@ | Tee-Object -FilePath diagnostics\source-directory.txt
+            $sourceInfo += "Selected individual source files:"
+            $sourceInfo += "WMS: $wms"
+            $sourceInfo += "PRD: $prd"
+            $sourceInfo += "Nomenclator: $nomenclator"
+            $sourceInfo += "Stock: $stock"
+            $sourceInfo += "Normalized source directory: $normalized"
           } else {
-            @"
-No complete source set found after recursive search and ZIP extraction.
-WMS: $wms
-PRD: $prd
-Nomenclator: $nomenclator
-Stock: $stock
-"@ | Tee-Object -FilePath diagnostics\source-directory.txt
+            $sourceInfo += "No complete source set found after recursive search and ZIP extraction."
+            $sourceInfo += "WMS: $wms"
+            $sourceInfo += "PRD: $prd"
+            $sourceInfo += "Nomenclator: $nomenclator"
+            $sourceInfo += "Stock: $stock"
           }
-
+          $sourceInfo | Set-Content -Path diagnostics\source-directory.txt -Encoding UTF8
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Generate independent reference extraction when data is available
@@ -188,32 +182,31 @@ Stock: $stock
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
-          @"
-          # TraceAI Diagnostics
-
-          Commit: $env:GITHUB_SHA
-          Workflow: $env:GITHUB_WORKFLOW
-          Code: ${{ github.event.inputs.code }}
-          Lot: ${{ github.event.inputs.lot }}
-
-          ## Artifacts
-          - pytest-output.txt
-          - demo_traceability_report.docx
-          - reference_traceability.md/json, only if complete source data was found and extraction succeeded
-          - real_traceability_report.docx, only if complete source data was found and DOCX generation succeeded
-          - reference-extraction-output.txt
-          - real-docx-output.txt
-          - source-directory.txt
-          - source-files-found.txt
-          - source-files-found-after-unzip.txt
-
-          ## Source data rule
-          The workflow accepts these source names and normalizes them at runtime:
-          - trasabilitate_wms.csv OR trasabilitate_wms.zip containing trasabilitate_wms.csv
-          - rapoarte productie.csv OR raport_productie.csv OR rapoarte_productie.csv
-          - nomenclator.xlsx
-          - stoc la moment original.xlsx OR stoc_la_moment_original.xlsx
-          "@ | Set-Content -Path diagnostics\diagnostic-summary.md -Encoding UTF8
+          $summary = @()
+          $summary += "# TraceAI Diagnostics"
+          $summary += ""
+          $summary += "Commit: $env:GITHUB_SHA"
+          $summary += "Workflow: $env:GITHUB_WORKFLOW"
+          $summary += "Code: ${{ github.event.inputs.code }}"
+          $summary += "Lot: ${{ github.event.inputs.lot }}"
+          $summary += ""
+          $summary += "## Artifacts"
+          $summary += "- pytest-output.txt"
+          $summary += "- demo_traceability_report.docx"
+          $summary += "- reference_traceability.md/json, if extraction succeeded"
+          $summary += "- real_traceability_report.docx, if DOCX generation succeeded"
+          $summary += "- reference-extraction-output.txt"
+          $summary += "- real-docx-output.txt"
+          $summary += "- source-directory.txt"
+          $summary += "- source-files-found.txt"
+          $summary += "- source-files-found-after-unzip.txt"
+          $summary += ""
+          $summary += "## Source data rule"
+          $summary += "- trasabilitate_wms.csv OR trasabilitate_wms.zip containing trasabilitate_wms.csv"
+          $summary += "- rapoarte productie.csv OR raport_productie.csv OR rapoarte_productie.csv"
+          $summary += "- nomenclator.xlsx"
+          $summary += "- stoc la moment original.xlsx OR stoc_la_moment_original.xlsx"
+          $summary | Set-Content -Path diagnostics\diagnostic-summary.md -Encoding UTF8
 
       - name: Upload diagnostics artifacts
         if: always()
