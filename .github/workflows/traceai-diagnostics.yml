@@ -68,6 +68,9 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           $manual = "${{ github.event.inputs.source_directory }}"
+          $root = (Get-Location).Path
+          $zipExtractRoot = Join-Path $root "diagnostics\unzipped-sources"
+          New-Item -ItemType Directory -Force $zipExtractRoot | Out-Null
 
           function Find-FileInDirectory($directory, $names) {
             foreach ($name in $names) {
@@ -100,12 +103,13 @@ jobs:
             "samples\input",
             "tests\data",
             "tests\fixtures",
-            "fixtures"
+            "fixtures",
+            "."
           ) | Where-Object { Test-Path $_ } | ForEach-Object { (Resolve-Path $_).Path }
 
-          $root = (Get-Location).Path
           $interestingNames = @(
             "trasabilitate_wms.csv",
+            "trasabilitate_wms.zip",
             "rapoarte productie.csv",
             "raport_productie.csv",
             "rapoarte_productie.csv",
@@ -117,6 +121,19 @@ jobs:
             Where-Object { $interestingNames -contains $_.Name } |
             Select-Object FullName, DirectoryName, Name
           $foundFiles | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found.txt -Encoding UTF8
+
+          $zipFiles = $foundFiles | Where-Object { $_.Name -eq "trasabilitate_wms.zip" }
+          $zipIndex = 0
+          foreach ($zip in $zipFiles) {
+            $zipIndex += 1
+            $destination = Join-Path $zipExtractRoot "wms-$zipIndex"
+            New-Item -ItemType Directory -Force $destination | Out-Null
+            Expand-Archive -Path $zip.FullName -DestinationPath $destination -Force
+            $candidateDirectories += $destination
+            $csvInside = Get-ChildItem -Path $destination -Recurse -File -Filter "trasabilitate_wms.csv" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($csvInside) { $candidateDirectories += $csvInside.DirectoryName }
+          }
+
           $candidateDirectories += ($foundFiles | Select-Object -ExpandProperty DirectoryName -Unique)
           $candidateDirectories = $candidateDirectories | Where-Object { $_ } | Select-Object -Unique
 
@@ -138,7 +155,7 @@ jobs:
             Copy-Item (Find-FileInDirectory $selected @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")) (Join-Path $normalized "stoc la moment original.xlsx") -Force
             "Selected source directory: $selected`nNormalized source directory: $normalized" | Tee-Object -FilePath diagnostics\source-directory.txt
           } else {
-            "No complete source directory found. The workflow searched recursively for official and underscore filename variants." | Tee-Object -FilePath diagnostics\source-directory.txt
+            "No complete source directory found. The workflow searched recursively for official, underscore and zipped WMS source variants." | Tee-Object -FilePath diagnostics\source-directory.txt
           }
 
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -176,7 +193,7 @@ jobs:
 
           ## Source data rule
           The workflow accepts these source names and normalizes them at runtime:
-          - trasabilitate_wms.csv
+          - trasabilitate_wms.csv OR trasabilitate_wms.zip containing trasabilitate_wms.csv
           - rapoarte productie.csv OR raport_productie.csv OR rapoarte_productie.csv
           - nomenclator.xlsx
           - stoc la moment original.xlsx OR stoc_la_moment_original.xlsx
