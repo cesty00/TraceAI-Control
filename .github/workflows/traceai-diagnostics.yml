@@ -15,6 +15,17 @@ on:
         description: "Lot"
         required: false
         default: "105.26"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "samples/**"
+      - ".github/workflows/traceai-diagnostics.yml"
+      - "*.csv"
+      - "*.xlsx"
+      - "*.zip"
   pull_request:
     paths:
       - "src/**"
@@ -76,15 +87,6 @@ jobs:
             foreach ($name in $names) {
               $match = $files | Where-Object { $_.Name -eq $name } | Select-Object -First 1
               if ($match) { return $match.FullName }
-            }
-            return ""
-          }
-
-          function Find-FileInDirectory($directory, $names) {
-            if (-not $directory -or -not (Test-Path $directory)) { return "" }
-            foreach ($name in $names) {
-              $path = Join-Path $directory $name
-              if (Test-Path $path) { return (Resolve-Path $path).Path }
             }
             return ""
           }
@@ -214,5 +216,14 @@ Stock: $stock
         uses: actions/upload-artifact@v4
         with:
           name: TraceAI-Diagnostics
-          path: diagnostics/**
+          path: |
+            diagnostics/pytest-output.txt
+            diagnostics/demo_traceability_report.docx
+            diagnostics/reference_traceability.md
+            diagnostics/reference_traceability.json
+            diagnostics/real_traceability_report.docx
+            diagnostics/source-directory.txt
+            diagnostics/source-files-found.txt
+            diagnostics/source-files-found-after-unzip.txt
+            diagnostics/diagnostic-summary.md
           if-no-files-found: warn
