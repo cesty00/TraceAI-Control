@@ -14,7 +14,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
 from src.ui.audit_checklist_view_model import (
     AuditChecklistUiSection,
     AuditChecklistUiViewModel,
@@ -77,7 +76,7 @@ def submit_audit_checklist_form_values(
     source_directory: str,
     code: str,
     lot: str,
-    payload_builder: AuditChecklistPayloadBuilder = build_audit_checklist_ui_payload,
+    payload_builder: AuditChecklistPayloadBuilder | None = None,
     view_model_builder: AuditChecklistViewModelBuilder = build_audit_checklist_ui_view_model,
 ) -> VisualAuditChecklistResult:
     """Build the audit checklist view model from visual form values.
@@ -97,7 +96,8 @@ def submit_audit_checklist_form_values(
         )
 
     try:
-        payload = payload_builder(source_directory, code, lot)
+        builder = payload_builder or default_audit_checklist_payload_builder
+        payload = builder(source_directory, code, lot)
         view_model = view_model_builder(payload)
     except Exception as exc:  # pragma: no cover - exact exception belongs to engine/audit layer
         return VisualAuditChecklistResult(
@@ -113,6 +113,20 @@ def submit_audit_checklist_form_values(
         message="Previzualizare audit checklist generată cu succes.",
         error=None,
     )
+
+
+def default_audit_checklist_payload_builder(source_directory: str, code: str, lot: str) -> dict[str, Any]:
+    """Import the payload builder lazily to keep runnable UI modules isolated.
+
+    The diagnostics workflow executes ``python -m src.ui.audit_checklist_json``.
+    Importing that runnable module eagerly from ``src.ui.visual`` would load it
+    before runpy executes it and would reintroduce a warning. Lazy import keeps
+    the visual UI API stable without side effects.
+    """
+
+    from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
+
+    return build_audit_checklist_ui_payload(source_directory, code, lot)
 
 
 def validate_audit_checklist_form_values(source_directory: str, code: str, lot: str) -> str | None:
