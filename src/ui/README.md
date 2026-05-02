@@ -10,6 +10,7 @@ CLI/UI shell minimal peste orchestrator
 UI vizual minimal peste orchestrator
 contract JSON audit checklist pentru interfață
 view-model audit checklist bazat pe payload["sections"]
+previzualizare audit checklist în UI-ul vizual
 ```
 
 UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
@@ -157,6 +158,51 @@ for section in view_model.sections:
     print(section.title, section.kind)
 ```
 
+## UI vizual audit checklist
+
+Fișier:
+
+```text
+src/ui/visual.py
+```
+
+Flux testabil:
+
+```text
+submit_audit_checklist_form_values(source_directory, code, lot)
+-> build_audit_checklist_ui_payload(...)
+-> build_audit_checklist_ui_view_model(payload)
+-> VisualAuditChecklistResult
+```
+
+Funcții noi:
+
+```text
+VisualAuditChecklistResult
+submit_audit_checklist_form_values
+validate_audit_checklist_form_values
+format_audit_checklist_preview
+```
+
+UI-ul vizual include butonul:
+
+```text
+Previzualizează audit checklist
+```
+
+Butonul afișează o previzualizare compactă din view-model:
+
+```text
+schema
+produs / lot
+rezultat
+secțiuni în ordinea payload["sections"]
+detalii pentru secțiunile details
+primele rânduri pentru secțiunile table
+```
+
+Aceasta este o randare UI minimală, nu un raport audit nou și nu o sursă de adevăr separată.
+
 ## Exemplu de utilizare Python pentru DOCX minimal
 
 ```python
@@ -223,7 +269,9 @@ câmp folder surse oficiale
 câmp cod articol
 câmp lot
 câmp raport DOCX output
+buton previzualizare audit checklist
 buton generare raport DOCX
+zonă text pentru previzualizarea audit checklist
 mesaj succes / eroare
 ```
 
@@ -232,10 +280,12 @@ Funcții testabile:
 ```text
 build_request_from_form_values()
 submit_visual_form_values()
+submit_audit_checklist_form_values()
+format_audit_checklist_preview()
 run_visual_app()
 ```
 
-Testele nu pornesc fereastra grafică; verifică doar maparea câmpurilor și apelul către orchestrator prin handler injectat.
+Testele nu pornesc fereastra grafică; verifică doar maparea câmpurilor, apelul către orchestrator prin handler injectat și formatarea previzualizării.
 
 ## Comportament controlat
 
@@ -259,6 +309,8 @@ output_path=None
 message="Eroare la generarea raportului."
 error=<mesaj eroare>
 ```
+
+Pentru audit checklist, lipsa `source_directory`, `code` sau `lot` oprește apelul către builderul de payload.
 
 ## Interdicții
 
@@ -315,6 +367,8 @@ schema audit-checklist-ui.v1
 ordinea secțiunilor audit checklist
 maparea rows / data în view-model fără rebuild business
 validarea formelor invalide de payload UI
+previzualizarea audit checklist din view-model
+oprirea apelului audit checklist când lipsesc câmpuri UI
 ```
 
 ## Document contract
@@ -327,4 +381,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este integrarea view-modelului audit checklist în UI-ul vizual, fără logică de business nouă.
+Următorul pas UI permis este înlocuirea previzualizării text compacte cu widgeturi dedicate pe secțiuni, fără logică de business nouă.
