@@ -22,8 +22,7 @@ from src.audit.audit_checklist_report import (
 )
 from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.rules.run_traceability_case import run_traceability_case
-
-UI_SCHEMA_VERSION = "audit-checklist-ui.v1"
+from src.ui.audit_checklist_contract import UI_SCHEMA_VERSION
 
 
 def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lot: str) -> dict[str, Any]:
