@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.ui.audit_checklist_json import UI_SCHEMA_VERSION
+from src.ui.audit_checklist_contract import UI_SCHEMA_VERSION
 
 
 @dataclass(frozen=True)
