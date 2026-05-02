@@ -1,5 +1,6 @@
 """UI orchestration boundary for TraceAI Control."""
 
+from .audit_checklist_contract import UI_SCHEMA_VERSION
 from .audit_checklist_view_model import (
     AuditChecklistUiSection,
     AuditChecklistUiViewModel,
@@ -22,6 +23,7 @@ __all__ = [
     "AuditChecklistUiViewModel",
     "DocxReportGenerator",
     "TraceabilityCaseRunner",
+    "UI_SCHEMA_VERSION",
     "UiGenerationRequest",
     "UiGenerationResult",
     "build_audit_checklist_ui_view_model",
