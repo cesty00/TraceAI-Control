@@ -8,13 +8,15 @@ Acest folder conține straturile UI minimale pentru TraceAI Control.
 funcție de orchestrare testabilă
 CLI/UI shell minimal peste orchestrator
 UI vizual minimal peste orchestrator
+contract JSON audit checklist pentru interfață
+view-model audit checklist bazat pe payload["sections"]
 ```
 
 UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
 
 ## Rol permis
 
-UI-ul este doar strat de orchestrare:
+UI-ul este doar strat de orchestrare și prezentare:
 
 ```text
 colectare source_directory
@@ -23,11 +25,12 @@ colectare lot
 colectare output_docx_path
 apel engine existent
 afișare succes / eroare
+afișare secțiuni audit checklist deja pregătite în audit-checklist-ui.v1
 ```
 
 ## Apel engine permis
 
-Fluxul permis este:
+Fluxul permis pentru raportul DOCX minimal existent este:
 
 ```text
 run_traceability_case(source_directory, code, lot)
@@ -39,6 +42,16 @@ run_traceability_case(source_directory, code, lot)
 ```text
 generate_report_from_ui_request()
 ```
+
+Fluxul permis pentru interfața audit checklist este:
+
+```text
+build_audit_checklist_ui_payload(source_directory, code, lot)
+-> build_audit_checklist_ui_view_model(payload)
+-> render payload["sections"] în UI
+```
+
+UI-ul nu reconstruiește tabelele din `TraceabilityCase` și nu citește din DOCX.
 
 ## Funcția de orchestrare
 
@@ -75,7 +88,76 @@ message
 error
 ```
 
-## Exemplu de utilizare Python
+## Audit checklist UI JSON
+
+Fișier:
+
+```text
+src/ui/audit_checklist_json.py
+```
+
+Contract:
+
+```text
+schema_version = audit-checklist-ui.v1
+```
+
+Payload-ul conține:
+
+```text
+subject
+sections
+report
+```
+
+`sections` este ordinea de afișare pentru interfață. `report` păstrează raportul complet pentru consumatori avansați, dar UI-ul standard trebuie să randeze din `sections`.
+
+## Audit checklist view-model
+
+Fișier:
+
+```text
+src/ui/audit_checklist_view_model.py
+```
+
+Exporturi:
+
+```text
+AuditChecklistUiSection
+AuditChecklistUiViewModel
+build_audit_checklist_ui_view_model
+validate_audit_checklist_ui_payload
+```
+
+Rol:
+
+```text
+validează schema UI
+citește payload["sections"]
+clasifică secțiunile ca table / details / empty
+expune column_keys pentru tabele
+expune field_keys pentru detalii
+păstrează valorile din payload fără reinterpretare business
+```
+
+Exemplu de utilizare Python:
+
+```python
+from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
+from src.ui.audit_checklist_view_model import build_audit_checklist_ui_view_model
+
+payload = build_audit_checklist_ui_payload(
+    "cale/catre/date",
+    code="DS099903883",
+    lot="105.26",
+)
+view_model = build_audit_checklist_ui_view_model(payload)
+
+for section in view_model.sections:
+    print(section.title, section.kind)
+```
+
+## Exemplu de utilizare Python pentru DOCX minimal
 
 ```python
 from src.ui.orchestrator import UiGenerationRequest, generate_report_from_ui_request
@@ -193,6 +275,16 @@ deducere trasabilitate amonte/aval
 conversii de unități de măsură
 ```
 
+UI-ul audit checklist nu are voie să:
+
+```text
+parseze DOCX
+reconstruiască tabele din TraceabilityCase brut
+recalculeze cantități
+schimbe ordinea secțiunilor primită în payload["sections"]
+înlocuiască lipsurile explicite FARA DATE IDENTIFICATE
+```
+
 ## Testare
 
 Testele dedicate sunt în:
@@ -201,6 +293,8 @@ Testele dedicate sunt în:
 tests/test_ui_orchestrator.py
 tests/test_ui_cli.py
 tests/test_ui_visual.py
+tests/test_audit_checklist_ui_json.py
+tests/test_audit_checklist_view_model.py
 ```
 
 Acestea verifică:
@@ -217,6 +311,10 @@ cod 1 la eroare CLI
 maparea câmpurilor vizuale în UiGenerationRequest
 apelarea orchestratorului din formularul vizual
 propagarea rezultatului de succes/eroare în UI vizual
+schema audit-checklist-ui.v1
+ordinea secțiunilor audit checklist
+maparea rows / data în view-model fără rebuild business
+validarea formelor invalide de payload UI
 ```
 
 ## Document contract
@@ -229,4 +327,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este rafinarea strict vizuală a formularului sau pregătirea pentru installer, fără logică de business nouă.
+Următorul pas UI permis este integrarea view-modelului audit checklist în UI-ul vizual, fără logică de business nouă.
