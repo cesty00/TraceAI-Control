@@ -23,6 +23,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from xml.etree import ElementTree as ET
 
+from src.core.source_discovery import find_official_source_path
+
 
 OFFICIAL_SOURCES: tuple[str, ...] = (
     "trasabilitate_wms.csv",
@@ -82,7 +84,7 @@ def build_inventory_report(source_directory: str | Path) -> InventoryReport:
     source_reports: list[SourceInventory] = []
 
     for expected_name in OFFICIAL_SOURCES:
-        path = root / expected_name
+        path = find_official_source_path(root, expected_name) or root / expected_name
         source_reports.append(inventory_source(expected_name, path))
 
     global_problems = [
