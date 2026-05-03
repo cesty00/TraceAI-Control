@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.audit.audit_checklist_report import build_audit_checklist_report
 from src.audit.audit_traceability_report import build_audit_traceability_report
+from src.core.build_info import BuildInfo, format_build_info_line
 from src.report.audit_checklist_docx import (
     AuditReportPolicy,
     build_document_xml,
@@ -24,6 +25,7 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     assert "05_FLUX_LOTURI_SI_DOCUMENTE — Fluxuri loturi și documente" in xml
     assert "Registru documente fizice de pregătit pentru auditor" in xml
     assert "Concluzie audit intern" in xml
+    assert "Informații build raport" in xml
 
 
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
@@ -50,6 +52,25 @@ def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
         "Comandă WMS",
     ]:
         assert downstream_header in xml
+
+
+def test_audit_checklist_docx_renders_build_information() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    build_info = BuildInfo(
+        app_name="TraceAI Control",
+        app_version="1.0.0",
+        build_commit="abcdef1234567890",
+        build_date="build-date",
+        build_channel="local",
+        generated_at="generated-at",
+    )
+
+    xml = build_document_xml(report, build_info=build_info)
+
+    assert "Build raport: 1.0.0 / commit abcdef123456 / generat generated-at" in xml
+    assert "Commit build" in xml
+    assert "abcdef1234567890" in xml
+    assert format_build_info_line(build_info) == "TraceAI Control 1.0.0 | commit abcdef123456 | channel local | generated generated-at"
 
 
 def test_audit_checklist_docx_renders_split_receipt_fields_when_available() -> None:
@@ -88,3 +109,4 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
         document_xml = package.read("word/document.xml").decode("utf-8")
     assert "TEST DE TRASABILITATE PENTRU AUDIT" in document_xml
     assert "Rezumat de conformare checklist" in document_xml
+    assert "Informații build raport" in document_xml

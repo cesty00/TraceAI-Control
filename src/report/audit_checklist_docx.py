@@ -9,13 +9,13 @@ and the structure stays close to the validated scanned model.
 from __future__ import annotations
 
 import argparse
+import html
 import re
 import zipfile
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import date
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from src.audit.audit_checklist_report import (
     AuditChecklistReport,
@@ -26,6 +26,7 @@ from src.audit.audit_checklist_report import (
     build_audit_checklist_report,
 )
 from src.audit.audit_traceability_report import build_audit_traceability_report
+from src.core.build_info import BuildInfo, build_info_table_rows, get_build_info
 from src.report.audit_docx import (
     APP_XML,
     CONTENT_TYPES_XML,
@@ -204,9 +205,11 @@ def generate_audit_checklist_docx_report(
     report: AuditChecklistReport,
     output_path: str | Path,
     policy: AuditReportPolicy = DEFAULT_POLICY,
+    build_info: BuildInfo | None = None,
 ) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
+    metadata = build_info or get_build_info()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as package:
         package.writestr("[Content_Types].xml", CONTENT_TYPES_XML)
         package.writestr("_rels/.rels", ROOT_RELS_XML)
@@ -216,13 +219,18 @@ def generate_audit_checklist_docx_report(
         package.writestr("word/styles.xml", STYLES_XML)
         package.writestr("word/header1.xml", HEADER_XML)
         package.writestr("word/footer1.xml", FOOTER_XML)
-        package.writestr("word/document.xml", build_document_xml(report, policy))
+        package.writestr("word/document.xml", build_document_xml(report, policy, metadata))
     return output
 
 
-def build_document_xml(report: AuditChecklistReport, policy: AuditReportPolicy = DEFAULT_POLICY) -> str:
+def build_document_xml(
+    report: AuditChecklistReport,
+    policy: AuditReportPolicy = DEFAULT_POLICY,
+    build_info: BuildInfo | None = None,
+) -> str:
+    metadata = build_info or get_build_info()
     body: list[str] = []
-    body.extend(build_title_block(report))
+    body.extend(build_title_block(report, metadata))
     body.extend(build_conformity_section(report, policy))
     body.extend(build_exercise_section(report, policy))
     body.extend(build_downstream_section(report, policy))
@@ -234,14 +242,16 @@ def build_document_xml(report: AuditChecklistReport, policy: AuditReportPolicy =
     body.extend(build_lot_flow_section(report, policy))
     body.extend(build_document_register_section(report, policy))
     body.extend(build_conclusion_section(report, policy))
+    body.extend(build_build_info_section(metadata))
     return wrap_document("".join(body))
 
 
-def build_title_block(report: AuditChecklistReport) -> list[str]:
+def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> list[str]:
     return [
         paragraph("TEST DE TRASABILITATE PENTRU AUDIT", style="Title"),
         paragraph(f"{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}", bold=True, align="center"),
         paragraph("Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.", align="center"),
+        literal_paragraph(f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}", align="center"),
     ]
 
 
@@ -430,6 +440,42 @@ def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditR
         "Recepțiile WMS disponibile și stocurile la moment sunt afișate în Tabelul I și în fluxurile de loturi.",
         "Raportul poate fi folosit ca bază pentru pregătirea dosarului de audit, împreună cu documentele fizice menționate în registru.",
     ]
+
+
+def build_build_info_section(build_info: BuildInfo) -> list[str]:
+    return [
+        paragraph("Informații build raport", style="Heading1"),
+        paragraph("Această secțiune identifică versiunea aplicației folosită la generarea raportului, pentru corelare cu diagnosticele GitHub și build-urile instalate local."),
+        literal_table(["Câmp", "Valoare"], build_info_table_rows(build_info)),
+    ]
+
+
+def literal_paragraph(text: object, style: str | None = None, bold: bool = False, align: str | None = None) -> str:
+    """Render technical metadata literally, without audit numeric formatting."""
+
+    style_xml = f'<w:pStyle w:val="{style}"/>' if style else ""
+    align_xml = f'<w:jc w:val="{align}"/>' if align else ""
+    bold_xml = "<w:b/>" if bold else ""
+    return f"<w:p><w:pPr>{style_xml}{align_xml}</w:pPr><w:r><w:rPr>{bold_xml}</w:rPr><w:t>{html.escape(str(text), quote=False)}</w:t></w:r></w:p>"
+
+
+def literal_table(headers: list[str], rows: list[list[object]]) -> str:
+    xml_rows = [literal_table_row(headers, is_header=True)]
+    xml_rows.extend(literal_table_row(row) for row in rows)
+    borders = "<w:tblBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/></w:tblBorders>"
+    return f"<w:tbl><w:tblPr><w:tblStyle w:val=\"TraceAITable\"/><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblLayout w:type=\"autofit\"/>{borders}</w:tblPr>{''.join(xml_rows)}</w:tbl>"
+
+
+def literal_table_row(values: list[object], is_header: bool = False) -> str:
+    return f"<w:tr>{''.join(literal_table_cell(value, is_header=is_header) for value in values)}</w:tr>"
+
+
+def literal_table_cell(value: object, is_header: bool = False) -> str:
+    shading_xml = '<w:shd w:fill="EDEDED"/>' if is_header else ""
+    bold_xml = "<w:b/>" if is_header else ""
+    size = "15" if is_header else "14"
+    text = str(value).strip() if value is not None else MISSING
+    return f"<w:tc><w:tcPr>{shading_xml}<w:tcMar><w:top w:w=\"40\" w:type=\"dxa\"/><w:left w:w=\"40\" w:type=\"dxa\"/><w:bottom w:w=\"40\" w:type=\"dxa\"/><w:right w:w=\"40\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz w:val=\"{size}\"/><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\"/></w:rPr><w:t>{html.escape(text or MISSING, quote=False)}</w:t></w:r></w:p></w:tc>"
 
 
 def extract_document_text_from_xml(document_xml: str) -> str:

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.core.build_info import format_build_info_line
 from src.ui.audit_checklist_section_widgets import (
     SectionDisplayModel,
     build_section_display_model,
@@ -302,13 +303,14 @@ def run_visual_app(
     current_view_model: AuditChecklistUiViewModel | None = None
     current_display_model: SectionDisplayModel | None = None
     section_by_tree_id: dict[str, str] = {}
+    build_info_line = format_build_info_line()
 
     main_frame = ttk.Frame(root, padding=18)
     main_frame.grid(row=0, column=0, sticky="nsew")
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
     main_frame.columnconfigure(1, weight=1)
-    main_frame.rowconfigure(7, weight=1)
+    main_frame.rowconfigure(8, weight=1)
 
     title_label = ttk.Label(main_frame, text="TraceAI Control — audit checklist și raport DOCX", font=("Segoe UI", 14, "bold"))
     title_label.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 14))
@@ -318,6 +320,7 @@ def run_visual_app(
     lot_var = tk.StringVar()
     output_var = tk.StringVar()
     status_var = tk.StringVar(value="Completați câmpurile și generați raportul sau previzualizarea audit checklist.")
+    build_info_var = tk.StringVar(value=build_info_line)
     section_title_var = tk.StringVar(value="Nicio secțiune selectată")
     section_summary_var = tk.StringVar(value="Generați previzualizarea audit checklist pentru a vedea secțiunile.")
 
@@ -450,7 +453,7 @@ def run_visual_app(
             return
         status_var.set(result.message if result.success else result.error or result.message)
         if result.success:
-            messagebox.showinfo(APP_TITLE, result.message)
+            messagebox.showinfo(APP_TITLE, f"{result.message}\n\n{build_info_line}")
         else:
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
@@ -528,10 +531,12 @@ def run_visual_app(
     generate_button.grid(row=0, column=1)
 
     status_label = ttk.Label(main_frame, textvariable=status_var, wraplength=980)
-    status_label.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 8))
+    status_label.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 2))
+    build_info_label = ttk.Label(main_frame, textvariable=build_info_var, wraplength=980)
+    build_info_label.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 8))
 
     preview_frame = ttk.LabelFrame(main_frame, text="Audit checklist pe secțiuni")
-    preview_frame.grid(row=7, column=0, columnspan=3, sticky="nsew")
+    preview_frame.grid(row=8, column=0, columnspan=3, sticky="nsew")
     preview_frame.columnconfigure(1, weight=1)
     preview_frame.rowconfigure(0, weight=1)
 
