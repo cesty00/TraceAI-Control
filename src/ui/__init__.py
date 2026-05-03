@@ -28,6 +28,7 @@ from .orchestrator import (
     TraceabilityCaseRunner,
     UiGenerationRequest,
     UiGenerationResult,
+    generate_audit_checklist_docx_from_traceability_case,
     generate_report_from_ui_request,
     validate_ui_generation_request,
 )
@@ -67,6 +68,7 @@ __all__ = [
     "find_section_by_key",
     "format_audit_checklist_preview",
     "format_section_display_text",
+    "generate_audit_checklist_docx_from_traceability_case",
     "generate_report_from_ui_request",
     "humanize_field_label",
     "main",
