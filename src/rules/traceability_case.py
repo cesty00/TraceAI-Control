@@ -162,7 +162,7 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     prd_consumption_rows = payloads_to_table_rows(mapped_rows["prd_consumptions"])
     stock_rows = payloads_to_table_rows(mapped_rows["stock"])
 
-    if any([production_rows, raw_material_rows, packaging_rows, auxiliary_rows, prd_consumption_rows, order_traceability_rows]):
+    if any([production_rows, delivery_rows, raw_material_rows, packaging_rows, auxiliary_rows, wms_receipt_rows, prd_consumption_rows, stock_rows, order_traceability_rows]):
         return TraceabilityReportTables(
             production=replace_table_rows(tables.production, production_rows),
             finished_goods_deliveries=replace_table_rows(tables.finished_goods_deliveries, delivery_rows),
