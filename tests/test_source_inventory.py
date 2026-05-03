@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.core.source_discovery import find_official_source_path, normalize_source_filename
 from src.core.source_inventory import build_inventory_report, report_to_dict
 
 
@@ -76,6 +77,42 @@ def test_build_inventory_report_detects_csv_and_xlsx(tmp_path: Path) -> None:
     assert nomenclator["file_type"] == "xlsx"
     assert nomenclator["sheets"][0]["name"] == "Articole"
     assert nomenclator["sheets"][0]["columns"] == ["Cod", "Denumire"]
+
+
+def test_build_inventory_report_detects_ui_folder_aliases_with_underscores(tmp_path: Path) -> None:
+    with (tmp_path / "trasabilitate_wms.csv").open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["Cod articol", "Lot", "Cantitate"])
+        writer.writerow(["DS0001", "L001", "10"])
+
+    with (tmp_path / "raport_productie.csv").open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["PRE_Cod Articol", "PRE_LOT", "PRE_Cantitate Predare"])
+        writer.writerow(["DS0001", "L001", "10"])
+
+    write_minimal_xlsx(tmp_path / "nomenclator.xlsx", "Articole", ["Cod", "Denumire"])
+    write_minimal_xlsx(tmp_path / "stoc_la_moment_original.xlsx", "Stoc", ["Cod", "Lot", "Stoc"])
+
+    report = build_inventory_report(tmp_path)
+    data = report_to_dict(report)
+
+    assert data["problems"] == []
+    paths = {source["expected_name"]: Path(source["path"]).name for source in data["sources"]}
+    assert paths["rapoarte productie.csv"] == "raport_productie.csv"
+    assert paths["stoc la moment original.xlsx"] == "stoc_la_moment_original.xlsx"
+
+
+def test_source_discovery_searches_recursively_when_parent_folder_is_selected(tmp_path: Path) -> None:
+    nested = tmp_path / "trace2"
+    nested.mkdir()
+    (nested / "raport_productie.csv").write_text("PRE_Cod Articol,PRE_LOT\nDS0001,L001\n", encoding="utf-8")
+
+    assert find_official_source_path(tmp_path, "rapoarte productie.csv") == nested / "raport_productie.csv"
+
+
+def test_normalize_source_filename_accepts_spaces_underscores_hyphens_and_diacritics() -> None:
+    assert normalize_source_filename("raport_productie.csv") == normalize_source_filename("raport producție.csv")
+    assert normalize_source_filename("stoc-la-moment-original.xlsx") == normalize_source_filename("stoc_la_moment_original.xlsx")
 
 
 def test_build_inventory_report_marks_missing_sources(tmp_path: Path) -> None:
