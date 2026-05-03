@@ -16,13 +16,16 @@ from pathlib import Path
 from typing import Any
 
 from src.core.build_info import BuildInfo, build_info_to_dict, get_build_info
-from src.core.normalized_dataset import NormalizedDataSet, build_normalized_dataset
+from src.core.normalized_dataset import build_normalized_dataset
 from src.core.record_selection import RecordSelectionResult, select_records_by_code_lot
-from src.core.source_inventory import InventoryReport, SourceInventory, build_inventory_report
+from src.core.source_inventory import SourceInventory, build_inventory_report
 
 STATUS_OK = "OK"
 STATUS_WARNING = "WARNING"
 STATUS_BLOCKER = "BLOCKER"
+
+PRIMARY_SUBJECT_SOURCES = {"production", "wms"}
+OPTIONAL_SUBJECT_SOURCES = {"stock", "nomenclator"}
 
 
 @dataclass(frozen=True)
@@ -95,6 +98,9 @@ def build_preflight_report(
 
     warnings.extend(dataset.problems)
     warnings.extend(selection.warnings)
+    subject_warnings, subject_blockers = evaluate_subject_coverage(subject.records_by_source)
+    warnings.extend(subject_warnings)
+    blockers.extend(subject_blockers)
 
     if subject.total_records == 0:
         blockers.append("Codul și lotul nu au fost găsite în sursele normalizate.")
@@ -111,6 +117,33 @@ def build_preflight_report(
         warnings=deduplicate(warnings),
         blockers=deduplicate(blockers),
     )
+
+
+def evaluate_subject_coverage(records_by_source: dict[str, int]) -> tuple[list[str], list[str]]:
+    """Evaluate where the requested code/lot was found.
+
+    Stocul este validare finală, nu sursă de adevăr pentru existența cazului.
+    Un cod+lot poate lipsi din stoc dacă nu mai există stoc fizic la momentul
+    analizat. De aceea lipsa din `stock` este observație, nu blocaj.
+    """
+
+    warnings: list[str] = []
+    blockers: list[str] = []
+
+    missing_primary = sorted(source for source in PRIMARY_SUBJECT_SOURCES if records_by_source.get(source, 0) == 0)
+    if len(missing_primary) == len(PRIMARY_SUBJECT_SOURCES):
+        blockers.append("Codul și lotul nu au fost găsite în sursele principale PRD/WMS.")
+    else:
+        for source in missing_primary:
+            warnings.append(f"Codul și lotul nu au fost găsite în sursa principală {source}.")
+
+    if records_by_source.get("stock", 0) == 0:
+        warnings.append("Codul și lotul nu apar în stocul la moment; acest lucru poate fi normal dacă nu există stoc fizic pe codul și lotul analizat.")
+
+    if records_by_source.get("nomenclator", 0) == 0:
+        warnings.append("Codul și lotul nu apar împreună în nomenclator; nomenclatorul poate conține doar codul, fără lot.")
+
+    return warnings, blockers
 
 
 def source_status_from_inventory(source: SourceInventory) -> PreflightSourceStatus:
