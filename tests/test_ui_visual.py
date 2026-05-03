@@ -1,9 +1,11 @@
+from src.ui.audit_checklist_section_widgets import build_section_display_model
 from src.ui.audit_checklist_view_model import AuditChecklistUiSection, AuditChecklistUiViewModel
 from src.ui.orchestrator import UiGenerationRequest, UiGenerationResult
 from src.ui.visual import (
     VisualAuditChecklistResult,
     build_request_from_form_values,
     format_audit_checklist_preview,
+    format_section_display_text,
     submit_audit_checklist_form_values,
     submit_visual_form_values,
     validate_audit_checklist_form_values,
@@ -165,6 +167,35 @@ def test_format_audit_checklist_preview_renders_subject_details_and_limited_rows
     assert "Rânduri: 2" in preview
     assert "[1] document=D1; client=C1" in preview
     assert "... încă 1 rând(uri)" in preview
+
+
+def test_format_section_display_text_renders_selected_details_section() -> None:
+    display = build_section_display_model(make_visual_view_model().sections[0])
+
+    text = format_section_display_text(display)
+
+    assert text == (
+        "Bilanț produs finit\n"
+        "Detalii bilanț.\n"
+        "2 câmp(uri)\n"
+        "- prd_produced: 10 KG\n"
+        "- delivered: 3 KG\n"
+    )
+
+
+def test_format_section_display_text_renders_selected_table_section() -> None:
+    display = build_section_display_model(make_visual_view_model().sections[1])
+
+    text = format_section_display_text(display)
+
+    assert text == (
+        "Livrări\n"
+        "Livrări aval.\n"
+        "2 rând(uri)\n"
+        "document | client\n"
+        "D1 | C1\n"
+        "D2 | C2\n"
+    )
 
 
 def make_visual_view_model() -> AuditChecklistUiViewModel:
