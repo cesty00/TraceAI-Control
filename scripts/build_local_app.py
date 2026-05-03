@@ -94,6 +94,7 @@ def run_pyinstaller(root: Path, metadata_file: Path, onefile: bool = False) -> N
     if pyinstaller is None:
         raise RuntimeError("PyInstaller nu este instalat. Rulează: pip install pyinstaller")
 
+    entry_script = root / "src" / "ui" / "visual.py"
     command = [
         pyinstaller,
         "--noconfirm",
@@ -107,7 +108,7 @@ def run_pyinstaller(root: Path, metadata_file: Path, onefile: bool = False) -> N
         command.append("--onefile")
     else:
         command.append("--onedir")
-    command.extend(["-m", "src.ui.visual"])
+    command.append(str(entry_script))
     subprocess.run(command, cwd=root, check=True)
 
 
