@@ -2,8 +2,9 @@
 
 The installed local application must expose enough build metadata to correlate a
 DOCX report with the GitHub commit used to generate it. Packaged builds can set
-these values through environment variables or bundle ``traceai_build_info.json``;
-source checkouts can fall back to Git when available.
+these values through environment variables, bundle ``traceai_build_info.json`` or
+embed a generated metadata module; source checkouts can fall back to Git when
+available.
 """
 
 from __future__ import annotations
@@ -55,19 +56,21 @@ def get_build_info(generated_at: datetime | None = None) -> BuildInfo:
     Resolution order:
     1. TRACEAI_BUILD_* environment variables, useful for CI or scripted builds;
     2. bundled ``traceai_build_info.json``, useful for packaged Windows apps;
-    3. Git checkout metadata;
-    4. UNKNOWN fallback.
+    3. generated ``src.core._generated_build_info`` module embedded by build;
+    4. Git checkout metadata;
+    5. UNKNOWN fallback.
     """
 
     now = generated_at or datetime.now(timezone.utc)
     resource = read_packaged_build_info()
-    commit = os.getenv(ENV_BUILD_COMMIT) or resource.get("build_commit") or detect_git_commit() or UNKNOWN
+    generated = read_generated_build_info()
+    commit = os.getenv(ENV_BUILD_COMMIT) or resource.get("build_commit") or generated.get("build_commit") or detect_git_commit() or UNKNOWN
     return BuildInfo(
-        app_name=str(resource.get("app_name") or APP_NAME),
-        app_version=os.getenv(ENV_BUILD_VERSION) or str(resource.get("app_version") or APP_VERSION),
+        app_name=str(resource.get("app_name") or generated.get("app_name") or APP_NAME),
+        app_version=os.getenv(ENV_BUILD_VERSION) or str(resource.get("app_version") or generated.get("app_version") or APP_VERSION),
         build_commit=str(commit),
-        build_date=os.getenv(ENV_BUILD_DATE) or str(resource.get("build_date") or UNKNOWN),
-        build_channel=os.getenv(ENV_BUILD_CHANNEL) or str(resource.get("build_channel") or "local"),
+        build_date=os.getenv(ENV_BUILD_DATE) or str(resource.get("build_date") or generated.get("build_date") or UNKNOWN),
+        build_channel=os.getenv(ENV_BUILD_CHANNEL) or str(resource.get("build_channel") or generated.get("build_channel") or "local"),
         generated_at=now.replace(microsecond=0).isoformat(),
     )
 
@@ -115,6 +118,17 @@ def read_packaged_build_info() -> dict[str, Any]:
         except (OSError, json.JSONDecodeError):
             continue
     return {}
+
+
+def read_generated_build_info() -> dict[str, Any]:
+    """Read build metadata embedded as a generated Python module."""
+
+    try:
+        from src.core import _generated_build_info
+    except Exception:
+        return {}
+    payload = getattr(_generated_build_info, "BUILD_INFO", {})
+    return payload if isinstance(payload, dict) else {}
 
 
 def build_info_candidate_paths() -> list[Path]:
