@@ -11,6 +11,7 @@ contain traceability business logic.
 from __future__ import annotations
 
 from collections.abc import Callable
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,7 @@ from src.ui.orchestrator import UiGenerationRequest, UiGenerationResult, generat
 VisualRequestHandler = Callable[[UiGenerationRequest], UiGenerationResult]
 AuditChecklistPayloadBuilder = Callable[[str, str, str], dict[str, Any]]
 AuditChecklistViewModelBuilder = Callable[[dict[str, Any]], AuditChecklistUiViewModel]
+AuditChecklistRequestHandler = Callable[[str, str, str], "VisualAuditChecklistResult"]
 
 APP_TITLE = "TraceAI Control — Modul Trasabilitate"
 
@@ -81,6 +83,31 @@ def submit_visual_form_values(
     return request_handler(request)
 
 
+def submit_visual_form_values_async(
+    source_directory: str,
+    code: str,
+    lot: str,
+    output_docx_path: str,
+    executor: Executor,
+    request_handler: VisualRequestHandler = generate_report_from_ui_request,
+) -> Future[UiGenerationResult]:
+    """Submit DOCX generation on a background executor.
+
+    The returned Future must be observed from the UI thread using ``root.after``
+    or an equivalent event-loop callback. Tkinter widgets are intentionally not
+    touched by this function.
+    """
+
+    return executor.submit(
+        submit_visual_form_values,
+        source_directory,
+        code,
+        lot,
+        output_docx_path,
+        request_handler,
+    )
+
+
 def submit_audit_checklist_form_values(
     source_directory: str,
     code: str,
@@ -122,6 +149,18 @@ def submit_audit_checklist_form_values(
         message="Previzualizare audit checklist generată cu succes.",
         error=None,
     )
+
+
+def submit_audit_checklist_form_values_async(
+    source_directory: str,
+    code: str,
+    lot: str,
+    executor: Executor,
+    audit_request_handler: AuditChecklistRequestHandler = submit_audit_checklist_form_values,
+) -> Future[VisualAuditChecklistResult]:
+    """Submit audit checklist preview generation on a background executor."""
+
+    return executor.submit(audit_request_handler, source_directory, code, lot)
 
 
 def default_audit_checklist_payload_builder(source_directory: str, code: str, lot: str) -> dict[str, Any]:
@@ -242,7 +281,7 @@ def format_section_display_text(display_model: SectionDisplayModel) -> str:
 
 def run_visual_app(
     request_handler: VisualRequestHandler = generate_report_from_ui_request,
-    audit_request_handler: Callable[[str, str, str], VisualAuditChecklistResult] = submit_audit_checklist_form_values,
+    audit_request_handler: AuditChecklistRequestHandler = submit_audit_checklist_form_values,
 ) -> int:
     """Run the minimal Tkinter visual shell.
 
@@ -258,6 +297,8 @@ def run_visual_app(
     root.geometry("1120x760")
     root.minsize(980, 680)
 
+    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="traceai-ui-worker")
+    busy = False
     current_view_model: AuditChecklistUiViewModel | None = None
     current_display_model: SectionDisplayModel | None = None
     section_by_tree_id: dict[str, str] = {}
@@ -386,22 +427,46 @@ def run_visual_app(
         status_var.set(f"Secțiunea selectată a fost exportată: {output_path}")
         messagebox.showinfo(APP_TITLE, f"Export finalizat: {output_path}")
 
-    def on_generate() -> None:
-        result = submit_visual_form_values(
-            source_directory=source_var.get(),
-            code=code_var.get(),
-            lot=lot_var.get(),
-            output_docx_path=output_var.get(),
-            request_handler=request_handler,
-        )
+    def set_busy(is_busy: bool, message: str | None = None) -> None:
+        nonlocal busy
+        busy = is_busy
+        state = "disabled" if is_busy else "normal"
+        generate_button.configure(state=state)
+        preview_button.configure(state=state)
+        if message:
+            status_var.set(message)
+        root.update_idletasks()
+
+    def poll_docx_generation(future: Future[UiGenerationResult]) -> None:
+        if not future.done():
+            root.after(100, poll_docx_generation, future)
+            return
+        set_busy(False)
+        try:
+            result = future.result()
+        except Exception as exc:  # pragma: no cover - protects UI event loop
+            status_var.set(str(exc))
+            messagebox.showerror(APP_TITLE, str(exc))
+            return
         status_var.set(result.message if result.success else result.error or result.message)
         if result.success:
             messagebox.showinfo(APP_TITLE, result.message)
         else:
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
-    def on_preview_audit() -> None:
-        result = audit_request_handler(source_var.get(), code_var.get(), lot_var.get())
+    def poll_audit_preview(future: Future[VisualAuditChecklistResult]) -> None:
+        if not future.done():
+            root.after(100, poll_audit_preview, future)
+            return
+        set_busy(False)
+        try:
+            result = future.result()
+        except Exception as exc:  # pragma: no cover - protects UI event loop
+            status_var.set(str(exc))
+            set_preview_text(str(exc))
+            clear_table()
+            messagebox.showerror(APP_TITLE, str(exc))
+            return
         status_var.set(result.message if result.success else result.error or result.message)
         if result.success and result.view_model is not None:
             load_sections(result.view_model)
@@ -409,6 +474,37 @@ def run_visual_app(
             set_preview_text(result.error or result.message)
             clear_table()
             messagebox.showerror(APP_TITLE, result.error or result.message)
+
+    def on_generate() -> None:
+        if busy:
+            return
+        set_busy(True, "Generare raport DOCX în curs... aplicația rămâne disponibilă.")
+        future = submit_visual_form_values_async(
+            source_directory=source_var.get(),
+            code=code_var.get(),
+            lot=lot_var.get(),
+            output_docx_path=output_var.get(),
+            executor=executor,
+            request_handler=request_handler,
+        )
+        root.after(100, poll_docx_generation, future)
+
+    def on_preview_audit() -> None:
+        if busy:
+            return
+        set_busy(True, "Generare previzualizare audit checklist în curs...")
+        future = submit_audit_checklist_form_values_async(
+            source_directory=source_var.get(),
+            code=code_var.get(),
+            lot=lot_var.get(),
+            executor=executor,
+            audit_request_handler=audit_request_handler,
+        )
+        root.after(100, poll_audit_preview, future)
+
+    def on_close() -> None:
+        executor.shutdown(wait=False, cancel_futures=True)
+        root.destroy()
 
     ttk.Label(main_frame, text="Folder surse oficiale").grid(row=1, column=0, sticky="w", pady=4)
     ttk.Entry(main_frame, textvariable=source_var).grid(row=1, column=1, sticky="ew", pady=4, padx=(8, 8))
@@ -426,8 +522,10 @@ def run_visual_app(
 
     button_frame = ttk.Frame(main_frame)
     button_frame.grid(row=5, column=1, columnspan=2, sticky="e", pady=(16, 8))
-    ttk.Button(button_frame, text="Previzualizează audit checklist", command=on_preview_audit).grid(row=0, column=0, padx=(0, 8))
-    ttk.Button(button_frame, text="Generează raport DOCX", command=on_generate).grid(row=0, column=1)
+    preview_button = ttk.Button(button_frame, text="Previzualizează audit checklist", command=on_preview_audit)
+    preview_button.grid(row=0, column=0, padx=(0, 8))
+    generate_button = ttk.Button(button_frame, text="Generează raport DOCX", command=on_generate)
+    generate_button.grid(row=0, column=1)
 
     status_label = ttk.Label(main_frame, textvariable=status_var, wraplength=980)
     status_label.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 8))
@@ -472,6 +570,7 @@ def run_visual_app(
     table_scrollbar_x.grid(row=1, column=0, sticky="ew")
     section_table.configure(yscrollcommand=table_scrollbar_y.set, xscrollcommand=table_scrollbar_x.set)
 
+    root.protocol("WM_DELETE_WINDOW", on_close)
     root.mainloop()
     return 0
 
