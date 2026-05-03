@@ -11,6 +11,7 @@ UI vizual minimal peste orchestrator
 contract JSON audit checklist pentru interfață
 view-model audit checklist bazat pe payload["sections"]
 widgeturi dedicate pentru secțiuni audit checklist
+rafinări UX de prezentare pentru secțiuni și tabele
 ```
 
 UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
@@ -159,6 +160,8 @@ SectionDisplayModel
 build_section_list_items
 find_section_by_key
 build_section_display_model
+humanize_field_label
+truncate_display_text
 ```
 
 Rol:
@@ -166,10 +169,21 @@ Rol:
 ```text
 construiește lista de navigare a secțiunilor
 păstrează ordinea din view-model
+adaugă sumar de afișare pe secțiune
 construiește modelul de afișare pentru secțiunea selectată
 transformă details în perechi cheie/valoare
 transformă table în coloane și rânduri pentru Treeview
+umanizează etichetele coloanelor pentru lizibilitate
+limitează controlat numărul de rânduri afișate în tabele mari
+trunchiază explicit valorile foarte lungi
 nu calculează și nu interpretează business
+```
+
+Constante UX:
+
+```text
+DEFAULT_TABLE_ROW_LIMIT = 200
+DEFAULT_DISPLAY_VALUE_LIMIT = 240
 ```
 
 Exemplu de utilizare Python:
@@ -229,10 +243,12 @@ Previzualizează audit checklist
 Butonul afișează:
 
 ```text
-listă de secțiuni în stânga
+listă de secțiuni în stânga, cu sumar
 titlu și sumar pentru secțiunea selectată
 detalii text pentru secțiunea selectată
 tabel Treeview pentru secțiunile table
+coloane cu etichete mai lizibile
+limitare controlată pentru tabele mari
 ```
 
 Aceasta este o randare UI minimală, nu un raport audit nou și nu o sursă de adevăr separată.
@@ -406,6 +422,9 @@ maparea rows / data în view-model fără rebuild business
 validarea formelor invalide de payload UI
 previzualizarea audit checklist din view-model
 modelele de afișare pentru secțiuni details/table/empty
+sumarul de navigare pentru secțiuni
+limitarea controlată a tabelelor mari
+trunchierea explicită a valorilor lungi
 fallback text pentru secțiunea selectată
 oprirea apelului audit checklist când lipsesc câmpuri UI
 ```
@@ -420,4 +439,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este rafinarea experienței vizuale a widgeturilor dedicate, fără logică de business nouă.
+Următorul pas UI permis este integrarea unei comenzi de export/clipboard pentru secțiunea selectată, fără logică de business nouă.
