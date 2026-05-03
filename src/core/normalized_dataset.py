@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
+from .source_discovery import find_official_source_path
 from .source_inventory import (
     OFFICIAL_SOURCES,
     XLSX_MAIN_NAMESPACE,
@@ -100,14 +101,20 @@ class NormalizedDataSet:
 
 
 def build_normalized_dataset(source_directory: str | Path) -> NormalizedDataSet:
-    """Build a normalized dataset from the four official source files."""
+    """Build a normalized dataset from the four official source files.
+
+    The inventory layer and the dataset layer must resolve source aliases in the
+    same way. Otherwise the UI can report that ``raport_productie.csv`` was
+    found while the Rules pipeline still tries to read only
+    ``rapoarte productie.csv`` and silently degrades to WMS-only output.
+    """
 
     root = Path(source_directory).expanduser().resolve()
     tables: list[NormalizedTable] = []
     problems: list[str] = []
 
     for source_name in OFFICIAL_SOURCES:
-        path = root / source_name
+        path = find_official_source_path(root, source_name) or root / source_name
         source_key = SOURCE_KEYS[source_name]
 
         if not path.exists():

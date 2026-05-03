@@ -107,6 +107,24 @@ def test_normalized_dataset_prefers_real_article_code_over_numeric_article_id(tm
     assert production["rows"][0]["code_lot_hints"] == {"code": "DS0001", "lot": "L001"}
 
 
+def test_build_normalized_dataset_uses_discovered_alias_paths(tmp_path: Path) -> None:
+    write_csv(tmp_path / "trasabilitate_wms.csv", ["Cod articol", "Lot", "Cantitate"], ["DS0001", "L001", "10"])
+    write_csv(tmp_path / "raport_productie.csv", ["PRE_Cod Articol", "PRE_LOT", "PRE_Cantitate Predare"], ["DS0001", "L001", "10"])
+    write_minimal_xlsx(tmp_path / "nomenclator.xlsx", "Articole", ["Cod", "Denumire"], ["DS0001", "Produs test"])
+    write_minimal_xlsx(tmp_path / "stoc_la_moment_original.xlsx", "Stoc", ["Cod", "Lot", "Stoc"], ["DS0001", "L001", "5"])
+
+    dataset = build_normalized_dataset(tmp_path)
+
+    assert dataset.problems == []
+    assert [table.source_key for table in dataset.tables] == ["wms", "production", "nomenclator", "stock"]
+    production = next(table for table in dataset.tables if table.source_key == "production")
+    stock = next(table for table in dataset.tables if table.source_key == "stock")
+    assert production.source_name == "rapoarte productie.csv"
+    assert production.rows[0].values["pre_cod_articol"] == "DS0001"
+    assert stock.source_name == "stoc la moment original.xlsx"
+    assert stock.rows[0].values["stoc"] == "5"
+
+
 def test_normalized_dataset_reports_missing_files(tmp_path: Path) -> None:
     dataset = dataset_to_dict(build_normalized_dataset(tmp_path))
 
