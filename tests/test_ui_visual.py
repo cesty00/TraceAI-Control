@@ -192,7 +192,7 @@ def test_format_section_display_text_renders_selected_table_section() -> None:
         "Livrări\n"
         "Livrări aval.\n"
         "2 rând(uri)\n"
-        "document | client\n"
+        "Document | Client\n"
         "D1 | C1\n"
         "D2 | C2\n"
     )
