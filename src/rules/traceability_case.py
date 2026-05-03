@@ -154,14 +154,14 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     generic_tables = build_report_tables_from_generic_selected_records(result)
     order_traceability_rows = payloads_to_table_rows(build_order_traceability_rows(result))
 
-    production_rows = merge_table_rows(generic_tables.production.rows, payloads_to_table_rows(mapped_rows["production"]))
-    delivery_rows = merge_table_rows(generic_tables.finished_goods_deliveries.rows, payloads_to_table_rows(mapped_rows["finished_goods_deliveries"]))
-    raw_material_rows = merge_table_rows(generic_tables.raw_materials.rows, payloads_to_table_rows(mapped_rows["raw_materials"]))
-    packaging_rows = merge_table_rows(generic_tables.packaging.rows, payloads_to_table_rows(mapped_rows["packaging"]))
-    auxiliary_rows = merge_table_rows(generic_tables.auxiliaries_gas.rows, payloads_to_table_rows(mapped_rows["auxiliaries_gas"]))
-    wms_receipt_rows = merge_table_rows(generic_tables.wms_receipts.rows, payloads_to_table_rows(mapped_rows["wms_receipts"]))
-    prd_consumption_rows = merge_table_rows(generic_tables.prd_consumptions.rows, payloads_to_table_rows(mapped_rows["prd_consumptions"]))
-    stock_rows = merge_table_rows(generic_tables.stock.rows, payloads_to_table_rows(mapped_rows["stock"]))
+    production_rows = select_table_rows(generic_tables.production.rows, payloads_to_table_rows(mapped_rows["production"]))
+    delivery_rows = select_table_rows(generic_tables.finished_goods_deliveries.rows, payloads_to_table_rows(mapped_rows["finished_goods_deliveries"]))
+    raw_material_rows = select_table_rows(generic_tables.raw_materials.rows, payloads_to_table_rows(mapped_rows["raw_materials"]))
+    packaging_rows = select_table_rows(generic_tables.packaging.rows, payloads_to_table_rows(mapped_rows["packaging"]))
+    auxiliary_rows = select_table_rows(generic_tables.auxiliaries_gas.rows, payloads_to_table_rows(mapped_rows["auxiliaries_gas"]))
+    wms_receipt_rows = select_table_rows(generic_tables.wms_receipts.rows, payloads_to_table_rows(mapped_rows["wms_receipts"]))
+    prd_consumption_rows = select_table_rows(generic_tables.prd_consumptions.rows, payloads_to_table_rows(mapped_rows["prd_consumptions"]))
+    stock_rows = select_table_rows(generic_tables.stock.rows, payloads_to_table_rows(mapped_rows["stock"]))
 
     return TraceabilityReportTables(
         production=replace_table_rows(tables.production, production_rows),
@@ -222,29 +222,42 @@ def payloads_to_table_rows(payloads: list[Any]) -> list[TraceabilityTableRow]:
     return [TraceabilityTableRow(payload.values, payload.source_key, payload.source_name, payload.sheet_name, payload.row_number) for payload in payloads]
 
 
-def merge_table_rows(base_rows: list[TraceabilityTableRow], override_rows: list[TraceabilityTableRow]) -> list[TraceabilityTableRow]:
-    """Merge generic and source-specific rows while preserving source keys.
+def select_table_rows(base_rows: list[TraceabilityTableRow], override_rows: list[TraceabilityTableRow]) -> list[TraceabilityTableRow]:
+    """Prefer source-specific rows, enriching them with matching originals only.
 
-    Generic rows keep original source keys such as ``stoc``; source-specific rows
-    add stable canonical aliases such as ``Stoc``. Rows from the same physical
-    source row are merged instead of duplicated.
+    If source-specific mapping exists, it is the authoritative table for that
+    section because it may aggregate multiple raw WMS rows into one audit row.
+    Generic rows are used only to preserve original source keys for the same
+    physical source row. Unmatched generic rows are not appended, preventing
+    duplicate downstream deliveries and false upstream lines.
     """
 
-    rows_by_key: dict[tuple[str | None, str | None, str | None, int | None], TraceabilityTableRow] = {}
-    order: list[tuple[str | None, str | None, str | None, int | None]] = []
+    if not override_rows:
+        return base_rows
 
-    for row in [*base_rows, *override_rows]:
-        key = (row.source_key, row.source_name, row.sheet_name, row.row_number)
-        if key not in rows_by_key:
-            rows_by_key[key] = row
-            order.append(key)
+    base_by_key = {row_key(row): row for row in base_rows}
+    selected: list[TraceabilityTableRow] = []
+    for row in override_rows:
+        base_row = base_by_key.get(row_key(row))
+        if base_row is None:
+            selected.append(row)
             continue
-        existing = rows_by_key[key]
-        merged_values = dict(existing.values)
+        merged_values = dict(base_row.values)
         merged_values.update(row.values)
-        rows_by_key[key] = TraceabilityTableRow(merged_values, row.source_key or existing.source_key, row.source_name or existing.source_name, row.sheet_name or existing.sheet_name, row.row_number if row.row_number is not None else existing.row_number)
+        selected.append(
+            TraceabilityTableRow(
+                merged_values,
+                row.source_key or base_row.source_key,
+                row.source_name or base_row.source_name,
+                row.sheet_name or base_row.sheet_name,
+                row.row_number if row.row_number is not None else base_row.row_number,
+            )
+        )
+    return selected
 
-    return [rows_by_key[key] for key in order]
+
+def row_key(row: TraceabilityTableRow) -> tuple[str | None, str | None, str | None, int | None]:
+    return row.source_key, row.source_name, row.sheet_name, row.row_number
 
 
 def build_preliminary_balance(report_tables: TraceabilityReportTables) -> TraceabilityPreliminaryBalance:
