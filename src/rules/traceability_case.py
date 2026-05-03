@@ -154,14 +154,14 @@ def build_report_tables_from_rules_result(result: RulesPipelineResult) -> Tracea
     generic_tables = build_report_tables_from_generic_selected_records(result)
     order_traceability_rows = payloads_to_table_rows(build_order_traceability_rows(result))
 
-    production_rows = payloads_to_table_rows(mapped_rows["production"]) or generic_tables.production.rows
-    delivery_rows = payloads_to_table_rows(mapped_rows["finished_goods_deliveries"]) or generic_tables.finished_goods_deliveries.rows
-    raw_material_rows = payloads_to_table_rows(mapped_rows["raw_materials"]) or generic_tables.raw_materials.rows
-    packaging_rows = payloads_to_table_rows(mapped_rows["packaging"]) or generic_tables.packaging.rows
-    auxiliary_rows = payloads_to_table_rows(mapped_rows["auxiliaries_gas"]) or generic_tables.auxiliaries_gas.rows
-    wms_receipt_rows = payloads_to_table_rows(mapped_rows["wms_receipts"]) or generic_tables.wms_receipts.rows
-    prd_consumption_rows = payloads_to_table_rows(mapped_rows["prd_consumptions"]) or generic_tables.prd_consumptions.rows
-    stock_rows = payloads_to_table_rows(mapped_rows["stock"]) or generic_tables.stock.rows
+    production_rows = merge_table_rows(generic_tables.production.rows, payloads_to_table_rows(mapped_rows["production"]))
+    delivery_rows = merge_table_rows(generic_tables.finished_goods_deliveries.rows, payloads_to_table_rows(mapped_rows["finished_goods_deliveries"]))
+    raw_material_rows = merge_table_rows(generic_tables.raw_materials.rows, payloads_to_table_rows(mapped_rows["raw_materials"]))
+    packaging_rows = merge_table_rows(generic_tables.packaging.rows, payloads_to_table_rows(mapped_rows["packaging"]))
+    auxiliary_rows = merge_table_rows(generic_tables.auxiliaries_gas.rows, payloads_to_table_rows(mapped_rows["auxiliaries_gas"]))
+    wms_receipt_rows = merge_table_rows(generic_tables.wms_receipts.rows, payloads_to_table_rows(mapped_rows["wms_receipts"]))
+    prd_consumption_rows = merge_table_rows(generic_tables.prd_consumptions.rows, payloads_to_table_rows(mapped_rows["prd_consumptions"]))
+    stock_rows = merge_table_rows(generic_tables.stock.rows, payloads_to_table_rows(mapped_rows["stock"]))
 
     return TraceabilityReportTables(
         production=replace_table_rows(tables.production, production_rows),
@@ -188,7 +188,9 @@ def build_report_tables_from_generic_selected_records(result: RulesPipelineResul
 
     for record in result.core.selection.records:
         row = table_row_from_selected_record(record)
-        if record.source_key == "wms" and is_finished_goods_delivery_record(record):
+        if record.source_key == "wms" and is_wms_receipt_record(record):
+            wms_rows.append(row)
+        elif record.source_key == "wms" and is_finished_goods_delivery_record(record):
             delivery_rows.append(row)
         elif record.source_key == "wms":
             wms_rows.append(row)
@@ -218,6 +220,31 @@ def build_report_tables_from_generic_selected_records(result: RulesPipelineResul
 
 def payloads_to_table_rows(payloads: list[Any]) -> list[TraceabilityTableRow]:
     return [TraceabilityTableRow(payload.values, payload.source_key, payload.source_name, payload.sheet_name, payload.row_number) for payload in payloads]
+
+
+def merge_table_rows(base_rows: list[TraceabilityTableRow], override_rows: list[TraceabilityTableRow]) -> list[TraceabilityTableRow]:
+    """Merge generic and source-specific rows while preserving source keys.
+
+    Generic rows keep original source keys such as ``stoc``; source-specific rows
+    add stable canonical aliases such as ``Stoc``. Rows from the same physical
+    source row are merged instead of duplicated.
+    """
+
+    rows_by_key: dict[tuple[str | None, str | None, str | None, int | None], TraceabilityTableRow] = {}
+    order: list[tuple[str | None, str | None, str | None, int | None]] = []
+
+    for row in [*base_rows, *override_rows]:
+        key = (row.source_key, row.source_name, row.sheet_name, row.row_number)
+        if key not in rows_by_key:
+            rows_by_key[key] = row
+            order.append(key)
+            continue
+        existing = rows_by_key[key]
+        merged_values = dict(existing.values)
+        merged_values.update(row.values)
+        rows_by_key[key] = TraceabilityTableRow(merged_values, row.source_key or existing.source_key, row.source_name or existing.source_name, row.sheet_name or existing.sheet_name, row.row_number if row.row_number is not None else existing.row_number)
+
+    return [rows_by_key[key] for key in order]
 
 
 def build_preliminary_balance(report_tables: TraceabilityReportTables) -> TraceabilityPreliminaryBalance:
@@ -363,11 +390,22 @@ def is_packaging_record(record: Any) -> bool:
     return any(hint in text for hint in PACKAGING_HINTS)
 
 
+def is_wms_receipt_record(record: Any) -> bool:
+    return record.source_key == "wms" and first_value_by_alias(merged_record_values(record), CANONICAL_REPORT_ALIASES["Document intrare"]) is not None
+
+
 def is_finished_goods_delivery_record(record: Any) -> bool:
-    if record.source_key != "wms":
+    if record.source_key != "wms" or is_wms_receipt_record(record):
         return False
     text = normalized_record_text(record)
     return any(hint in text for hint in FINISHED_GOODS_DELIVERY_HINTS)
+
+
+def merged_record_values(record: Any) -> dict[str, str]:
+    values = dict(getattr(record, "values", {}) or {})
+    for key, value in (getattr(record, "original_values", {}) or {}).items():
+        values.setdefault(key, value)
+    return values
 
 
 def normalized_record_text(record: Any) -> str:
