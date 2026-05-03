@@ -1,5 +1,6 @@
 param(
-    [string]$AppName = 'TraceAI-Control'
+    [string]$AppName = 'TraceAI-Control',
+    [string]$ExpectedCommit = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,6 +12,7 @@ Set-Location $RepoRoot
 
 $ExePath = Join-Path $RepoRoot "dist\$AppName\$AppName.exe"
 $BuildFolder = Join-Path $RepoRoot "dist\$AppName"
+$MetadataPath = Join-Path $BuildFolder 'traceai_build_info.json'
 
 if (-not (Test-Path $BuildFolder)) {
     throw "Build folder not found: $BuildFolder. Run installer\windows\build_windows.ps1 first."
@@ -25,9 +27,24 @@ if ($ExecutableInfo.Length -le 0) {
     throw "Executable is empty: $ExePath"
 }
 
+if (-not (Test-Path $MetadataPath)) {
+    throw "Build metadata not found: $MetadataPath"
+}
+
+$Metadata = Get-Content $MetadataPath | ConvertFrom-Json
+if ([string]::IsNullOrWhiteSpace($Metadata.build_commit) -or $Metadata.build_commit -eq 'UNKNOWN') {
+    throw "Build metadata has invalid build_commit: $($Metadata.build_commit)"
+}
+
+if (-not [string]::IsNullOrWhiteSpace($ExpectedCommit) -and $Metadata.build_commit -ne $ExpectedCommit) {
+    throw "Build metadata commit mismatch. Expected $ExpectedCommit, got $($Metadata.build_commit)"
+}
+
 Write-Host 'Build artifact found.' -ForegroundColor Green
 Write-Host "Executable: $ExePath" -ForegroundColor Green
 Write-Host "Size bytes: $($ExecutableInfo.Length)" -ForegroundColor Green
+Write-Host "Metadata: $MetadataPath" -ForegroundColor Green
+Get-Content $MetadataPath | Out-Host
 
 Write-Host 'Manual smoke test:' -ForegroundColor Cyan
 Write-Host '1. Start the executable:' -ForegroundColor Cyan
