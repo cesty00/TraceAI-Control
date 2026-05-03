@@ -167,27 +167,10 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
         for flow in report.source_lot_flows
     ]
     document_register = [
-        ChecklistDocumentRegisterLine(
-            area=document.document_area,
-            document_type=document.document_type,
-            document_reference=document.document_reference,
-            related_code=document.related_code,
-            related_lot=document.related_lot,
-            related_order=document.related_order,
-            why_needed=document.why_needed,
-            status=document.status,
-        )
+        ChecklistDocumentRegisterLine(document.document_area, document.document_type, document.document_reference, document.related_code, document.related_lot, document.related_order, document.why_needed, document.status)
         for document in report.physical_documents
     ]
-    exercise = ChecklistExercise(
-        code=report.exercise.code,
-        lot=report.exercise.lot,
-        product_name=report.exercise.product_name,
-        case_type=report.exercise.case_type,
-        result=report.exercise.traceability_result,
-        generated_from_sources=report.exercise.data_sources,
-        balance_summary=balance.observation,
-    )
+    exercise = ChecklistExercise(report.exercise.code, report.exercise.lot, report.exercise.product_name, report.exercise.case_type, report.exercise.traceability_result, report.exercise.data_sources, balance.observation)
     return AuditChecklistReport(
         conformity=build_conformity_items(balance, downstream, upstream, production_consumption, lot_flows, document_register),
         exercise=exercise,
@@ -205,45 +188,23 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
 
 def map_downstream_delivery(delivery: FinishedProductDelivery) -> ChecklistDownstreamDelivery:
     client, address = split_client_and_address(delivery.client)
-    return ChecklistDownstreamDelivery(
-        client=client,
-        address=address,
-        delivery_date=delivery.delivery_date,
-        delivered_quantity=join_quantity(delivery.quantity, delivery.um),
-        delivery_document_type="WMS document livrare",
-        delivery_document_number=delivery.document_number,
-        wms_order=delivery.order_number,
-        observation="Document livrare preluat din WMS.",
-    )
+    return ChecklistDownstreamDelivery(client, address, delivery.delivery_date, join_quantity(delivery.quantity, delivery.um), "WMS document livrare", delivery.document_number, delivery.order_number, "Document livrare preluat din WMS.")
 
 
 def map_upstream_line(line: UpstreamMaterialLine) -> ChecklistUpstreamLine:
     receipt = parse_receipt_summary(line.document_summary)
-    return ChecklistUpstreamLine(
-        material_type=display_category(line.category),
-        code=line.code,
-        lot=line.lot,
-        name=line.name,
-        consumed_quantity=join_quantity(line.quantity_consumed, line.um),
-        receipt_date=receipt["receipt_date"],
-        supplier=receipt["supplier"],
-        document_type=receipt["document_type"],
-        document_number=receipt["document_number"],
-        document_date=receipt["document_date"],
-        stock_at_moment=line.stock_at_moment,
-        third_party_delivery_status=display_third_party_status(line.third_party_delivery_status),
-        observation="; ".join(line.observations) if line.observations else "OK",
-    )
+    return ChecklistUpstreamLine(display_category(line.category), line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), receipt["receipt_date"], receipt["supplier"], receipt["document_type"], receipt["document_number"], receipt["document_date"], line.stock_at_moment, display_third_party_status(line.third_party_delivery_status), "; ".join(line.observations) if line.observations else "OK")
 
 
 def build_production_consumption(report: AuditTraceabilityReport) -> list[ChecklistProductionConsumption]:
     rows: list[ChecklistProductionConsumption] = []
     for order in report.production_orders:
+        production_date = getattr(order, "production_date", MISSING) or MISSING
         for line in [*order.raw_materials, *order.packaging, *order.auxiliaries_gas]:
             rows.append(
                 ChecklistProductionConsumption(
                     production_order=order.production_order,
-                    production_date=MISSING,
+                    production_date=production_date,
                     finished_product_quantity=join_quantity(order.prd_quantity, order.prd_um),
                     wms_production_out=join_quantity(order.wms_production_out_quantity, order.wms_production_out_um),
                     associated_delivery=order.associated_delivery,
@@ -257,45 +218,13 @@ def build_production_consumption(report: AuditTraceabilityReport) -> list[Checkl
     return rows
 
 
-def build_conformity_items(
-    balance: ChecklistFinishedProductBalance,
-    downstream: list[ChecklistDownstreamDelivery],
-    upstream: list[ChecklistUpstreamLine],
-    production_consumption: list[ChecklistProductionConsumption],
-    lot_flows: list[ChecklistLotFlow],
-    document_register: list[ChecklistDocumentRegisterLine],
-) -> list[ChecklistConformityItem]:
+def build_conformity_items(balance: ChecklistFinishedProductBalance, downstream: list[ChecklistDownstreamDelivery], upstream: list[ChecklistUpstreamLine], production_consumption: list[ChecklistProductionConsumption], lot_flows: list[ChecklistLotFlow], document_register: list[ChecklistDocumentRegisterLine]) -> list[ChecklistConformityItem]:
     return [
-        ChecklistConformityItem(
-            requirement="01_EXERCITIU — fișa principală și bilanț produs finit",
-            status="DA" if balance.status != MISSING else "NU",
-            evidence=f"PRD={balance.prd_produced}; WMS production-out={balance.wms_production_out}; WMS livrat={balance.wms_delivered}",
-            observation=balance.observation,
-        ),
-        ChecklistConformityItem(
-            requirement="02_TABEL_I_AMONTE — materii prime, ambalaje, auxiliare/gaz",
-            status="DA" if upstream else "NU",
-            evidence=f"{len(upstream)} linie/linii amonte",
-            observation="Include lot, consum, recepție/furnizor/document/stoc unde există în surse.",
-        ),
-        ChecklistConformityItem(
-            requirement="03_TABEL_II_AVAL — livrări produs finit",
-            status="DA" if downstream else "NU",
-            evidence=f"{len(downstream)} livrare/livrări aval",
-            observation="Include client, document WMS, cantitate și dată/adresă dacă există în sursă.",
-        ),
-        ChecklistConformityItem(
-            requirement="04_PRODUCTIE_CONSUM — detaliere pe comenzi de producție",
-            status="DA" if production_consumption else "NU",
-            evidence=f"{len(production_consumption)} rând(uri) consum pe comenzi",
-            observation="Comenzile sunt separate de tabelul amonte agregat.",
-        ),
-        ChecklistConformityItem(
-            requirement="05_FLUX_LOTURI_SI_DOCUMENTE — fluxuri și registru documente",
-            status="DA" if lot_flows and document_register else "NU",
-            evidence=f"{len(lot_flows)} flux(uri), {len(document_register)} document(e) în registru",
-            observation="Registrul documentelor fizice este generat pentru pregătirea auditului.",
-        ),
+        ChecklistConformityItem("01_EXERCITIU — fișa principală și bilanț produs finit", "DA" if balance.status != MISSING else "NU", f"PRD={balance.prd_produced}; WMS production-out={balance.wms_production_out}; WMS livrat={balance.wms_delivered}", balance.observation),
+        ChecklistConformityItem("02_TABEL_I_AMONTE — materii prime, ambalaje, auxiliare/gaz", "DA" if upstream else "NU", f"{len(upstream)} linie/linii amonte", "Include lot, consum, recepție/furnizor/document/stoc unde există în surse."),
+        ChecklistConformityItem("03_TABEL_II_AVAL — livrări produs finit", "DA" if downstream else "NU", f"{len(downstream)} livrare/livrări aval", "Include client, document WMS, cantitate și dată/adresă dacă există în sursă."),
+        ChecklistConformityItem("04_PRODUCTIE_CONSUM — detaliere pe comenzi de producție", "DA" if production_consumption else "NU", f"{len(production_consumption)} rând(uri) consum pe comenzi", "Comenzile sunt separate de tabelul amonte agregat."),
+        ChecklistConformityItem("05_FLUX_LOTURI_SI_DOCUMENTE — fluxuri și registru documente", "DA" if lot_flows and document_register else "NU", f"{len(lot_flows)} flux(uri), {len(document_register)} document(e) în registru", "Registrul documentelor fizice este generat pentru pregătirea auditului."),
     ]
 
 
@@ -304,23 +233,13 @@ def parse_receipt_summary(summary: str) -> dict[str, str]:
         return empty_receipt_fields()
     first_example = summary.split(";", 1)[1].strip() if ";" in summary else summary.strip()
     first_example = first_example.split(";", 1)[0].strip()
-    # Supported examples:
-    # 300005747/Fish Invest LTD: 5000 Kilogram
-    # 300005747/Fish Invest LTD/2026-04-10: 5000 Kilogram
-    # 300005747/Fish Invest LTD | data 2026-04-10: 5000 Kilogram
     document = first_example.split(":", 1)[0].strip() if ":" in first_example else first_example
     document = document.replace(" | data ", "/")
     parts = [part.strip() for part in document.split("/") if part.strip()]
     document_number = parts[0] if parts else MISSING
     supplier = parts[1] if len(parts) >= 2 else MISSING
     detected_date = first_date(parts[2:]) if len(parts) >= 3 else MISSING
-    return {
-        "receipt_date": detected_date,
-        "supplier": supplier or MISSING,
-        "document_type": "WMS recepție",
-        "document_number": document_number or MISSING,
-        "document_date": detected_date,
-    }
+    return {"receipt_date": detected_date, "supplier": supplier or MISSING, "document_type": "WMS recepție", "document_number": document_number or MISSING, "document_date": detected_date}
 
 
 def first_date(values: list[str]) -> str:
@@ -332,21 +251,14 @@ def first_date(values: list[str]) -> str:
 
 
 def empty_receipt_fields() -> dict[str, str]:
-    return {
-        "receipt_date": MISSING,
-        "supplier": MISSING,
-        "document_type": MISSING,
-        "document_number": MISSING,
-        "document_date": MISSING,
-    }
+    return {"receipt_date": MISSING, "supplier": MISSING, "document_type": MISSING, "document_number": MISSING, "document_date": MISSING}
 
 
 def split_client_and_address(client: str) -> tuple[str, str]:
     if not client or client == MISSING:
         return MISSING, MISSING
     text = client.strip()
-    separators = ["_-", " - ", "_", "-"]
-    for separator in separators:
+    for separator in ["_-", " - ", "_", "-"]:
         if separator in text:
             left, right = text.split(separator, 1)
             left = left.strip(" _-")
@@ -375,20 +287,11 @@ def join_quantity(quantity: object, unit: object) -> str:
 
 
 def display_category(category: str) -> str:
-    return {
-        "raw_material": "Materie primă",
-        "packaging": "Ambalaj",
-        "auxiliary_gas": "Material auxiliar / gaz",
-    }.get(category, category)
+    return {"raw_material": "Materie primă", "packaging": "Ambalaj", "auxiliary_gas": "Material auxiliar / gaz"}.get(category, category)
 
 
 def display_third_party_status(status: str) -> str:
-    return {
-        "NU_SE_APLICA": "Nu se aplică",
-        "NU": "NU",
-        "DA": "DA",
-        "NECLAR": "NECLAR",
-    }.get(status, status or MISSING)
+    return {"NU_SE_APLICA": "Nu se aplică", "NU": "NU", "DA": "DA", "NECLAR": "NECLAR"}.get(status, status or MISSING)
 
 
 def audit_checklist_report_to_dict(report: AuditChecklistReport) -> dict[str, Any]:
