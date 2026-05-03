@@ -1,11 +1,11 @@
 """Minimal visual UI shell for TraceAI Control.
 
 The visual UI is intentionally thin. It collects the same core fields as the
-CLI, calls the UI orchestration boundary, and displays the returned status.
+CLI, calls orchestration/core boundaries, and displays returned status.
 
 For audit checklist preview, it consumes the stable ``audit-checklist-ui.v1``
-view model. It does not rebuild report data, read operational source files, or
-contain traceability business logic.
+view model. For source validation, it consumes the stable
+``preflight-report.v1`` report. It does not contain traceability business logic.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from src.core.build_info import format_build_info_line
+from src.core.preflight_report import PreflightReport, build_preflight_report, format_preflight_report
 from src.ui.audit_checklist_section_widgets import (
     SectionDisplayModel,
     build_section_display_model,
@@ -36,6 +37,7 @@ VisualRequestHandler = Callable[[UiGenerationRequest], UiGenerationResult]
 AuditChecklistPayloadBuilder = Callable[[str, str, str], dict[str, Any]]
 AuditChecklistViewModelBuilder = Callable[[dict[str, Any]], AuditChecklistUiViewModel]
 AuditChecklistRequestHandler = Callable[[str, str, str], "VisualAuditChecklistResult"]
+PreflightRequestHandler = Callable[[str, str, str], "VisualPreflightResult"]
 
 APP_TITLE = "TraceAI Control — Modul Trasabilitate"
 
@@ -46,6 +48,16 @@ class VisualAuditChecklistResult:
 
     success: bool
     view_model: AuditChecklistUiViewModel | None
+    message: str
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class VisualPreflightResult:
+    """Stable status returned when the visual UI asks for source preflight."""
+
+    success: bool
+    report: PreflightReport | None
     message: str
     error: str | None = None
 
@@ -92,12 +104,7 @@ def submit_visual_form_values_async(
     executor: Executor,
     request_handler: VisualRequestHandler = generate_report_from_ui_request,
 ) -> Future[UiGenerationResult]:
-    """Submit DOCX generation on a background executor.
-
-    The returned Future must be observed from the UI thread using ``root.after``
-    or an equivalent event-loop callback. Tkinter widgets are intentionally not
-    touched by this function.
-    """
+    """Submit DOCX generation on a background executor."""
 
     return executor.submit(
         submit_visual_form_values,
@@ -109,6 +116,65 @@ def submit_visual_form_values_async(
     )
 
 
+def validate_audit_checklist_form_values(source_directory: str, code: str, lot: str) -> str | None:
+    """Validate only UI fields needed for audit checklist preview/preflight."""
+
+    missing_fields = [
+        field_name
+        for field_name, field_value in (
+            ("source_directory", source_directory),
+            ("code", code),
+            ("lot", lot),
+        )
+        if not str(field_value).strip()
+    ]
+    if missing_fields:
+        return "Câmpuri obligatorii lipsă: " + ", ".join(missing_fields)
+    return None
+
+
+def submit_preflight_form_values(source_directory: str, code: str, lot: str) -> VisualPreflightResult:
+    """Build the source preflight report from visual form values."""
+
+    validation_error = validate_audit_checklist_form_values(source_directory, code, lot)
+    if validation_error:
+        return VisualPreflightResult(
+            success=False,
+            report=None,
+            message="Date UI incomplete pentru verificarea surselor.",
+            error=validation_error,
+        )
+
+    try:
+        report = build_preflight_report(source_directory, code, lot)
+    except Exception as exc:  # pragma: no cover - exact exception belongs to core/source layer
+        return VisualPreflightResult(
+            success=False,
+            report=None,
+            message="Eroare la verificarea surselor.",
+            error=str(exc),
+        )
+
+    return VisualPreflightResult(
+        success=True,
+        report=report,
+        message=f"Verificare surse finalizată: {report.status}.",
+        error=None,
+    )
+
+
+def submit_preflight_form_values_async(
+    source_directory: str,
+    code: str,
+    lot: str,
+    executor: Executor,
+    preflight_request_handler: PreflightRequestHandler = submit_preflight_form_values,
+) -> Future[VisualPreflightResult]:
+    """Submit source preflight on a background executor."""
+
+    return executor.submit(preflight_request_handler, source_directory, code, lot)
+
+
 def submit_audit_checklist_form_values(
     source_directory: str,
     code: str,
@@ -116,12 +182,7 @@ def submit_audit_checklist_form_values(
     payload_builder: AuditChecklistPayloadBuilder | None = None,
     view_model_builder: AuditChecklistViewModelBuilder = build_audit_checklist_ui_view_model,
 ) -> VisualAuditChecklistResult:
-    """Build the audit checklist view model from visual form values.
-
-    This is UI orchestration only: source parsing and report construction remain
-    behind ``build_audit_checklist_ui_payload``; section mapping remains behind
-    ``build_audit_checklist_ui_view_model``.
-    """
+    """Build the audit checklist view model from visual form values."""
 
     validation_error = validate_audit_checklist_form_values(source_directory, code, lot)
     if validation_error:
@@ -165,34 +226,11 @@ def submit_audit_checklist_form_values_async(
 
 
 def default_audit_checklist_payload_builder(source_directory: str, code: str, lot: str) -> dict[str, Any]:
-    """Import the payload builder lazily to keep runnable UI modules isolated.
-
-    The diagnostics workflow executes ``python -m src.ui.audit_checklist_json``.
-    Importing that runnable module eagerly from ``src.ui.visual`` would load it
-    before runpy executes it and would reintroduce a warning. Lazy import keeps
-    the visual UI API stable without side effects.
-    """
+    """Import the payload builder lazily to keep runnable UI modules isolated."""
 
     from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
 
     return build_audit_checklist_ui_payload(source_directory, code, lot)
-
-
-def validate_audit_checklist_form_values(source_directory: str, code: str, lot: str) -> str | None:
-    """Validate only UI fields needed for audit checklist preview."""
-
-    missing_fields = [
-        field_name
-        for field_name, field_value in (
-            ("source_directory", source_directory),
-            ("code", code),
-            ("lot", lot),
-        )
-        if not str(field_value).strip()
-    ]
-    if missing_fields:
-        return "Câmpuri obligatorii lipsă: " + ", ".join(missing_fields)
-    return None
 
 
 def write_selected_section_tsv(display_model: SectionDisplayModel, output_path: str | Path) -> Path:
@@ -205,11 +243,7 @@ def write_selected_section_tsv(display_model: SectionDisplayModel, output_path: 
 
 
 def format_audit_checklist_preview(view_model: AuditChecklistUiViewModel, max_rows_per_section: int = 3) -> str:
-    """Format a compact text preview from the audit checklist view model.
-
-    The visual UI uses this as a safe first rendering step. It displays only data
-    already present in the view model and limits table output for readability.
-    """
+    """Format a compact text preview from the audit checklist view model."""
 
     subject = view_model.subject
     lines = [
@@ -283,12 +317,9 @@ def format_section_display_text(display_model: SectionDisplayModel) -> str:
 def run_visual_app(
     request_handler: VisualRequestHandler = generate_report_from_ui_request,
     audit_request_handler: AuditChecklistRequestHandler = submit_audit_checklist_form_values,
+    preflight_request_handler: PreflightRequestHandler = submit_preflight_form_values,
 ) -> int:
-    """Run the minimal Tkinter visual shell.
-
-    The function imports Tkinter lazily so the module remains importable in
-    headless test environments.
-    """
+    """Run the minimal Tkinter visual shell."""
 
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
@@ -312,17 +343,18 @@ def run_visual_app(
     main_frame.columnconfigure(1, weight=1)
     main_frame.rowconfigure(8, weight=1)
 
-    title_label = ttk.Label(main_frame, text="TraceAI Control — audit checklist și raport DOCX", font=("Segoe UI", 14, "bold"))
-    title_label.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 14))
+    ttk.Label(main_frame, text="TraceAI Control — audit checklist și raport DOCX", font=("Segoe UI", 14, "bold")).grid(
+        row=0, column=0, columnspan=3, sticky="w", pady=(0, 14)
+    )
 
     source_var = tk.StringVar()
     code_var = tk.StringVar()
     lot_var = tk.StringVar()
     output_var = tk.StringVar()
-    status_var = tk.StringVar(value="Completați câmpurile și generați raportul sau previzualizarea audit checklist.")
+    status_var = tk.StringVar(value="Completați câmpurile, verificați sursele și generați raportul.")
     build_info_var = tk.StringVar(value=build_info_line)
     section_title_var = tk.StringVar(value="Nicio secțiune selectată")
-    section_summary_var = tk.StringVar(value="Generați previzualizarea audit checklist pentru a vedea secțiunile.")
+    section_summary_var = tk.StringVar(value="Verificați sursele sau generați previzualizarea audit checklist.")
 
     def choose_source_directory() -> None:
         selected = filedialog.askdirectory(title="Alege folderul cu sursele oficiale")
@@ -348,6 +380,14 @@ def run_visual_app(
         section_table.delete(*section_table.get_children())
         section_table["columns"] = ()
         section_table["show"] = "headings"
+
+    def clear_sections() -> None:
+        nonlocal current_view_model, current_display_model
+        current_view_model = None
+        current_display_model = None
+        section_by_tree_id.clear()
+        section_tree.delete(*section_tree.get_children())
+        clear_table()
 
     def render_section_display(display_model: SectionDisplayModel) -> None:
         nonlocal current_display_model
@@ -434,6 +474,7 @@ def run_visual_app(
         nonlocal busy
         busy = is_busy
         state = "disabled" if is_busy else "normal"
+        preflight_button.configure(state=state)
         generate_button.configure(state=state)
         preview_button.configure(state=state)
         if message:
@@ -447,7 +488,7 @@ def run_visual_app(
         set_busy(False)
         try:
             result = future.result()
-        except Exception as exc:  # pragma: no cover - protects UI event loop
+        except Exception as exc:  # pragma: no cover
             status_var.set(str(exc))
             messagebox.showerror(APP_TITLE, str(exc))
             return
@@ -457,6 +498,31 @@ def run_visual_app(
         else:
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
+    def poll_preflight(future: Future[VisualPreflightResult]) -> None:
+        if not future.done():
+            root.after(100, poll_preflight, future)
+            return
+        set_busy(False)
+        clear_sections()
+        try:
+            result = future.result()
+        except Exception as exc:  # pragma: no cover
+            status_var.set(str(exc))
+            set_preview_text(str(exc))
+            messagebox.showerror(APP_TITLE, str(exc))
+            return
+        status_var.set(result.message if result.success else result.error or result.message)
+        section_title_var.set("Verificare surse înainte de generare")
+        if result.success and result.report is not None:
+            section_summary_var.set(f"Status preflight: {result.report.status}")
+            set_preview_text(format_preflight_report(result.report))
+            if result.report.status == "BLOCKER":
+                messagebox.showwarning(APP_TITLE, "Preflight a găsit blocaje. Verificați detaliile înainte de generare.")
+        else:
+            section_summary_var.set("Verificarea surselor nu a reușit.")
+            set_preview_text(result.error or result.message)
+            messagebox.showerror(APP_TITLE, result.error or result.message)
+
     def poll_audit_preview(future: Future[VisualAuditChecklistResult]) -> None:
         if not future.done():
             root.after(100, poll_audit_preview, future)
@@ -464,7 +530,7 @@ def run_visual_app(
         set_busy(False)
         try:
             result = future.result()
-        except Exception as exc:  # pragma: no cover - protects UI event loop
+        except Exception as exc:  # pragma: no cover
             status_var.set(str(exc))
             set_preview_text(str(exc))
             clear_table()
@@ -491,6 +557,19 @@ def run_visual_app(
             request_handler=request_handler,
         )
         root.after(100, poll_docx_generation, future)
+
+    def on_preflight() -> None:
+        if busy:
+            return
+        set_busy(True, "Verificare surse în curs...")
+        future = submit_preflight_form_values_async(
+            source_directory=source_var.get(),
+            code=code_var.get(),
+            lot=lot_var.get(),
+            executor=executor,
+            preflight_request_handler=preflight_request_handler,
+        )
+        root.after(100, poll_preflight, future)
 
     def on_preview_audit() -> None:
         if busy:
@@ -525,17 +604,17 @@ def run_visual_app(
 
     button_frame = ttk.Frame(main_frame)
     button_frame.grid(row=5, column=1, columnspan=2, sticky="e", pady=(16, 8))
+    preflight_button = ttk.Button(button_frame, text="Verifică surse", command=on_preflight)
+    preflight_button.grid(row=0, column=0, padx=(0, 8))
     preview_button = ttk.Button(button_frame, text="Previzualizează audit checklist", command=on_preview_audit)
-    preview_button.grid(row=0, column=0, padx=(0, 8))
+    preview_button.grid(row=0, column=1, padx=(0, 8))
     generate_button = ttk.Button(button_frame, text="Generează raport DOCX", command=on_generate)
-    generate_button.grid(row=0, column=1)
+    generate_button.grid(row=0, column=2)
 
-    status_label = ttk.Label(main_frame, textvariable=status_var, wraplength=980)
-    status_label.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 2))
-    build_info_label = ttk.Label(main_frame, textvariable=build_info_var, wraplength=980)
-    build_info_label.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+    ttk.Label(main_frame, textvariable=status_var, wraplength=980).grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 2))
+    ttk.Label(main_frame, textvariable=build_info_var, wraplength=980).grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 8))
 
-    preview_frame = ttk.LabelFrame(main_frame, text="Audit checklist pe secțiuni")
+    preview_frame = ttk.LabelFrame(main_frame, text="Verificare surse / Audit checklist pe secțiuni")
     preview_frame.grid(row=8, column=0, columnspan=3, sticky="nsew")
     preview_frame.columnconfigure(1, weight=1)
     preview_frame.rowconfigure(0, weight=1)
