@@ -186,6 +186,58 @@ def build_limited_table_summary(total_count: int, displayed_count: int, hidden_c
     return f"{total_count} rând(uri)"
 
 
+def export_section_display_as_text(display_model: SectionDisplayModel) -> str:
+    """Export the selected section as readable plain text."""
+
+    lines = [display_model.title]
+    if display_model.description:
+        lines.append(display_model.description)
+    if display_model.summary:
+        lines.append(display_model.summary)
+    if display_model.kind == "details":
+        if display_model.detail_pairs:
+            lines.extend(f"{key}: {value}" for key, value in display_model.detail_pairs)
+        else:
+            lines.append(display_model.empty_message)
+    elif display_model.kind == "table":
+        lines.append(export_section_display_as_tsv(display_model).rstrip())
+    else:
+        lines.append(display_model.empty_message)
+    return "\n".join(line for line in lines if line != "") + "\n"
+
+
+def export_section_display_as_tsv(display_model: SectionDisplayModel) -> str:
+    """Export the selected section table as TSV text.
+
+    Details sections are exported as two-column key/value TSV. Empty sections
+    export their explicit empty message. The function uses only the display
+    model, not raw traceability data.
+    """
+
+    if display_model.kind == "details":
+        if not display_model.detail_pairs:
+            return display_model.empty_message + "\n"
+        rows = [["Câmp", "Valoare"], *[[key, value] for key, value in display_model.detail_pairs]]
+        return rows_to_tsv(rows)
+    if display_model.kind == "table":
+        if not display_model.table_columns:
+            return display_model.empty_message + "\n"
+        return rows_to_tsv([display_model.table_columns, *display_model.table_rows])
+    return display_model.empty_message + "\n"
+
+
+def rows_to_tsv(rows: list[list[str]]) -> str:
+    """Serialize rows to TSV with safe cell normalization."""
+
+    return "\n".join("\t".join(normalize_tsv_cell(cell) for cell in row) for row in rows) + "\n"
+
+
+def normalize_tsv_cell(value: Any) -> str:
+    """Keep TSV one-line-per-record without changing visible meaning."""
+
+    return str(value).replace("\t", " ").replace("\r", " ").replace("\n", " ")
+
+
 def humanize_field_label(value: str) -> str:
     """Make payload keys easier to read in visual widgets."""
 

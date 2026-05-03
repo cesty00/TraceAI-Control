@@ -9,6 +9,7 @@ from src.ui.visual import (
     submit_audit_checklist_form_values,
     submit_visual_form_values,
     validate_audit_checklist_form_values,
+    write_selected_section_tsv,
 )
 
 
@@ -196,6 +197,16 @@ def test_format_section_display_text_renders_selected_table_section() -> None:
         "D1 | C1\n"
         "D2 | C2\n"
     )
+
+
+def test_write_selected_section_tsv_writes_display_model(tmp_path) -> None:
+    display = build_section_display_model(make_visual_view_model().sections[1])
+    output_path = tmp_path / "exports" / "section.tsv"
+
+    result = write_selected_section_tsv(display, output_path)
+
+    assert result == output_path
+    assert output_path.read_text(encoding="utf-8") == "Document\tClient\nD1\tC1\nD2\tC2\n"
 
 
 def make_visual_view_model() -> AuditChecklistUiViewModel:

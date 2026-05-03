@@ -3,8 +3,12 @@ from src.ui.audit_checklist_section_widgets import (
     SectionListItem,
     build_section_display_model,
     build_section_list_items,
+    export_section_display_as_text,
+    export_section_display_as_tsv,
     find_section_by_key,
     humanize_field_label,
+    normalize_tsv_cell,
+    rows_to_tsv,
     stringify_display_value,
     truncate_display_text,
 )
@@ -95,6 +99,46 @@ def test_build_section_display_model_for_empty_section() -> None:
         kind="empty",
         summary="FARA DATE IDENTIFICATE",
     )
+
+
+def test_export_section_display_as_text_for_details() -> None:
+    display = build_section_display_model(make_view_model().sections[0])
+
+    assert export_section_display_as_text(display) == (
+        "Bilanț\n"
+        "Detalii bilanț.\n"
+        "2 câmp(uri)\n"
+        "prd_produced: 10 KG\n"
+        "observations: ok; verificat\n"
+    )
+
+
+def test_export_section_display_as_tsv_for_table() -> None:
+    display = build_section_display_model(make_view_model().sections[1])
+
+    assert export_section_display_as_tsv(display) == "Document\tClient\nD1\tC1\nD2\tC2\n"
+
+
+def test_export_section_display_as_tsv_for_details() -> None:
+    display = build_section_display_model(make_view_model().sections[0])
+
+    assert export_section_display_as_tsv(display) == (
+        "Câmp\tValoare\n"
+        "prd_produced\t10 KG\n"
+        "observations\tok; verificat\n"
+    )
+
+
+def test_export_section_display_as_text_for_empty_section() -> None:
+    display = build_section_display_model(make_view_model().sections[2])
+
+    assert export_section_display_as_text(display) == "Gol\nFără date.\nFARA DATE IDENTIFICATE\nFARA DATE IDENTIFICATE\n"
+    assert export_section_display_as_tsv(display) == "FARA DATE IDENTIFICATE\n"
+
+
+def test_rows_to_tsv_normalizes_cells_to_one_line_records() -> None:
+    assert normalize_tsv_cell("a\tb\nc") == "a b c"
+    assert rows_to_tsv([["A", "B"], ["1", "two\nlines"]]) == "A\tB\n1\ttwo lines\n"
 
 
 def test_humanize_field_label_makes_payload_keys_readable() -> None:

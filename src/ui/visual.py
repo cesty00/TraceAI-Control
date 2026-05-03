@@ -12,12 +12,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from src.ui.audit_checklist_section_widgets import (
     SectionDisplayModel,
     build_section_display_model,
     build_section_list_items,
+    export_section_display_as_text,
+    export_section_display_as_tsv,
     find_section_by_key,
 )
 from src.ui.audit_checklist_view_model import (
@@ -152,6 +155,15 @@ def validate_audit_checklist_form_values(source_directory: str, code: str, lot: 
     return None
 
 
+def write_selected_section_tsv(display_model: SectionDisplayModel, output_path: str | Path) -> Path:
+    """Write the selected section display model as TSV for external use."""
+
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(export_section_display_as_tsv(display_model), encoding="utf-8")
+    return output
+
+
 def format_audit_checklist_preview(view_model: AuditChecklistUiViewModel, max_rows_per_section: int = 3) -> str:
     """Format a compact text preview from the audit checklist view model.
 
@@ -243,10 +255,11 @@ def run_visual_app(
 
     root = tk.Tk()
     root.title(APP_TITLE)
-    root.geometry("1120x720")
-    root.minsize(980, 640)
+    root.geometry("1120x760")
+    root.minsize(980, 680)
 
     current_view_model: AuditChecklistUiViewModel | None = None
+    current_display_model: SectionDisplayModel | None = None
     section_by_tree_id: dict[str, str] = {}
 
     main_frame = ttk.Frame(root, padding=18)
@@ -293,6 +306,8 @@ def run_visual_app(
         section_table["show"] = "headings"
 
     def render_section_display(display_model: SectionDisplayModel) -> None:
+        nonlocal current_display_model
+        current_display_model = display_model
         section_title_var.set(display_model.title)
         section_summary_var.set(display_model.summary or display_model.empty_message)
         set_preview_text(format_section_display_text(display_model))
@@ -333,6 +348,43 @@ def run_visual_app(
         if section is None:
             return
         render_section_display(build_section_display_model(section))
+
+    def require_selected_section() -> SectionDisplayModel | None:
+        if current_display_model is None:
+            messagebox.showwarning(APP_TITLE, "Nu există secțiune selectată pentru copiere/export.")
+            return None
+        return current_display_model
+
+    def on_copy_section_text() -> None:
+        display_model = require_selected_section()
+        if display_model is None:
+            return
+        root.clipboard_clear()
+        root.clipboard_append(export_section_display_as_text(display_model))
+        status_var.set("Secțiunea selectată a fost copiată în clipboard ca text.")
+
+    def on_copy_section_tsv() -> None:
+        display_model = require_selected_section()
+        if display_model is None:
+            return
+        root.clipboard_clear()
+        root.clipboard_append(export_section_display_as_tsv(display_model))
+        status_var.set("Secțiunea selectată a fost copiată în clipboard ca TSV.")
+
+    def on_export_section_tsv() -> None:
+        display_model = require_selected_section()
+        if display_model is None:
+            return
+        selected = filedialog.asksaveasfilename(
+            title="Exportă secțiunea selectată ca TSV",
+            defaultextension=".tsv",
+            filetypes=[("TSV", "*.tsv"), ("Text", "*.txt"), ("All files", "*.*")],
+        )
+        if not selected:
+            return
+        output_path = write_selected_section_tsv(display_model, selected)
+        status_var.set(f"Secțiunea selectată a fost exportată: {output_path}")
+        messagebox.showinfo(APP_TITLE, f"Export finalizat: {output_path}")
 
     def on_generate() -> None:
         result = submit_visual_form_values(
@@ -393,17 +445,23 @@ def run_visual_app(
     detail_frame = ttk.Frame(preview_frame)
     detail_frame.grid(row=0, column=1, sticky="nsew")
     detail_frame.columnconfigure(0, weight=1)
-    detail_frame.rowconfigure(3, weight=1)
+    detail_frame.rowconfigure(4, weight=1)
 
     ttk.Label(detail_frame, textvariable=section_title_var, font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
     ttk.Label(detail_frame, textvariable=section_summary_var, wraplength=720).grid(row=1, column=0, sticky="ew", pady=(4, 8))
 
+    export_frame = ttk.Frame(detail_frame)
+    export_frame.grid(row=2, column=0, sticky="e", pady=(0, 8))
+    ttk.Button(export_frame, text="Copiază text", command=on_copy_section_text).grid(row=0, column=0, padx=(0, 6))
+    ttk.Button(export_frame, text="Copiază TSV", command=on_copy_section_tsv).grid(row=0, column=1, padx=(0, 6))
+    ttk.Button(export_frame, text="Exportă TSV...", command=on_export_section_tsv).grid(row=0, column=2)
+
     section_text = tk.Text(detail_frame, wrap="word", height=8)
-    section_text.grid(row=2, column=0, sticky="ew")
+    section_text.grid(row=3, column=0, sticky="ew")
     section_text.configure(state="disabled")
 
     table_frame = ttk.Frame(detail_frame)
-    table_frame.grid(row=3, column=0, sticky="nsew", pady=(8, 0))
+    table_frame.grid(row=4, column=0, sticky="nsew", pady=(8, 0))
     table_frame.columnconfigure(0, weight=1)
     table_frame.rowconfigure(0, weight=1)
     section_table = ttk.Treeview(table_frame, show="headings")
