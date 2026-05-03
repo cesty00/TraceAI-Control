@@ -65,16 +65,15 @@ jobs:
           if ($payload.build_commit -ne $env:GITHUB_SHA) {
             Write-Error "Packaged build commit does not match GITHUB_SHA"
           }
-
-      - name: Create artifact archive
-        shell: pwsh
-        run: |
-          Compress-Archive -Path "dist/TraceAI-Control" -DestinationPath "TraceAI-Control-Windows-${{ github.sha }}.zip" -Force
+          $exe = "dist/TraceAI-Control/TraceAI-Control.exe"
+          if (!(Test-Path $exe)) {
+            Write-Error "Missing packaged executable: $exe"
+          }
 
       - name: Upload Windows app artifact
         uses: actions/upload-artifact@v4
         with:
           name: TraceAI-Control-Windows-${{ github.sha }}
-          path: TraceAI-Control-Windows-${{ github.sha }}.zip
+          path: dist/TraceAI-Control/**
           if-no-files-found: error
           retention-days: 30
