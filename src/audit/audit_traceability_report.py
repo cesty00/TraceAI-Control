@@ -25,6 +25,11 @@ THIRD_PARTY_YES = "DA"
 THIRD_PARTY_UNKNOWN = "NECLAR"
 THIRD_PARTY_NOT_APPLICABLE = "NU_SE_APLICA"
 MISSING = "FARA DATE IDENTIFICATE"
+DATE_FIELD_ALIASES = (
+    "Data", "Dată", "Data document", "Dată document", "Data livrare", "Dată livrare",
+    "Data recepție", "Dată recepție", "Data receptie", "Data producției", "Data productie",
+    "data", "data_document", "data_livrare", "data_receptie", "data_productie",
+)
 
 
 @dataclass(frozen=True)
@@ -94,6 +99,7 @@ class ProductionOrderTrace:
     wms_production_out_quantity: str
     wms_production_out_um: str
     associated_delivery: str
+    production_date: str = MISSING
     raw_materials: list[UpstreamMaterialLine] = field(default_factory=list)
     packaging: list[UpstreamMaterialLine] = field(default_factory=list)
     auxiliaries_gas: list[UpstreamMaterialLine] = field(default_factory=list)
@@ -150,15 +156,6 @@ class AuditTraceabilityReport:
 
 
 def build_audit_traceability_report(traceability_case: TraceabilityCase) -> AuditTraceabilityReport:
-    """Build the audit DTO from a TraceabilityCase.
-
-    The audit DTO must preserve all details already extracted by the rules layer.
-    The order traceability table is the richest source for upstream audit data
-    because it contains per-order consumptions, third-party delivery status,
-    WMS receipt summaries and stock summaries.
-    Aggregated raw/packaging/auxiliary tables are kept as fallback only.
-    """
-
     exercise = AuditExercise(
         code=traceability_case.subject.code,
         lot=traceability_case.subject.lot,
@@ -200,7 +197,7 @@ def build_downstream(table: TraceabilityReportTable) -> list[FinishedProductDeli
                 order_number=value(row, "Numar comanda"),
                 document_number=value(row, "Document comanda"),
                 client=value(row, "Client"),
-                delivery_date=MISSING,
+                delivery_date=first_existing_value(row, "Data livrare", "Data document", *DATE_FIELD_ALIASES),
                 quantity=value(row, "Cantitate"),
                 um=value(row, "UM"),
                 rows="1",
@@ -214,7 +211,6 @@ def build_upstream(traceability_case: TraceabilityCase, production_orders: list[
     order_upstream = aggregate_upstream_from_orders(production_orders)
     if order_upstream:
         return order_upstream
-
     rows: list[UpstreamMaterialLine] = []
     rows.extend(upstream_from_table(traceability_case.report_tables.raw_materials, "raw_material", include_third_party=True))
     rows.extend(upstream_from_table(traceability_case.report_tables.packaging, "packaging", include_third_party=False))
@@ -230,11 +226,9 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
         lines.extend(order.auxiliaries_gas)
     if not lines:
         return []
-
     grouped: dict[tuple[str, str, str, str, str], list[UpstreamMaterialLine]] = defaultdict(list)
     for line in lines:
         grouped[(line.category, line.code, line.lot, line.name, line.um)].append(line)
-
     aggregated: list[UpstreamMaterialLine] = []
     for (category, code, lot, name, um), group in sorted(grouped.items()):
         totals = sum_by_unit((line.quantity_consumed, line.um) for line in group)
@@ -308,11 +302,9 @@ def build_production_orders(traceability_case: TraceabilityCase) -> list[Product
     order_table = traceability_case.report_tables.order_traceability
     if order_table is None or not order_table.rows:
         return production_orders_from_summary(traceability_case)
-
     by_order: dict[str, list[TraceabilityTableRow]] = defaultdict(list)
     for row in order_table.rows:
         by_order[value(row, "Comandă producție")].append(row)
-
     result: list[ProductionOrderTrace] = []
     for order in sorted(by_order):
         rows = by_order[order]
@@ -346,6 +338,7 @@ def build_production_orders(traceability_case: TraceabilityCase) -> list[Product
                 wms_production_out_quantity=out_quantity,
                 wms_production_out_um=out_um,
                 associated_delivery=value(first, "Livrare produs finit asociată"),
+                production_date=first_existing_value(first, "Data producției", "Data productie", *DATE_FIELD_ALIASES),
                 raw_materials=raw_materials,
                 packaging=packaging,
                 auxiliaries_gas=auxiliaries,
@@ -369,6 +362,7 @@ def production_orders_from_summary(traceability_case: TraceabilityCase) -> list[
                 wms_production_out_quantity=MISSING,
                 wms_production_out_um=MISSING,
                 associated_delivery=MISSING,
+                production_date=first_existing_value(row, "Data producției", "Data productie", *DATE_FIELD_ALIASES),
                 observations=["Detalierea pe comenzi nu este disponibilă în TraceabilityCase."],
             )
         )
@@ -408,21 +402,15 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
     )
 
 
-def build_finished_product_balance(
-    traceability_case: TraceabilityCase,
-    downstream: list[FinishedProductDelivery],
-    production_orders: list[ProductionOrderTrace],
-) -> FinishedProductBalance:
+def build_finished_product_balance(traceability_case: TraceabilityCase, downstream: list[FinishedProductDelivery], production_orders: list[ProductionOrderTrace]) -> FinishedProductBalance:
     prd_totals = sum_by_unit((order.prd_quantity, order.prd_um) for order in production_orders)
     production_out_totals = sum_by_unit((order.wms_production_out_quantity, order.wms_production_out_um) for order in production_orders)
     delivered_totals = sum_by_unit((delivery.quantity, delivery.um) for delivery in downstream)
     stock_totals = sum_by_unit((value(row, "Stoc"), value(row, "UM")) for row in traceability_case.report_tables.stock.rows)
-
     prd_quantity, prd_um = single_total_or_missing(prd_totals)
     out_quantity, out_um = single_total_or_missing(production_out_totals)
     delivered_quantity, delivered_um = single_total_or_missing(delivered_totals)
     stock_quantity, stock_um = single_total_or_missing(stock_totals)
-
     observations: list[str] = []
     status = STATUS_INCOMPLETE
     if prd_quantity != MISSING and out_quantity != MISSING:
@@ -434,100 +422,28 @@ def build_finished_product_balance(
             observations.append("PRD produs diferă de WMS PRODUCTION-OUT; verificare manuală necesară.")
     if delivered_quantity != MISSING:
         observations.append("Livrările sunt preluate din WMS și se evaluează în valoare absolută pentru reconciliere.")
-    return FinishedProductBalance(
-        prd_produced_quantity=prd_quantity,
-        prd_produced_um=prd_um,
-        wms_production_out_quantity=out_quantity,
-        wms_production_out_um=out_um,
-        wms_delivered_quantity=delivered_quantity,
-        wms_delivered_um=delivered_um,
-        stock_quantity=stock_quantity,
-        stock_um=stock_um,
-        adjustments_quantity=MISSING,
-        adjustments_um=MISSING,
-        balance_status=status,
-        balance_observation=" ".join(observations) if observations else MISSING,
-    )
+    return FinishedProductBalance(prd_quantity, prd_um, out_quantity, out_um, delivered_quantity, delivered_um, stock_quantity, stock_um, MISSING, MISSING, status, " ".join(observations) if observations else MISSING)
 
 
 def build_source_lot_flows(upstream: list[UpstreamMaterialLine]) -> list[SourceLotFlow]:
-    flows: list[SourceLotFlow] = []
-    for line in upstream:
-        flows.append(
-            SourceLotFlow(
-                category=line.category,
-                code=line.code,
-                lot=line.lot,
-                name=line.name,
-                receipt_total=line.receipt_summary,
-                receipt_documents=line.document_summary,
-                consumed_in_audited_lot=f"{line.quantity_consumed} {line.um}",
-                consumed_in_other_orders=MISSING,
-                third_party_delivered_total=line.third_party_delivery_details,
-                adjustments_total=MISSING,
-                stock_at_moment=format_stock_summary(line.stock_at_moment, line.stock_um),
-                flow_status="documentat parțial" if line.receipt_summary == MISSING else "documentat",
-                observation="; ".join(line.observations) if line.observations else MISSING,
-            )
-        )
-    return flows
+    return [
+        SourceLotFlow(line.category, line.code, line.lot, line.name, line.receipt_summary, line.document_summary, f"{line.quantity_consumed} {line.um}", MISSING, line.third_party_delivery_details, MISSING, format_stock_summary(line.stock_at_moment, line.stock_um), "documentat parțial" if line.receipt_summary == MISSING else "documentat", "; ".join(line.observations) if line.observations else MISSING)
+        for line in upstream
+    ]
 
 
-def build_physical_document_requirements(
-    exercise: AuditExercise,
-    downstream: list[FinishedProductDelivery],
-    upstream: list[UpstreamMaterialLine],
-    production_orders: list[ProductionOrderTrace],
-) -> list[PhysicalDocumentRequirement]:
+def build_physical_document_requirements(exercise: AuditExercise, downstream: list[FinishedProductDelivery], upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace]) -> list[PhysicalDocumentRequirement]:
     documents: list[PhysicalDocumentRequirement] = []
     for order in production_orders:
-        documents.append(
-            PhysicalDocumentRequirement(
-                document_area="PRD",
-                document_type="Comandă / raport producție",
-                document_reference=order.production_order,
-                related_code=exercise.code,
-                related_lot=exercise.lot,
-                related_order=order.production_order,
-                why_needed="Confirmă producția și consumurile pe comandă.",
-                status="required",
-            )
-        )
+        documents.append(PhysicalDocumentRequirement("PRD", "Comandă / raport producție", order.production_order, exercise.code, exercise.lot, order.production_order, "Confirmă producția și consumurile pe comandă.", "required"))
     for delivery in downstream:
-        documents.append(
-            PhysicalDocumentRequirement(
-                document_area="WMS",
-                document_type="Document livrare produs finit",
-                document_reference=delivery.document_number,
-                related_code=exercise.code,
-                related_lot=exercise.lot,
-                related_order=delivery.order_number,
-                why_needed="Confirmă livrarea aval către client.",
-                status="required",
-            )
-        )
+        documents.append(PhysicalDocumentRequirement("WMS", "Document livrare produs finit", delivery.document_number, exercise.code, exercise.lot, delivery.order_number, "Confirmă livrarea aval către client.", "required"))
     for line in upstream:
-        documents.append(
-            PhysicalDocumentRequirement(
-                document_area="NIR" if line.category == "raw_material" else "WMS",
-                document_type="Document intrare / recepție lot sursă",
-                document_reference=line.document_summary,
-                related_code=line.code,
-                related_lot=line.lot,
-                related_order=MISSING,
-                why_needed="Confirmă intrarea lotului sursă folosit în lotul auditat.",
-                status="required" if line.category in {"raw_material", "packaging"} else "recommended",
-            )
-        )
+        documents.append(PhysicalDocumentRequirement("NIR" if line.category == "raw_material" else "WMS", "Document intrare / recepție lot sursă", line.document_summary, line.code, line.lot, MISSING, "Confirmă intrarea lotului sursă folosit în lotul auditat.", "required" if line.category in {"raw_material", "packaging"} else "recommended"))
     return documents
 
 
-def collect_observations(
-    traceability_case: TraceabilityCase,
-    upstream: list[UpstreamMaterialLine],
-    production_orders: list[ProductionOrderTrace],
-    balance: FinishedProductBalance,
-) -> list[str]:
+def collect_observations(traceability_case: TraceabilityCase, upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace], balance: FinishedProductBalance) -> list[str]:
     observations = list(traceability_case.observations)
     if balance.balance_observation != MISSING:
         observations.append(balance.balance_observation)
@@ -542,22 +458,10 @@ def collect_observations(
     return dedupe(observations)
 
 
-def build_conclusion_summary(
-    exercise: AuditExercise,
-    balance: FinishedProductBalance,
-    downstream: list[FinishedProductDelivery],
-    upstream: list[UpstreamMaterialLine],
-    production_orders: list[ProductionOrderTrace],
-) -> str:
+def build_conclusion_summary(exercise: AuditExercise, balance: FinishedProductBalance, downstream: list[FinishedProductDelivery], upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace]) -> str:
     upstream_with_receipts = sum(1 for line in upstream if line.receipt_summary != MISSING)
     upstream_with_stock = sum(1 for line in upstream if line.stock_at_moment != MISSING)
-    return (
-        f"Pentru {exercise.code} / {exercise.lot}, raportul audit conține "
-        f"{len(production_orders)} comandă/comenzi de producție, {len(downstream)} livrare/livrări aval "
-        f"și {len(upstream)} linie/linii amonte. "
-        f"Recepții WMS mapate: {upstream_with_receipts}. Stocuri mapate: {upstream_with_stock}. "
-        f"Status bilanț: {balance.balance_status}."
-    )
+    return f"Pentru {exercise.code} / {exercise.lot}, raportul audit conține {len(production_orders)} comandă/comenzi de producție, {len(downstream)} livrare/livrări aval și {len(upstream)} linie/linii amonte. Recepții WMS mapate: {upstream_with_receipts}. Stocuri mapate: {upstream_with_stock}. Status bilanț: {balance.balance_status}."
 
 
 def detect_report_status(traceability_case: TraceabilityCase) -> str:
@@ -590,16 +494,7 @@ def format_sources(traceability_case: TraceabilityCase) -> list[str]:
     for item in traceability_case.evidence:
         if item.source_key:
             sources.add(item.source_key)
-    for table in (
-        traceability_case.report_tables.production,
-        traceability_case.report_tables.finished_goods_deliveries,
-        traceability_case.report_tables.raw_materials,
-        traceability_case.report_tables.packaging,
-        traceability_case.report_tables.auxiliaries_gas,
-        traceability_case.report_tables.wms_receipts,
-        traceability_case.report_tables.stock,
-        traceability_case.report_tables.order_traceability,
-    ):
+    for table in (traceability_case.report_tables.production, traceability_case.report_tables.finished_goods_deliveries, traceability_case.report_tables.raw_materials, traceability_case.report_tables.packaging, traceability_case.report_tables.auxiliaries_gas, traceability_case.report_tables.wms_receipts, traceability_case.report_tables.stock, traceability_case.report_tables.order_traceability):
         if table is None:
             continue
         for row in table.rows:
@@ -711,6 +606,14 @@ def quantities_equal(left: str, right: str) -> bool:
     return abs(left_decimal - right_decimal) <= Decimal("0.000001")
 
 
+def first_existing_value(row: TraceabilityTableRow, *keys: str) -> str:
+    for key in keys:
+        found = value(row, key)
+        if found != MISSING:
+            return found
+    return MISSING
+
+
 def value(row: TraceabilityTableRow, key: str) -> str:
     if key in row.values and str(row.values[key]).strip():
         return str(row.values[key]).strip()
@@ -718,7 +621,17 @@ def value(row: TraceabilityTableRow, key: str) -> str:
     for existing_key, existing_value in row.values.items():
         if existing_key.casefold() == key_folded and str(existing_value).strip():
             return str(existing_value).strip()
+    normalized_key = normalize_key(key)
+    for existing_key, existing_value in row.values.items():
+        if normalize_key(existing_key) == normalized_key and str(existing_value).strip():
+            return str(existing_value).strip()
     return MISSING
+
+
+def normalize_key(value_text: object) -> str:
+    text = str(value_text).casefold().strip()
+    text = text.translate(str.maketrans({"ă": "a", "â": "a", "î": "i", "ș": "s", "ş": "s", "ț": "t", "ţ": "t"}))
+    return "_".join(part for part in "".join(ch if ch.isalnum() else " " for ch in text).split())
 
 
 def format_source(row: TraceabilityTableRow) -> str:

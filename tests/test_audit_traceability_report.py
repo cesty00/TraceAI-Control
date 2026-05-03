@@ -19,7 +19,7 @@ def make_report_tables() -> TraceabilityReportTables:
         production=TraceabilityReportTable(
             key="production",
             title="Producția lotului",
-            columns=["Cod", "Lot", "Denumire", "Comandă", "Cantitate", "UM", "Observații"],
+            columns=["Cod", "Lot", "Denumire", "Comandă", "Cantitate", "UM", "Data producției", "Observații"],
             rows=[
                 TraceabilityTableRow(
                     values={
@@ -29,6 +29,7 @@ def make_report_tables() -> TraceabilityReportTables:
                         "Comandă": "0030412_DC",
                         "Cantitate": "168",
                         "UM": "BUCATA",
+                        "Data producției": "2026-04-10",
                     },
                     source_key="production",
                     source_name="rapoarte productie.csv",
@@ -39,13 +40,14 @@ def make_report_tables() -> TraceabilityReportTables:
         finished_goods_deliveries=TraceabilityReportTable(
             key="finished_goods_deliveries",
             title="Livrări produs finit",
-            columns=["Numar comanda", "Document comanda", "Client", "Cantitate", "UM"],
+            columns=["Numar comanda", "Document comanda", "Client", "Data livrare", "Cantitate", "UM"],
             rows=[
                 TraceabilityTableRow(
                     values={
                         "Numar comanda": "WME110972",
                         "Document comanda": "38569",
-                        "Client": "LIDL ROMAN",
+                        "Client": "LIDL ROMAN - DEPOZIT NORD",
+                        "Data livrare": "2026-04-11",
                         "Cantitate": "-168",
                         "UM": "BUCATA",
                     },
@@ -137,6 +139,7 @@ def make_report_tables() -> TraceabilityReportTables:
                 "Produs finit",
                 "Cantitate produs finit",
                 "UM produs finit",
+                "Data producției",
                 "WMS production-out",
                 "Livrare produs finit asociată",
                 "Categorie consum",
@@ -146,6 +149,8 @@ def make_report_tables() -> TraceabilityReportTables:
                 "Cantitate consum",
                 "UM consum",
                 "Livrări consum către terți",
+                "Recepții WMS consum",
+                "Stoc consum la moment",
             ],
             rows=[
                 TraceabilityTableRow(
@@ -154,6 +159,7 @@ def make_report_tables() -> TraceabilityReportTables:
                         "Produs finit": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
                         "Cantitate produs finit": "168",
                         "UM produs finit": "BUCATA",
+                        "Data producției": "2026-04-10",
                         "WMS production-out": "168 BUCATA",
                         "Livrare produs finit asociată": "WME110972 / 38569 / LIDL ROMAN / -168 BUCATA",
                         "Categorie consum": "Materie primă alimentară",
@@ -163,6 +169,8 @@ def make_report_tables() -> TraceabilityReportTables:
                         "Cantitate consum": "85",
                         "UM consum": "Kilogram",
                         "Livrări consum către terți": "NU",
+                        "Recepții WMS consum": "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-09: 5000 Kilogram",
+                        "Stoc consum la moment": "125 Kilogram; locații: Depozit Principal",
                     },
                     source_key="production",
                     source_name="rapoarte productie.csv",
@@ -174,6 +182,7 @@ def make_report_tables() -> TraceabilityReportTables:
                         "Produs finit": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
                         "Cantitate produs finit": "168",
                         "UM produs finit": "BUCATA",
+                        "Data producției": "2026-04-10",
                         "WMS production-out": "168 BUCATA",
                         "Livrare produs finit asociată": "WME110972 / 38569 / LIDL ROMAN / -168 BUCATA",
                         "Categorie consum": "Ambalaj",
@@ -194,6 +203,7 @@ def make_report_tables() -> TraceabilityReportTables:
                         "Produs finit": "PF-REFRIGERAT-FD CREVETI PREFIERTI 20/30 500G ATM LIDL",
                         "Cantitate produs finit": "168",
                         "UM produs finit": "BUCATA",
+                        "Data producției": "2026-04-10",
                         "WMS production-out": "168 BUCATA",
                         "Livrare produs finit asociată": "WME110972 / 38569 / LIDL ROMAN / -168 BUCATA",
                         "Categorie consum": "Auxiliar / gaz",
@@ -240,11 +250,14 @@ def test_build_audit_traceability_report_maps_core_audit_sections() -> None:
     assert report.balance.wms_delivered_um == "BUCATA"
     assert len(report.downstream) == 1
     assert report.downstream[0].document_number == "38569"
+    assert report.downstream[0].delivery_date == "2026-04-11"
     assert len(report.upstream) == 3
     assert len(report.production_orders) == 1
     assert report.production_orders[0].production_order == "0030412_DC"
+    assert report.production_orders[0].production_date == "2026-04-10"
     assert report.production_orders[0].associated_delivery == "WME110972 / 38569 / LIDL ROMAN / -168 BUCATA"
     assert report.production_orders[0].raw_materials[0].third_party_delivery_status == THIRD_PARTY_NO
+    assert report.production_orders[0].raw_materials[0].receipt_summary == "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-09: 5000 Kilogram"
     assert report.production_orders[0].packaging[0].code == "10002"
     assert report.production_orders[0].auxiliaries_gas[0].code == "60001"
     assert report.conclusion.status == STATUS_PASS
@@ -254,10 +267,12 @@ def test_audit_report_to_dict_is_json_ready_and_keeps_document_register() -> Non
     report_dict = audit_traceability_report_to_dict(build_audit_traceability_report(make_case()))
 
     assert report_dict["exercise"]["code"] == "DS099904011"
+    assert report_dict["downstream"][0]["delivery_date"] == "2026-04-11"
+    assert report_dict["production_orders"][0]["production_date"] == "2026-04-10"
     assert report_dict["production_orders"][0]["raw_materials"][0]["third_party_delivery_status"] == THIRD_PARTY_NO
     assert report_dict["production_orders"][0]["packaging"][0]["third_party_delivery_status"] == THIRD_PARTY_NOT_APPLICABLE
     document_references = {item["document_reference"] for item in report_dict["physical_documents"]}
     assert "0030412_DC" in document_references
     assert "38569" in document_references
-    assert "FARA DATE IDENTIFICATE" in document_references
+    assert "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-09: 5000 Kilogram" in document_references
     assert report_dict["source_lot_flows"]
