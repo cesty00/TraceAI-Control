@@ -14,6 +14,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from src.ui.audit_checklist_section_widgets import (
+    SectionDisplayModel,
+    build_section_display_model,
+    build_section_list_items,
+    find_section_by_key,
+)
 from src.ui.audit_checklist_view_model import (
     AuditChecklistUiSection,
     AuditChecklistUiViewModel,
@@ -201,6 +207,27 @@ def format_audit_section_preview(
     return lines
 
 
+def format_section_display_text(display_model: SectionDisplayModel) -> str:
+    """Format a selected-section display model for text fallback/export."""
+
+    lines = [display_model.title]
+    if display_model.description:
+        lines.append(display_model.description)
+    if display_model.summary:
+        lines.append(display_model.summary)
+    if display_model.kind == "details":
+        for key, value in display_model.detail_pairs:
+            lines.append(f"- {key}: {value}")
+    elif display_model.kind == "table":
+        if display_model.table_columns:
+            lines.append(" | ".join(display_model.table_columns))
+        for row in display_model.table_rows:
+            lines.append(" | ".join(row))
+    else:
+        lines.append(display_model.empty_message)
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def run_visual_app(
     request_handler: VisualRequestHandler = generate_report_from_ui_request,
     audit_request_handler: Callable[[str, str, str], VisualAuditChecklistResult] = submit_audit_checklist_form_values,
@@ -216,8 +243,11 @@ def run_visual_app(
 
     root = tk.Tk()
     root.title(APP_TITLE)
-    root.geometry("940x680")
-    root.minsize(860, 600)
+    root.geometry("1120x720")
+    root.minsize(980, 640)
+
+    current_view_model: AuditChecklistUiViewModel | None = None
+    section_by_tree_id: dict[str, str] = {}
 
     main_frame = ttk.Frame(root, padding=18)
     main_frame.grid(row=0, column=0, sticky="nsew")
@@ -234,6 +264,8 @@ def run_visual_app(
     lot_var = tk.StringVar()
     output_var = tk.StringVar()
     status_var = tk.StringVar(value="Completați câmpurile și generați raportul sau previzualizarea audit checklist.")
+    section_title_var = tk.StringVar(value="Nicio secțiune selectată")
+    section_summary_var = tk.StringVar(value="Generați previzualizarea audit checklist pentru a vedea secțiunile.")
 
     def choose_source_directory() -> None:
         selected = filedialog.askdirectory(title="Alege folderul cu sursele oficiale")
@@ -250,10 +282,57 @@ def run_visual_app(
             output_var.set(selected)
 
     def set_preview_text(text: str) -> None:
-        preview_text.configure(state="normal")
-        preview_text.delete("1.0", tk.END)
-        preview_text.insert("1.0", text)
-        preview_text.configure(state="disabled")
+        section_text.configure(state="normal")
+        section_text.delete("1.0", tk.END)
+        section_text.insert("1.0", text)
+        section_text.configure(state="disabled")
+
+    def clear_table() -> None:
+        section_table.delete(*section_table.get_children())
+        section_table["columns"] = ()
+        section_table["show"] = "headings"
+
+    def render_section_display(display_model: SectionDisplayModel) -> None:
+        section_title_var.set(display_model.title)
+        section_summary_var.set(display_model.summary or display_model.empty_message)
+        set_preview_text(format_section_display_text(display_model))
+        clear_table()
+        if display_model.kind != "table" or not display_model.table_columns:
+            return
+        section_table["columns"] = display_model.table_columns
+        for column in display_model.table_columns:
+            section_table.heading(column, text=column)
+            section_table.column(column, width=140, minwidth=80, stretch=True)
+        for row in display_model.table_rows:
+            section_table.insert("", "end", values=row)
+
+    def load_sections(view_model: AuditChecklistUiViewModel) -> None:
+        nonlocal current_view_model
+        current_view_model = view_model
+        section_by_tree_id.clear()
+        section_tree.delete(*section_tree.get_children())
+        for item in build_section_list_items(view_model):
+            tree_id = section_tree.insert("", "end", text=item.label, values=(item.kind,))
+            section_by_tree_id[tree_id] = item.key
+        first_item = section_tree.get_children()[0] if section_tree.get_children() else None
+        if first_item:
+            section_tree.selection_set(first_item)
+            section_tree.focus(first_item)
+            render_selected_section()
+
+    def render_selected_section(_event: object | None = None) -> None:
+        if current_view_model is None:
+            return
+        selected = section_tree.selection()
+        if not selected:
+            return
+        section_key = section_by_tree_id.get(selected[0])
+        if not section_key:
+            return
+        section = find_section_by_key(current_view_model, section_key)
+        if section is None:
+            return
+        render_section_display(build_section_display_model(section))
 
     def on_generate() -> None:
         result = submit_visual_form_values(
@@ -273,9 +352,10 @@ def run_visual_app(
         result = audit_request_handler(source_var.get(), code_var.get(), lot_var.get())
         status_var.set(result.message if result.success else result.error or result.message)
         if result.success and result.view_model is not None:
-            set_preview_text(format_audit_checklist_preview(result.view_model))
+            load_sections(result.view_model)
         else:
             set_preview_text(result.error or result.message)
+            clear_table()
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
     ttk.Label(main_frame, text="Folder surse oficiale").grid(row=1, column=0, sticky="w", pady=4)
@@ -297,19 +377,42 @@ def run_visual_app(
     ttk.Button(button_frame, text="Previzualizează audit checklist", command=on_preview_audit).grid(row=0, column=0, padx=(0, 8))
     ttk.Button(button_frame, text="Generează raport DOCX", command=on_generate).grid(row=0, column=1)
 
-    status_label = ttk.Label(main_frame, textvariable=status_var, wraplength=820)
+    status_label = ttk.Label(main_frame, textvariable=status_var, wraplength=980)
     status_label.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 8))
 
-    preview_frame = ttk.LabelFrame(main_frame, text="Previzualizare audit checklist")
+    preview_frame = ttk.LabelFrame(main_frame, text="Audit checklist pe secțiuni")
     preview_frame.grid(row=7, column=0, columnspan=3, sticky="nsew")
-    preview_frame.columnconfigure(0, weight=1)
+    preview_frame.columnconfigure(1, weight=1)
     preview_frame.rowconfigure(0, weight=1)
 
-    preview_text = tk.Text(preview_frame, wrap="word", height=18)
-    preview_text.grid(row=0, column=0, sticky="nsew")
-    preview_scrollbar = ttk.Scrollbar(preview_frame, orient="vertical", command=preview_text.yview)
-    preview_scrollbar.grid(row=0, column=1, sticky="ns")
-    preview_text.configure(yscrollcommand=preview_scrollbar.set, state="disabled")
+    section_tree = ttk.Treeview(preview_frame, columns=("kind",), show="tree", selectmode="browse", height=18)
+    section_tree.grid(row=0, column=0, sticky="nsw", padx=(0, 10))
+    section_tree.column("#0", width=300, minwidth=220, stretch=False)
+    section_tree.bind("<<TreeviewSelect>>", render_selected_section)
+
+    detail_frame = ttk.Frame(preview_frame)
+    detail_frame.grid(row=0, column=1, sticky="nsew")
+    detail_frame.columnconfigure(0, weight=1)
+    detail_frame.rowconfigure(3, weight=1)
+
+    ttk.Label(detail_frame, textvariable=section_title_var, font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
+    ttk.Label(detail_frame, textvariable=section_summary_var, wraplength=720).grid(row=1, column=0, sticky="ew", pady=(4, 8))
+
+    section_text = tk.Text(detail_frame, wrap="word", height=8)
+    section_text.grid(row=2, column=0, sticky="ew")
+    section_text.configure(state="disabled")
+
+    table_frame = ttk.Frame(detail_frame)
+    table_frame.grid(row=3, column=0, sticky="nsew", pady=(8, 0))
+    table_frame.columnconfigure(0, weight=1)
+    table_frame.rowconfigure(0, weight=1)
+    section_table = ttk.Treeview(table_frame, show="headings")
+    section_table.grid(row=0, column=0, sticky="nsew")
+    table_scrollbar_y = ttk.Scrollbar(table_frame, orient="vertical", command=section_table.yview)
+    table_scrollbar_y.grid(row=0, column=1, sticky="ns")
+    table_scrollbar_x = ttk.Scrollbar(table_frame, orient="horizontal", command=section_table.xview)
+    table_scrollbar_x.grid(row=1, column=0, sticky="ew")
+    section_table.configure(yscrollcommand=table_scrollbar_y.set, xscrollcommand=table_scrollbar_x.set)
 
     root.mainloop()
     return 0
