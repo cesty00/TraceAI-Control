@@ -74,6 +74,20 @@ def test_audit_checklist_report_splits_wms_receipt_summary_when_available() -> N
     assert raw_material.stock_at_moment == "125 Kilogram; locații: Depozit Principal"
 
 
+def test_audit_checklist_report_splits_wms_receipt_summary_with_slash_date() -> None:
+    traceability_case = make_case()
+    raw_row = traceability_case.report_tables.order_traceability.rows[0]
+    raw_row.values["Recepții WMS consum"] = "total 5000 Kilogram; 300005747/Fish Invest LTD/14/01/2026 11:54:40: 5000 Kilogram"
+
+    checklist = build_audit_checklist_report(build_audit_traceability_report(traceability_case))
+    raw_material = next(line for line in checklist.upstream if line.code == "DS099903930")
+
+    assert raw_material.document_number == "300005747"
+    assert raw_material.supplier == "Fish Invest LTD"
+    assert raw_material.receipt_date == "14/01/2026"
+    assert raw_material.document_date == "14/01/2026"
+
+
 def test_audit_checklist_report_keeps_production_consumption_and_document_register() -> None:
     checklist = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     report_dict = audit_checklist_report_to_dict(checklist)
