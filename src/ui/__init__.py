@@ -8,8 +8,12 @@ from .audit_checklist_section_widgets import (
     SectionListItem,
     build_section_display_model,
     build_section_list_items,
+    export_section_display_as_text,
+    export_section_display_as_tsv,
     find_section_by_key,
     humanize_field_label,
+    normalize_tsv_cell,
+    rows_to_tsv,
     truncate_display_text,
 )
 from .audit_checklist_view_model import (
@@ -36,6 +40,7 @@ from .visual import (
     submit_audit_checklist_form_values,
     submit_visual_form_values,
     validate_audit_checklist_form_values,
+    write_selected_section_tsv,
 )
 
 __all__ = [
@@ -57,12 +62,16 @@ __all__ = [
     "build_request_from_form_values",
     "build_section_display_model",
     "build_section_list_items",
+    "export_section_display_as_text",
+    "export_section_display_as_tsv",
     "find_section_by_key",
     "format_audit_checklist_preview",
     "format_section_display_text",
     "generate_report_from_ui_request",
     "humanize_field_label",
     "main",
+    "normalize_tsv_cell",
+    "rows_to_tsv",
     "run_visual_app",
     "submit_audit_checklist_form_values",
     "submit_visual_form_values",
@@ -70,4 +79,5 @@ __all__ = [
     "validate_audit_checklist_form_values",
     "validate_audit_checklist_ui_payload",
     "validate_ui_generation_request",
+    "write_selected_section_tsv",
 ]
