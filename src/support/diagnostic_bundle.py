@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
