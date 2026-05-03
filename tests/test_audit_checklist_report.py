@@ -26,8 +26,8 @@ def test_audit_checklist_report_maps_downstream_columns_required_by_checklist() 
     delivery = checklist.downstream[0]
 
     assert delivery.client == "LIDL ROMAN"
-    assert delivery.address == "FARA DATE IDENTIFICATE"
-    assert delivery.delivery_date == "FARA DATE IDENTIFICATE"
+    assert delivery.address == "DEPOZIT NORD"
+    assert delivery.delivery_date == "2026-04-11"
     assert delivery.delivered_quantity == "-168 BUCATA"
     assert delivery.delivery_document_type == "WMS document livrare"
     assert delivery.delivery_document_number == "38569"
@@ -45,11 +45,11 @@ def test_audit_checklist_report_maps_upstream_columns_required_by_checklist() ->
     assert raw_material.lot == "90924-070"
     assert raw_material.consumed_quantity == "85 Kilogram"
     assert raw_material.third_party_delivery_status == "NU"
-    assert raw_material.receipt_date == "FARA DATE IDENTIFICATE"
-    assert raw_material.supplier == "FARA DATE IDENTIFICATE"
-    assert raw_material.document_type == "FARA DATE IDENTIFICATE"
-    assert raw_material.document_number == "FARA DATE IDENTIFICATE"
-    assert raw_material.document_date == "FARA DATE IDENTIFICATE"
+    assert raw_material.receipt_date == "2026-04-09"
+    assert raw_material.supplier == "Fish Invest LTD"
+    assert raw_material.document_type == "WMS recepție"
+    assert raw_material.document_number == "300005747"
+    assert raw_material.document_date == "2026-04-09"
 
     assert packaging.material_type == "Ambalaj"
     assert packaging.third_party_delivery_status == "Nu se aplică"
@@ -60,7 +60,7 @@ def test_audit_checklist_report_maps_upstream_columns_required_by_checklist() ->
 def test_audit_checklist_report_splits_wms_receipt_summary_when_available() -> None:
     traceability_case = make_case()
     raw_row = traceability_case.report_tables.order_traceability.rows[0]
-    raw_row.values["Recepții WMS consum"] = "total 5000 Kilogram; 300005747/Fish Invest LTD: 5000 Kilogram"
+    raw_row.values["Recepții WMS consum"] = "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-10: 5000 Kilogram"
     raw_row.values["Stoc consum la moment"] = "125 Kilogram; locații: Depozit Principal"
 
     checklist = build_audit_checklist_report(build_audit_traceability_report(traceability_case))
@@ -69,6 +69,8 @@ def test_audit_checklist_report_splits_wms_receipt_summary_when_available() -> N
     assert raw_material.document_type == "WMS recepție"
     assert raw_material.document_number == "300005747"
     assert raw_material.supplier == "Fish Invest LTD"
+    assert raw_material.receipt_date == "2026-04-10"
+    assert raw_material.document_date == "2026-04-10"
     assert raw_material.stock_at_moment == "125 Kilogram; locații: Depozit Principal"
 
 
@@ -78,8 +80,10 @@ def test_audit_checklist_report_keeps_production_consumption_and_document_regist
 
     assert len(checklist.production_consumption) == 3
     assert checklist.production_consumption[0].production_order == "0030412_DC"
+    assert checklist.production_consumption[0].production_date == "2026-04-10"
     assert {row.consumed_code for row in checklist.production_consumption} == {"DS099903930", "10002", "60001"}
     assert checklist.lot_flows
     assert checklist.document_register
     assert report_dict["exercise"]["code"] == "DS099904011"
     assert report_dict["balance"]["prd_produced"] == "168 BUCATA"
+    assert report_dict["production_consumption"][0]["production_date"] == "2026-04-10"
