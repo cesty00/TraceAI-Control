@@ -2,14 +2,16 @@
 
 The installed local application must expose enough build metadata to correlate a
 DOCX report with the GitHub commit used to generate it. Packaged builds can set
-these values through environment variables; source checkouts can fall back to
-Git when available.
+these values through environment variables or bundle ``traceai_build_info.json``;
+source checkouts can fall back to Git when available.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,11 +20,13 @@ from typing import Any
 UNKNOWN = "UNKNOWN"
 APP_NAME = "TraceAI Control"
 APP_VERSION = "0.5.0"
+BUILD_INFO_RESOURCE = "traceai_build_info.json"
 
 ENV_BUILD_COMMIT = "TRACEAI_BUILD_COMMIT"
 ENV_BUILD_VERSION = "TRACEAI_BUILD_VERSION"
 ENV_BUILD_DATE = "TRACEAI_BUILD_DATE"
 ENV_BUILD_CHANNEL = "TRACEAI_BUILD_CHANNEL"
+ENV_BUILD_INFO_FILE = "TRACEAI_BUILD_INFO_FILE"
 
 
 @dataclass(frozen=True)
@@ -46,16 +50,24 @@ class BuildInfo:
 
 
 def get_build_info(generated_at: datetime | None = None) -> BuildInfo:
-    """Return build metadata for the current application process."""
+    """Return build metadata for the current application process.
+
+    Resolution order:
+    1. TRACEAI_BUILD_* environment variables, useful for CI or scripted builds;
+    2. bundled ``traceai_build_info.json``, useful for packaged Windows apps;
+    3. Git checkout metadata;
+    4. UNKNOWN fallback.
+    """
 
     now = generated_at or datetime.now(timezone.utc)
-    commit = os.getenv(ENV_BUILD_COMMIT) or detect_git_commit() or UNKNOWN
+    resource = read_packaged_build_info()
+    commit = os.getenv(ENV_BUILD_COMMIT) or resource.get("build_commit") or detect_git_commit() or UNKNOWN
     return BuildInfo(
-        app_name=APP_NAME,
-        app_version=os.getenv(ENV_BUILD_VERSION, APP_VERSION),
-        build_commit=commit,
-        build_date=os.getenv(ENV_BUILD_DATE, UNKNOWN),
-        build_channel=os.getenv(ENV_BUILD_CHANNEL, "local"),
+        app_name=str(resource.get("app_name") or APP_NAME),
+        app_version=os.getenv(ENV_BUILD_VERSION) or str(resource.get("app_version") or APP_VERSION),
+        build_commit=str(commit),
+        build_date=os.getenv(ENV_BUILD_DATE) or str(resource.get("build_date") or UNKNOWN),
+        build_channel=os.getenv(ENV_BUILD_CHANNEL) or str(resource.get("build_channel") or "local"),
         generated_at=now.replace(microsecond=0).isoformat(),
     )
 
@@ -90,6 +102,48 @@ def build_info_table_rows(build_info: BuildInfo | None = None) -> list[list[str]
         ["Canal build", info.build_channel],
         ["Generat la", info.generated_at],
     ]
+
+
+def read_packaged_build_info() -> dict[str, Any]:
+    """Read bundled build metadata, returning an empty dict when unavailable."""
+
+    for path in build_info_candidate_paths():
+        try:
+            if path.is_file():
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                return payload if isinstance(payload, dict) else {}
+        except (OSError, json.JSONDecodeError):
+            continue
+    return {}
+
+
+def build_info_candidate_paths() -> list[Path]:
+    """Return possible locations for packaged build metadata."""
+
+    candidates: list[Path] = []
+    explicit = os.getenv(ENV_BUILD_INFO_FILE)
+    if explicit:
+        candidates.append(Path(explicit).expanduser())
+
+    # PyInstaller sets sys._MEIPASS for one-file/one-folder bundles.
+    pyinstaller_root = getattr(sys, "_MEIPASS", None)
+    if pyinstaller_root:
+        candidates.append(Path(str(pyinstaller_root)) / BUILD_INFO_RESOURCE)
+
+    executable = Path(sys.executable).resolve()
+    candidates.append(executable.parent / BUILD_INFO_RESOURCE)
+    candidates.append(Path.cwd() / BUILD_INFO_RESOURCE)
+    candidates.append(Path(__file__).resolve().parents[2] / BUILD_INFO_RESOURCE)
+    candidates.append(Path(__file__).resolve().parent / BUILD_INFO_RESOURCE)
+
+    deduplicated: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key not in seen:
+            deduplicated.append(candidate)
+            seen.add(key)
+    return deduplicated
 
 
 def detect_git_commit() -> str | None:
