@@ -1,6 +1,13 @@
 """UI orchestration boundary for TraceAI Control."""
 
 from .audit_checklist_contract import UI_SCHEMA_VERSION
+from .audit_checklist_section_widgets import (
+    SectionDisplayModel,
+    SectionListItem,
+    build_section_display_model,
+    build_section_list_items,
+    find_section_by_key,
+)
 from .audit_checklist_view_model import (
     AuditChecklistUiSection,
     AuditChecklistUiViewModel,
@@ -20,6 +27,7 @@ from .visual import (
     VisualAuditChecklistResult,
     build_request_from_form_values,
     format_audit_checklist_preview,
+    format_section_display_text,
     run_visual_app,
     submit_audit_checklist_form_values,
     submit_visual_form_values,
@@ -30,6 +38,8 @@ __all__ = [
     "AuditChecklistUiSection",
     "AuditChecklistUiViewModel",
     "DocxReportGenerator",
+    "SectionDisplayModel",
+    "SectionListItem",
     "TraceabilityCaseRunner",
     "UI_SCHEMA_VERSION",
     "UiGenerationRequest",
@@ -39,7 +49,11 @@ __all__ = [
     "build_parser",
     "build_request_from_args",
     "build_request_from_form_values",
+    "build_section_display_model",
+    "build_section_list_items",
+    "find_section_by_key",
     "format_audit_checklist_preview",
+    "format_section_display_text",
     "generate_report_from_ui_request",
     "main",
     "run_visual_app",
