@@ -26,14 +26,25 @@ def test_build_preflight_report_ok_for_minimal_sources(tmp_path: Path) -> None:
     text = format_preflight_report(report)
 
     assert report.status == STATUS_OK
-    assert report.subject.total_records == 2
-    assert report.subject.records_by_source == {"production": 1, "wms": 1}
+    assert report.subject.total_records == 4
+    assert report.subject.records_by_source == {"nomenclator": 1, "production": 1, "stock": 1, "wms": 1}
     assert all(source.status == STATUS_OK for source in report.sources)
     assert data["schema_version"] == "preflight-report.v1"
     assert data["build_info"]["build_commit"] == "abcdef1234567890"
     assert "WMS trasabilitate: OK" in text
     assert "Raport producție PRD: OK" in text
     assert "Cod+lot pe surse:" in text
+
+
+def test_build_preflight_report_warns_when_subject_is_absent_from_stock(tmp_path: Path) -> None:
+    write_minimal_sources(tmp_path, stock_code="OTHER", stock_lot="OTHER")
+
+    report = build_preflight_report(tmp_path, "DS0001", "L001")
+
+    assert report.status == "WARNING"
+    assert report.subject.records_by_source == {"nomenclator": 1, "production": 1, "wms": 1}
+    assert any("poate fi normal dacă nu există stoc fizic" in warning for warning in report.warnings)
+    assert not report.blockers
 
 
 def test_build_preflight_report_blocks_when_required_sources_missing(tmp_path: Path) -> None:
@@ -58,7 +69,7 @@ def test_build_preflight_report_blocks_when_code_lot_not_found(tmp_path: Path) -
     assert "Codul și lotul nu au fost găsite în sursele normalizate." in report.blockers
 
 
-def write_minimal_sources(folder: Path) -> None:
+def write_minimal_sources(folder: Path, stock_code: str = "DS0001", stock_lot: str = "L001") -> None:
     (folder / "trasabilitate_wms.csv").write_text(
         "cod,lot,cantitate,um,document\nDS0001,L001,10,kg,WMS-1\n",
         encoding="utf-8",
@@ -68,7 +79,7 @@ def write_minimal_sources(folder: Path) -> None:
         encoding="utf-8",
     )
     write_minimal_xlsx(folder / "nomenclator.xlsx", headers=["cod", "lot", "denumire"], row=["DS0001", "L001", "Produs test"])
-    write_minimal_xlsx(folder / "stoc la moment original.xlsx", headers=["cod", "lot", "stoc"], row=["DS0001", "L001", "5"])
+    write_minimal_xlsx(folder / "stoc la moment original.xlsx", headers=["cod", "lot", "stoc"], row=[stock_code, stock_lot, "5"])
 
 
 def write_minimal_xlsx(path: Path, headers: list[str], row: list[str]) -> None:
