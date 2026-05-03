@@ -1,0 +1,80 @@
+name: Windows App Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Application version written to build metadata"
+        required: false
+        default: "0.5.0"
+      channel:
+        description: "Build channel written to build metadata"
+        required: false
+        default: "github-actions"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "scripts/build_local_app.py"
+      - ".github/workflows/windows-app-build.yml"
+
+jobs:
+  build-windows-app:
+    name: Build Windows app artifact
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packaging dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+
+      - name: Run unit tests
+        run: |
+          python -m pytest
+
+      - name: Build TraceAI Control app
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($version)) { $version = "0.5.0" }
+          $channel = "${{ github.event.inputs.channel }}"
+          if ([string]::IsNullOrWhiteSpace($channel)) { $channel = "github-actions" }
+          python scripts/build_local_app.py --version $version --channel $channel --commit $env:GITHUB_SHA
+
+      - name: Verify packaged build metadata
+        shell: pwsh
+        run: |
+          $metadata = "dist/TraceAI-Control/traceai_build_info.json"
+          if (!(Test-Path $metadata)) {
+            Write-Error "Missing packaged build metadata: $metadata"
+          }
+          Get-Content $metadata
+          $payload = Get-Content $metadata | ConvertFrom-Json
+          if ($payload.build_commit -ne $env:GITHUB_SHA) {
+            Write-Error "Packaged build commit does not match GITHUB_SHA"
+          }
+
+      - name: Create artifact archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/TraceAI-Control" -DestinationPath "TraceAI-Control-Windows-${{ github.sha }}.zip" -Force
+
+      - name: Upload Windows app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TraceAI-Control-Windows-${{ github.sha }}
+          path: TraceAI-Control-Windows-${{ github.sha }}.zip
+          if-no-files-found: error
+          retention-days: 30
