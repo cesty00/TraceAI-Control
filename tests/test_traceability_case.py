@@ -31,7 +31,7 @@ def make_table(source_key: str, source_name: str, values: dict[str, str]) -> Nor
                 row_number=2,
                 values=values,
                 original_values=values,
-                code_lot_hints={"code": values.get("cod", ""), "lot": values.get("lot", "")},
+                code_lot_hints={"code": values.get("cod", values.get("Cod articol", "")), "lot": values.get("lot", values.get("Lot", ""))},
             )
         ],
         row_count=1,
@@ -124,12 +124,43 @@ def test_wms_aliases_are_exposed_for_docx_without_overwriting_source_keys() -> N
         ]
     )
     traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
-    delivery_values = traceability_case["report_tables"]["finished_goods_deliveries"]["rows"][0]["values"]
-    assert delivery_values["Document comanda"] == "AVZ-77"
-    assert delivery_values["Client"] == "Client alias"
-    assert delivery_values["Cantitate"] == "12"
-    assert delivery_values["UM"] == "Kilogram"
-    assert delivery_values["doc_comanda"] == "AVZ-77"
+    receipt_values = traceability_case["report_tables"]["wms_receipts"]["rows"][0]["values"]
+    assert receipt_values["Document intrare"] == "NIR-77"
+    assert receipt_values["Furnizor"] == "Furnizor alias"
+    assert receipt_values["Cantitate"] == "12"
+    assert receipt_values["UM"] == "Kilogram"
+
+
+def test_wms_only_finished_good_rows_do_not_create_false_upstream_lines() -> None:
+    rules = make_rules_result(
+        [
+            make_table(
+                "wms",
+                "trasabilitate_wms.csv",
+                {
+                    "Cod articol": "DS0001",
+                    "Lot": "L001",
+                    "Denumire": "PF-REFRIGERAT-P PASTRAV EVISCERAT GREUTATE VARIABILA",
+                    "Tip operatiune": "Livrare",
+                    "Document comanda": "38748",
+                    "Numar comanda": "WME111147",
+                    "Partener": "REWE (ROMANIA) SRL_DEPOZIT FILIASI",
+                    "Cantitate": "-33",
+                    "UM": "Kilogram",
+                    "Data": "15/04/2026 18:24:30",
+                },
+            )
+        ]
+    )
+
+    traceability_case = traceability_case_to_dict(build_traceability_case(rules, "DS0001", "L001"))
+
+    assert traceability_case["report_tables"]["finished_goods_deliveries"]["rows"]
+    assert traceability_case["report_tables"]["raw_materials"]["rows"] == []
+    assert traceability_case["report_tables"]["packaging"]["rows"] == []
+    assert traceability_case["report_tables"]["auxiliaries_gas"]["rows"] == []
+    assert traceability_case["report_tables"]["prd_consumptions"]["rows"] == []
+    assert traceability_case["report_tables"]["order_traceability"]["rows"] == []
 
 
 def test_alisol_is_classified_as_auxiliary_gas_not_raw_material() -> None:
