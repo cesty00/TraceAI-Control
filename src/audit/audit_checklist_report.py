@@ -233,12 +233,13 @@ def parse_receipt_summary(summary: str) -> dict[str, str]:
         return empty_receipt_fields()
     first_example = summary.split(";", 1)[1].strip() if ";" in summary else summary.strip()
     first_example = first_example.split(";", 1)[0].strip()
-    document = first_example.split(":", 1)[0].strip() if ":" in first_example else first_example
+    document = first_example.rsplit(": ", 1)[0].strip() if ": " in first_example else first_example
     document = document.replace(" | data ", "/")
-    parts = [part.strip() for part in document.split("/") if part.strip()]
+    detected_date = first_date([document])
+    document_without_date = document.replace(detected_date, "").strip(" /") if detected_date != MISSING else document
+    parts = [part.strip() for part in document_without_date.split("/") if part.strip()]
     document_number = parts[0] if parts else MISSING
     supplier = parts[1] if len(parts) >= 2 else MISSING
-    detected_date = first_date(parts[2:]) if len(parts) >= 3 else MISSING
     return {"receipt_date": detected_date, "supplier": supplier or MISSING, "document_type": "WMS recepție", "document_number": document_number or MISSING, "document_date": detected_date}
 
 
