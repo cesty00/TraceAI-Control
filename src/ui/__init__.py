@@ -2,11 +2,15 @@
 
 from .audit_checklist_contract import UI_SCHEMA_VERSION
 from .audit_checklist_section_widgets import (
+    DEFAULT_DISPLAY_VALUE_LIMIT,
+    DEFAULT_TABLE_ROW_LIMIT,
     SectionDisplayModel,
     SectionListItem,
     build_section_display_model,
     build_section_list_items,
     find_section_by_key,
+    humanize_field_label,
+    truncate_display_text,
 )
 from .audit_checklist_view_model import (
     AuditChecklistUiSection,
@@ -37,6 +41,8 @@ from .visual import (
 __all__ = [
     "AuditChecklistUiSection",
     "AuditChecklistUiViewModel",
+    "DEFAULT_DISPLAY_VALUE_LIMIT",
+    "DEFAULT_TABLE_ROW_LIMIT",
     "DocxReportGenerator",
     "SectionDisplayModel",
     "SectionListItem",
@@ -55,10 +61,12 @@ __all__ = [
     "format_audit_checklist_preview",
     "format_section_display_text",
     "generate_report_from_ui_request",
+    "humanize_field_label",
     "main",
     "run_visual_app",
     "submit_audit_checklist_form_values",
     "submit_visual_form_values",
+    "truncate_display_text",
     "validate_audit_checklist_form_values",
     "validate_audit_checklist_ui_payload",
     "validate_ui_generation_request",
