@@ -3,6 +3,7 @@ from pathlib import Path
 from src.rules.traceability_case import TraceabilityCase, TraceabilityCaseSubject
 from src.ui.orchestrator import (
     UiGenerationRequest,
+    generate_audit_checklist_docx_from_traceability_case,
     generate_report_from_ui_request,
     validate_ui_generation_request,
 )
@@ -34,11 +35,15 @@ def test_generate_report_from_ui_request_orchestrates_existing_engine() -> None:
     assert result.success is True
     assert result.output_path == expected_output
     assert result.error is None
-    assert "Raport generat cu succes" in result.message
+    assert "Raport audit checklist generat cu succes" in result.message
     assert calls == [
         ("runner", ("/data", "DS0001", "L001")),
         ("generator", ("DS0001", "L001", "/tmp/report.docx")),
     ]
+
+
+def test_generate_audit_checklist_docx_from_traceability_case_is_exported_adapter() -> None:
+    assert callable(generate_audit_checklist_docx_from_traceability_case)
 
 
 def test_generate_report_from_ui_request_returns_validation_error_without_engine_call() -> None:

@@ -6,16 +6,62 @@ Acest folder conține straturile UI minimale pentru TraceAI Control.
 
 ```text
 funcție de orchestrare testabilă
-CLI/UI shell minimal peste orchestrator
-UI vizual minimal peste orchestrator
+CLI/UI shell peste orchestrator
+UI vizual peste orchestrator
 contract JSON audit checklist pentru interfață
 view-model audit checklist bazat pe payload["sections"]
 widgeturi dedicate pentru secțiuni audit checklist
-rafinări UX de prezentare pentru secțiuni și tabele
 copy/export pentru secțiunea selectată
+generare DOCX audit checklist din aplicație
 ```
 
-UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
+## Flux DOCX implicit în aplicație
+
+Butonul de generare raport din aplicație trebuie să producă raportul audit checklist, nu raportul tehnic/minimal vechi.
+
+Fluxul implicit este:
+
+```text
+run_traceability_case(source_directory, code, lot)
+-> build_audit_traceability_report(traceability_case)
+-> build_audit_checklist_report(audit_report)
+-> generate_audit_checklist_docx_report(checklist_report, output_docx_path)
+```
+
+Adaptorul folosit de UI este:
+
+```text
+generate_audit_checklist_docx_from_traceability_case()
+```
+
+Orchestratorul principal este:
+
+```text
+generate_report_from_ui_request()
+```
+
+Mesajul de succes așteptat este:
+
+```text
+Raport audit checklist generat cu succes: <cale output>
+```
+
+Dacă un raport generat din aplicație începe cu:
+
+```text
+Raport trasabilitate TraceAI Control
+RAPORT DE TRASABILITATE
+```
+
+înseamnă că aplicația rulează încă vechiul flux `docx_minimal` sau un build neactualizat.
+
+Raportul audit checklist nou începe cu:
+
+```text
+TEST DE TRASABILITATE PENTRU AUDIT
+Rezumat de conformare checklist
+01_EXERCITIU — Fișa principală a exercițiului
+```
 
 ## Rol permis
 
@@ -32,70 +78,7 @@ afișare secțiuni audit checklist deja pregătite în audit-checklist-ui.v1
 copiere/export secțiune selectată din modelul de afișare
 ```
 
-## Apel engine permis
-
-Fluxul permis pentru raportul DOCX minimal existent este:
-
-```text
-run_traceability_case(source_directory, code, lot)
--> generate_minimal_docx_report(traceability_case, output_docx_path)
-```
-
-În cod, acest flux este expus prin:
-
-```text
-generate_report_from_ui_request()
-```
-
-Fluxul permis pentru interfața audit checklist este:
-
-```text
-build_audit_checklist_ui_payload(source_directory, code, lot)
--> build_audit_checklist_ui_view_model(payload)
--> build_section_list_items(view_model)
--> build_section_display_model(section)
--> render secțiuni în UI
--> export_section_display_as_text(display_model)
--> export_section_display_as_tsv(display_model)
-```
-
 UI-ul nu reconstruiește tabelele din `TraceabilityCase` și nu citește din DOCX.
-
-## Audit checklist section widgets
-
-Fișier:
-
-```text
-src/ui/audit_checklist_section_widgets.py
-```
-
-Exporturi relevante:
-
-```text
-SectionListItem
-SectionDisplayModel
-build_section_list_items
-find_section_by_key
-build_section_display_model
-export_section_display_as_text
-export_section_display_as_tsv
-rows_to_tsv
-normalize_tsv_cell
-humanize_field_label
-truncate_display_text
-```
-
-Rol:
-
-```text
-construiește lista de navigare a secțiunilor
-păstrează ordinea din view-model
-construiește modelul de afișare pentru secțiunea selectată
-exportă secțiunea selectată ca text lizibil
-exportă secțiunea selectată ca TSV pentru Excel/Sheets
-normalizează celulele TSV ca să rămână un rând per record
-nu calculează și nu interpretează business
-```
 
 ## UI vizual audit checklist
 
@@ -105,17 +88,6 @@ Fișier:
 src/ui/visual.py
 ```
 
-Funcții relevante:
-
-```text
-VisualAuditChecklistResult
-submit_audit_checklist_form_values
-validate_audit_checklist_form_values
-format_audit_checklist_preview
-format_section_display_text
-write_selected_section_tsv
-```
-
 UI-ul vizual include:
 
 ```text
@@ -123,9 +95,10 @@ Previzualizează audit checklist
 Copiază text
 Copiază TSV
 Exportă TSV...
+Generează raport DOCX
 ```
 
-Copierea/exportul folosește strict `SectionDisplayModel`. Nu citește fișiere operaționale și nu generează raport audit nou.
+`Generează raport DOCX` folosește orchestratorul UI și trebuie să genereze raportul audit checklist validat.
 
 ## Interdicții
 
@@ -168,6 +141,8 @@ tests/test_audit_checklist_section_widgets.py
 Acestea verifică inclusiv:
 
 ```text
+orchestrarea UI către generatorul DOCX audit checklist
+mesajul de succes pentru raport audit checklist
 export text pentru secțiunea selectată
 export TSV pentru table/details/empty
 normalizare celule TSV
@@ -182,7 +157,3 @@ Contractul complet este definit în:
 ```text
 docs/UI_ENGINE_CONTRACT.md
 ```
-
-## Următorul pas permis
-
-Următorul pas UI permis este rafinare de usability pentru exporturi sau pachetare aplicație, fără logică de business nouă.
