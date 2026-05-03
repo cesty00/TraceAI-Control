@@ -9,6 +9,7 @@ and the structure stays close to the validated scanned model.
 from __future__ import annotations
 
 import argparse
+import html
 import re
 import zipfile
 from collections import OrderedDict
@@ -250,7 +251,7 @@ def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> li
         paragraph("TEST DE TRASABILITATE PENTRU AUDIT", style="Title"),
         paragraph(f"{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}", bold=True, align="center"),
         paragraph("Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.", align="center"),
-        paragraph(f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}", align="center"),
+        literal_paragraph(f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}", align="center"),
     ]
 
 
@@ -445,8 +446,36 @@ def build_build_info_section(build_info: BuildInfo) -> list[str]:
     return [
         paragraph("Informații build raport", style="Heading1"),
         paragraph("Această secțiune identifică versiunea aplicației folosită la generarea raportului, pentru corelare cu diagnosticele GitHub și build-urile instalate local."),
-        table(["Câmp", "Valoare"], build_info_table_rows(build_info)),
+        literal_table(["Câmp", "Valoare"], build_info_table_rows(build_info)),
     ]
+
+
+def literal_paragraph(text: object, style: str | None = None, bold: bool = False, align: str | None = None) -> str:
+    """Render technical metadata literally, without audit numeric formatting."""
+
+    style_xml = f'<w:pStyle w:val="{style}"/>' if style else ""
+    align_xml = f'<w:jc w:val="{align}"/>' if align else ""
+    bold_xml = "<w:b/>" if bold else ""
+    return f"<w:p><w:pPr>{style_xml}{align_xml}</w:pPr><w:r><w:rPr>{bold_xml}</w:rPr><w:t>{html.escape(str(text), quote=False)}</w:t></w:r></w:p>"
+
+
+def literal_table(headers: list[str], rows: list[list[object]]) -> str:
+    xml_rows = [literal_table_row(headers, is_header=True)]
+    xml_rows.extend(literal_table_row(row) for row in rows)
+    borders = "<w:tblBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/></w:tblBorders>"
+    return f"<w:tbl><w:tblPr><w:tblStyle w:val=\"TraceAITable\"/><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblLayout w:type=\"autofit\"/>{borders}</w:tblPr>{''.join(xml_rows)}</w:tbl>"
+
+
+def literal_table_row(values: list[object], is_header: bool = False) -> str:
+    return f"<w:tr>{''.join(literal_table_cell(value, is_header=is_header) for value in values)}</w:tr>"
+
+
+def literal_table_cell(value: object, is_header: bool = False) -> str:
+    shading_xml = '<w:shd w:fill="EDEDED"/>' if is_header else ""
+    bold_xml = "<w:b/>" if is_header else ""
+    size = "15" if is_header else "14"
+    text = str(value).strip() if value is not None else MISSING
+    return f"<w:tc><w:tcPr>{shading_xml}<w:tcMar><w:top w:w=\"40\" w:type=\"dxa\"/><w:left w:w=\"40\" w:type=\"dxa\"/><w:bottom w:w=\"40\" w:type=\"dxa\"/><w:right w:w=\"40\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz w:val=\"{size}\"/><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\"/></w:rPr><w:t>{html.escape(text or MISSING, quote=False)}</w:t></w:r></w:p></w:tc>"
 
 
 def extract_document_text_from_xml(document_xml: str) -> str:
