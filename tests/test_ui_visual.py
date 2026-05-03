@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from src.ui.audit_checklist_section_widgets import build_section_display_model
 from src.ui.audit_checklist_view_model import AuditChecklistUiSection, AuditChecklistUiViewModel
 from src.ui.orchestrator import UiGenerationRequest, UiGenerationResult
@@ -7,7 +9,9 @@ from src.ui.visual import (
     format_audit_checklist_preview,
     format_section_display_text,
     submit_audit_checklist_form_values,
+    submit_audit_checklist_form_values_async,
     submit_visual_form_values,
+    submit_visual_form_values_async,
     validate_audit_checklist_form_values,
     write_selected_section_tsv,
 )
@@ -47,6 +51,40 @@ def test_submit_visual_form_values_calls_orchestrator_handler() -> None:
         output_docx_path="/tmp/report.docx",
         request_handler=handler,
     )
+
+    assert result.success is True
+    assert result.output_path == "/tmp/report.docx"
+    assert received_requests == [
+        UiGenerationRequest(
+            source_directory="/data",
+            code="DS0001",
+            lot="L001",
+            output_docx_path="/tmp/report.docx",
+        )
+    ]
+
+
+def test_submit_visual_form_values_async_runs_handler_on_executor() -> None:
+    received_requests: list[UiGenerationRequest] = []
+
+    def handler(request: UiGenerationRequest) -> UiGenerationResult:
+        received_requests.append(request)
+        return UiGenerationResult(
+            success=True,
+            output_path="/tmp/report.docx",
+            message="Raport generat cu succes: /tmp/report.docx",
+        )
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = submit_visual_form_values_async(
+            source_directory="/data",
+            code="DS0001",
+            lot="L001",
+            output_docx_path="/tmp/report.docx",
+            executor=executor,
+            request_handler=handler,
+        )
+        result = future.result(timeout=5)
 
     assert result.success is True
     assert result.output_path == "/tmp/report.docx"
@@ -115,6 +153,33 @@ def test_submit_audit_checklist_form_values_builds_view_model_from_payload() -> 
     )
     assert payload_calls == [("/data", "DS0001", "L001")]
     assert view_model_calls == [{"schema_version": "audit-checklist-ui.v1", "sections": []}]
+
+
+def test_submit_audit_checklist_form_values_async_runs_handler_on_executor() -> None:
+    expected_view_model = make_visual_view_model()
+    calls: list[tuple[str, str, str]] = []
+
+    def handler(source_directory: str, code: str, lot: str) -> VisualAuditChecklistResult:
+        calls.append((source_directory, code, lot))
+        return VisualAuditChecklistResult(
+            success=True,
+            view_model=expected_view_model,
+            message="Previzualizare audit checklist generată cu succes.",
+        )
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = submit_audit_checklist_form_values_async(
+            source_directory="/data",
+            code="DS0001",
+            lot="L001",
+            executor=executor,
+            audit_request_handler=handler,
+        )
+        result = future.result(timeout=5)
+
+    assert result.success is True
+    assert result.view_model == expected_view_model
+    assert calls == [("/data", "DS0001", "L001")]
 
 
 def test_submit_audit_checklist_form_values_returns_validation_error_without_engine_call() -> None:
