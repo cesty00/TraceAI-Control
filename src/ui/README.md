@@ -10,7 +10,7 @@ CLI/UI shell minimal peste orchestrator
 UI vizual minimal peste orchestrator
 contract JSON audit checklist pentru interfață
 view-model audit checklist bazat pe payload["sections"]
-previzualizare audit checklist în UI-ul vizual
+widgeturi dedicate pentru secțiuni audit checklist
 ```
 
 UI-ul vizual este implementat minimal, cu Tkinter, și rămâne doar strat peste orchestrator.
@@ -49,7 +49,9 @@ Fluxul permis pentru interfața audit checklist este:
 ```text
 build_audit_checklist_ui_payload(source_directory, code, lot)
 -> build_audit_checklist_ui_view_model(payload)
--> render payload["sections"] în UI
+-> build_section_list_items(view_model)
+-> build_section_display_model(section)
+-> render secțiuni în UI
 ```
 
 UI-ul nu reconstruiește tabelele din `TraceabilityCase` și nu citește din DOCX.
@@ -141,11 +143,41 @@ expune field_keys pentru detalii
 păstrează valorile din payload fără reinterpretare business
 ```
 
+## Audit checklist section widgets
+
+Fișier:
+
+```text
+src/ui/audit_checklist_section_widgets.py
+```
+
+Exporturi:
+
+```text
+SectionListItem
+SectionDisplayModel
+build_section_list_items
+find_section_by_key
+build_section_display_model
+```
+
+Rol:
+
+```text
+construiește lista de navigare a secțiunilor
+păstrează ordinea din view-model
+construiește modelul de afișare pentru secțiunea selectată
+transformă details în perechi cheie/valoare
+transformă table în coloane și rânduri pentru Treeview
+nu calculează și nu interpretează business
+```
+
 Exemplu de utilizare Python:
 
 ```python
 from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
 from src.ui.audit_checklist_view_model import build_audit_checklist_ui_view_model
+from src.ui.audit_checklist_section_widgets import build_section_display_model, build_section_list_items
 
 payload = build_audit_checklist_ui_payload(
     "cale/catre/date",
@@ -153,9 +185,12 @@ payload = build_audit_checklist_ui_payload(
     lot="105.26",
 )
 view_model = build_audit_checklist_ui_view_model(payload)
+items = build_section_list_items(view_model)
+selected = view_model.sections[0]
+display = build_section_display_model(selected)
 
-for section in view_model.sections:
-    print(section.title, section.kind)
+print(items[0].label)
+print(display.summary)
 ```
 
 ## UI vizual audit checklist
@@ -175,13 +210,14 @@ submit_audit_checklist_form_values(source_directory, code, lot)
 -> VisualAuditChecklistResult
 ```
 
-Funcții noi:
+Funcții:
 
 ```text
 VisualAuditChecklistResult
 submit_audit_checklist_form_values
 validate_audit_checklist_form_values
 format_audit_checklist_preview
+format_section_display_text
 ```
 
 UI-ul vizual include butonul:
@@ -190,15 +226,13 @@ UI-ul vizual include butonul:
 Previzualizează audit checklist
 ```
 
-Butonul afișează o previzualizare compactă din view-model:
+Butonul afișează:
 
 ```text
-schema
-produs / lot
-rezultat
-secțiuni în ordinea payload["sections"]
-detalii pentru secțiunile details
-primele rânduri pentru secțiunile table
+listă de secțiuni în stânga
+titlu și sumar pentru secțiunea selectată
+detalii text pentru secțiunea selectată
+tabel Treeview pentru secțiunile table
 ```
 
 Aceasta este o randare UI minimală, nu un raport audit nou și nu o sursă de adevăr separată.
@@ -271,7 +305,8 @@ câmp lot
 câmp raport DOCX output
 buton previzualizare audit checklist
 buton generare raport DOCX
-zonă text pentru previzualizarea audit checklist
+listă secțiuni audit checklist
+panou detalii / tabel pentru secțiunea selectată
 mesaj succes / eroare
 ```
 
@@ -282,10 +317,11 @@ build_request_from_form_values()
 submit_visual_form_values()
 submit_audit_checklist_form_values()
 format_audit_checklist_preview()
+format_section_display_text()
 run_visual_app()
 ```
 
-Testele nu pornesc fereastra grafică; verifică doar maparea câmpurilor, apelul către orchestrator prin handler injectat și formatarea previzualizării.
+Testele nu pornesc fereastra grafică; verifică maparea câmpurilor, apelul către orchestrator prin handler injectat, modelele de afișare și fallback-ul textual pentru secțiunea selectată.
 
 ## Comportament controlat
 
@@ -347,6 +383,7 @@ tests/test_ui_cli.py
 tests/test_ui_visual.py
 tests/test_audit_checklist_ui_json.py
 tests/test_audit_checklist_view_model.py
+tests/test_audit_checklist_section_widgets.py
 ```
 
 Acestea verifică:
@@ -368,6 +405,8 @@ ordinea secțiunilor audit checklist
 maparea rows / data în view-model fără rebuild business
 validarea formelor invalide de payload UI
 previzualizarea audit checklist din view-model
+modelele de afișare pentru secțiuni details/table/empty
+fallback text pentru secțiunea selectată
 oprirea apelului audit checklist când lipsesc câmpuri UI
 ```
 
@@ -381,4 +420,4 @@ docs/UI_ENGINE_CONTRACT.md
 
 ## Următorul pas permis
 
-Următorul pas UI permis este înlocuirea previzualizării text compacte cu widgeturi dedicate pe secțiuni, fără logică de business nouă.
+Următorul pas UI permis este rafinarea experienței vizuale a widgeturilor dedicate, fără logică de business nouă.
