@@ -66,12 +66,12 @@ jobs:
       - name: Build PyInstaller executable
         shell: pwsh
         run: |
-          powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests
+          powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1 -SkipTests -AppVersion 0.5.0 -BuildChannel github-actions-installer -BuildCommit $env:GITHUB_SHA
 
       - name: Verify PyInstaller executable
         shell: pwsh
         run: |
-          powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
+          powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1 -ExpectedCommit $env:GITHUB_SHA
 
       - name: Build Inno Setup installer
         shell: pwsh
