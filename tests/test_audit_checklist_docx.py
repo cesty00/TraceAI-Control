@@ -192,3 +192,11 @@ def test_audit_checklist_docx_conclusion_mentions_physical_documents_remain_requ
 
     assert "Ea nu înlocuiește verificarea documentelor fizice" in xml
     assert "ce trebuie atașat dosarului de audit" in xml
+
+
+def test_audit_checklist_docx_downstream_section_mentions_physical_delivery_documents() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare" in xml
+    assert "documentele WMS indicate" in xml
