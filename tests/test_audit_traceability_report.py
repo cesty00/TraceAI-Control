@@ -230,7 +230,18 @@ def make_case() -> TraceabilityCase:
             lot="103.26",
             case_type="FINISHED_PRODUCT",
         ),
-        sections={"core_validation_status": "VALID", "selected_record_count": 83},
+        sections={
+            "core_validation_status": "VALID",
+            "selected_record_count": 83,
+            "data_quality": {
+                "status": "WARNING",
+                "source_count": 4,
+                "sources_found": 4,
+                "error_count": 0,
+                "warning_count": 2,
+                "issue_count": 2,
+            },
+        },
         report_tables=make_report_tables(),
     )
 
@@ -248,6 +259,8 @@ def test_build_audit_traceability_report_maps_core_audit_sections() -> None:
     assert report.balance.wms_production_out_um == "BUCATA"
     assert report.balance.wms_delivered_quantity == "-168"
     assert report.balance.wms_delivered_um == "BUCATA"
+    assert report.data_quality["status"] == "WARNING"
+    assert report.data_quality["source_count"] == 4
     assert len(report.downstream) == 1
     assert report.downstream[0].document_number == "38569"
     assert report.downstream[0].delivery_date == "2026-04-11"
@@ -267,6 +280,7 @@ def test_audit_report_to_dict_is_json_ready_and_keeps_document_register() -> Non
     report_dict = audit_traceability_report_to_dict(build_audit_traceability_report(make_case()))
 
     assert report_dict["exercise"]["code"] == "DS099904011"
+    assert report_dict["data_quality"]["status"] == "WARNING"
     assert report_dict["downstream"][0]["delivery_date"] == "2026-04-11"
     assert report_dict["production_orders"][0]["production_date"] == "2026-04-10"
     assert report_dict["production_orders"][0]["raw_materials"][0]["third_party_delivery_status"] == THIRD_PARTY_NO

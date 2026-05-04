@@ -9,14 +9,22 @@ from tests.test_audit_traceability_report import make_case
 def test_audit_checklist_report_exposes_required_checklist_sections() -> None:
     checklist = build_audit_checklist_report(build_audit_traceability_report(make_case()))
 
-    requirements = [item.requirement for item in checklist.conformity]
+    items_by_requirement = {item.requirement: item for item in checklist.conformity}
 
-    assert "01_EXERCITIU — fișa principală și bilanț produs finit" in requirements
-    assert "02_TABEL_I_AMONTE — materii prime, ambalaje, auxiliare/gaz" in requirements
-    assert "03_TABEL_II_AVAL — livrări produs finit" in requirements
-    assert "04_PRODUCTIE_CONSUM — detaliere pe comenzi de producție" in requirements
-    assert "05_FLUX_LOTURI_SI_DOCUMENTE — fluxuri și registru documente" in requirements
-    assert all(item.status == "DA" for item in checklist.conformity)
+    data_quality = items_by_requirement["00_DATA_QUALITY — verificare surse înainte de raport"]
+    assert data_quality.status == "DA_CU_OBSERVATII"
+    assert data_quality.evidence == "Status=WARNING; surse=4/4; erori=0; warning=2; issues=2"
+
+    required_existing_sections = [
+        "01_EXERCITIU — fișa principală și bilanț produs finit",
+        "02_TABEL_I_AMONTE — materii prime, ambalaje, auxiliare/gaz",
+        "03_TABEL_II_AVAL — livrări produs finit",
+        "04_PRODUCTIE_CONSUM — detaliere pe comenzi de producție",
+        "05_FLUX_LOTURI_SI_DOCUMENTE — fluxuri și registru documente",
+    ]
+    for requirement in required_existing_sections:
+        assert requirement in items_by_requirement
+        assert items_by_requirement[requirement].status == "DA"
 
 
 def test_audit_checklist_report_maps_downstream_columns_required_by_checklist() -> None:
@@ -99,5 +107,6 @@ def test_audit_checklist_report_keeps_production_consumption_and_document_regist
     assert checklist.lot_flows
     assert checklist.document_register
     assert report_dict["exercise"]["code"] == "DS099904011"
+    assert report_dict["data_quality"]["status"] == "WARNING"
     assert report_dict["balance"]["prd_produced"] == "168 BUCATA"
     assert report_dict["production_consumption"][0]["production_date"] == "2026-04-10"
