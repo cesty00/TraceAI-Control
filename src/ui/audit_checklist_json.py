@@ -24,6 +24,15 @@ from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.rules.run_traceability_case import run_traceability_case
 from src.ui.audit_checklist_contract import UI_SCHEMA_VERSION
 
+DEFAULT_DATA_QUALITY_SUMMARY = {
+    "status": "NOT_AVAILABLE",
+    "source_count": 0,
+    "sources_found": 0,
+    "error_count": 0,
+    "warning_count": 0,
+    "issue_count": 0,
+}
+
 
 def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lot: str) -> dict[str, Any]:
     """Build the JSON payload consumed by the UI for one traceability case."""
@@ -31,10 +40,11 @@ def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lo
     traceability_case = run_traceability_case(str(source_directory), code, lot)
     audit_report = build_audit_traceability_report(traceability_case)
     checklist_report = build_audit_checklist_report(audit_report)
-    return audit_checklist_ui_payload_from_report(checklist_report)
+    data_quality = traceability_case.sections.get("data_quality", DEFAULT_DATA_QUALITY_SUMMARY)
+    return audit_checklist_ui_payload_from_report(checklist_report, data_quality=data_quality)
 
 
-def audit_checklist_ui_payload_from_report(report: AuditChecklistReport) -> dict[str, Any]:
+def audit_checklist_ui_payload_from_report(report: AuditChecklistReport, data_quality: dict[str, Any] | None = None) -> dict[str, Any]:
     """Convert AuditChecklistReport into a UI-friendly stable payload.
 
     The raw report dictionary is preserved under ``report`` so the UI can access
@@ -43,6 +53,7 @@ def audit_checklist_ui_payload_from_report(report: AuditChecklistReport) -> dict
     """
 
     report_dict = audit_checklist_report_to_dict(report)
+    report_dict["data_quality"] = normalize_data_quality_summary(data_quality)
     return {
         "schema_version": UI_SCHEMA_VERSION,
         "subject": {
@@ -57,6 +68,17 @@ def audit_checklist_ui_payload_from_report(report: AuditChecklistReport) -> dict
     }
 
 
+def normalize_data_quality_summary(data_quality: dict[str, Any] | None) -> dict[str, Any]:
+    """Return a stable Data Quality summary for UI display."""
+
+    source = data_quality if isinstance(data_quality, dict) else {}
+    summary = dict(DEFAULT_DATA_QUALITY_SUMMARY)
+    for key in summary:
+        if key in source:
+            summary[key] = source[key]
+    return summary
+
+
 def build_ui_sections(report_dict: dict[str, Any]) -> list[dict[str, Any]]:
     """Return the display order expected by the application interface."""
 
@@ -66,6 +88,12 @@ def build_ui_sections(report_dict: dict[str, Any]) -> list[dict[str, Any]]:
             "title": "Rezumat de conformare checklist",
             "description": "Arată dacă cerințele principale ale exercițiului de trasabilitate sunt acoperite de datele identificate.",
             "rows": report_dict["conformity"],
+        },
+        {
+            "key": "data_quality",
+            "title": "Data Quality — verificare surse",
+            "description": "Arată statusul verificării surselor înainte de interpretarea raportului de trasabilitate.",
+            "data": report_dict["data_quality"],
         },
         {
             "key": "exercise",

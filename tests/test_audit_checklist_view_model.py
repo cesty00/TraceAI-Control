@@ -16,6 +16,10 @@ def build_payload() -> dict:
     return audit_checklist_ui_payload_from_report(report)
 
 
+def payload_section_by_key(payload: dict, key: str) -> dict:
+    return next(section for section in payload["sections"] if section["key"] == key)
+
+
 def test_audit_checklist_view_model_uses_payload_sections_in_display_order() -> None:
     payload = build_payload()
 
@@ -35,11 +39,13 @@ def test_audit_checklist_view_model_maps_rows_and_details_without_rebuilding_rep
     sections = {section.key: section for section in view_model.sections}
 
     assert sections["downstream"].kind == "table"
-    assert sections["downstream"].rows == payload["sections"][3]["rows"]
+    assert sections["downstream"].rows == payload_section_by_key(payload, "downstream")["rows"]
     assert "delivery_document_number" in sections["downstream"].column_keys
     assert sections["balance"].kind == "details"
-    assert sections["balance"].data == payload["sections"][2]["data"]
+    assert sections["balance"].data == payload_section_by_key(payload, "balance")["data"]
     assert "prd_produced" in sections["balance"].field_keys
+    assert sections["data_quality"].kind == "details"
+    assert sections["data_quality"].data == payload_section_by_key(payload, "data_quality")["data"]
     assert sections["conclusion"].data["observations"] == payload["report"]["observations"]
 
 
