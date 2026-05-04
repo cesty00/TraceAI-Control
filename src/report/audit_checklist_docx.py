@@ -44,6 +44,7 @@ from src.report.audit_docx import (
 from src.rules.run_traceability_case import run_traceability_case
 
 MISSING = "FARA DATE IDENTIFICATE"
+DOCUMENT_REGISTER_CHECKBOX = "☐"
 QUICK_AUDITOR_GUIDE_ITEMS = [
     "Verifică întâi Rezumatul de conformare checklist.",
     "Confirmă bilanțul PRD vs WMS în 01_EXERCITIU.",
@@ -335,10 +336,10 @@ def build_lot_flow_section(report: AuditChecklistReport, policy: AuditReportPoli
 
 def build_document_register_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     selected = policy.select_document_register(report.document_register)
-    rows = [[line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed), line.status] for line in selected]
+    rows = [[DOCUMENT_REGISTER_CHECKBOX, line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed), line.status] for line in selected]
     if not rows:
-        rows = [[MISSING] * 8]
-    parts = [paragraph("Registru documente fizice de pregătit pentru auditor", style="Heading2"), paragraph("Registrul indică documentele care trebuie pregătite în dosarul de audit: rapoarte de producție, documente de livrare, documente de recepție și alte dovezi necesare. Scopul lui este să transforme rezultatul electronic într-o listă clară de documente fizice de prezentat."), table(["Zona", "Tip document", "Referință", "Cod", "Lot", "Comandă", "Motiv", "Status"], rows)]
+        rows = [[MISSING] * 9]
+    parts = [paragraph("Registru documente fizice de pregătit pentru auditor", style="Heading2"), paragraph("Registrul indică documentele care trebuie pregătite în dosarul de audit. Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită pentru documentele fizice."), table(["Bifat", "Zona", "Tip document", "Referință", "Cod", "Lot", "Comandă", "Motiv", "Status"], rows)]
     note = policy.overflow_note(len(report.document_register), len(selected), "documente")
     if note:
         parts.append(paragraph(note))
