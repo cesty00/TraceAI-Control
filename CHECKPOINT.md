@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: DATA-QUALITY-02_UI_JSON_DONE.
+Latest completed stage: DATA-QUALITY-02_DONE.
 
 Windows validation result:
 
@@ -148,9 +148,27 @@ DATA-QUALITY-02 UI JSON post-merge validation:
 - UI JSON contains `report.data_quality`
 - Real case DS099903883 / 105.26 remains PASS in reference comparison
 
-Current stage: DATA-QUALITY-02_UI_JSON_DONE.
+DATA-QUALITY-02 DOCX exposure:
 
-Next recommended stage: DATA-QUALITY-02_DOCX — display the compact Data Quality summary in the audit checklist DOCX using existing report data only. Alternative: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
+- PR: #70 — Display Data Quality summary in audit checklist DOCX
+- Squash merge commit: cb1142a0ca05aca5eaf58e960b5d3cbca5fa420e
+- Diagnostics artifact reviewed: TraceAI-Diagnostics (23).zip
+- Commit validated by diagnostics artifact: eb4ae832cf58771ac8a38f62be5820d83bf6e288
+- TraceAI Diagnostics PASS
+- 144 passed in 1.78s
+- reference_comparison.md = PASS
+- real_audit_checklist_report.docx generated successfully
+- real_audit_checklist_ui.json generated and valid
+- DOCX `Rezumat de conformare checklist` now contains `00_DATA_QUALITY — verificare surse înainte de raport`
+- DOCX contains `Status=ERROR; surse=4/4; erori=1; warning=7; issues=8` for real case DS099903883 / 105.26
+- UI JSON conformity rows also include `00_DATA_QUALITY`
+- Extraction, source mapping, quantities, balances, verdict rules and DOCX layout helpers unchanged
+- Report generation is still not blocked by Data Quality
+- PP-03 is out of scope
+
+Current stage: DATA-QUALITY-02_DONE.
+
+Next recommended stage: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages. Alternative: DATA-QUALITY-03 — expose detailed Data Quality issues in JSON/Audit Pack after typed errors are in place.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
