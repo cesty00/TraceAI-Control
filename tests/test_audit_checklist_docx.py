@@ -22,6 +22,8 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     assert "Card verdict auditor" in xml
     assert "Ghid rapid pentru auditor" in xml
     assert "Rezumat de conformare checklist" in xml
+    assert "00_DATA_QUALITY — verificare surse înainte de raport" in xml
+    assert "Status=WARNING; surse=4/4; erori=0; warning=2; issues=2" in xml
     assert "01_EXERCITIU — Fișa principală a exercițiului" in xml
     assert "02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare" in xml
     assert "03_TABEL_II_AVAL — Livrări produs finit" in xml
@@ -149,6 +151,7 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
     assert "Card verdict auditor" in document_xml
     assert "Ghid rapid pentru auditor" in document_xml
     assert "Rezumat de conformare checklist" in document_xml
+    assert "00_DATA_QUALITY — verificare surse înainte de raport" in document_xml
     assert "Informații build raport" in document_xml
 
 
