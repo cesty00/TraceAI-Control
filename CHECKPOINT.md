@@ -4,30 +4,36 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-main diagnostic commit: 2f1317ef2013512590a220d300f92ab6a60c7c59
+main diagnostic commit: 8d4add1defab4f4d79eff15c724aa26a09fd7ab4
 
-Latest completed stage: OBSERVABILITY-02A add UI diagnostic ZIP action helpers.
+Latest completed stage: OBSERVABILITY-02B add Diagnostic ZIP button in visual UI.
+
+Implemented commits:
+
+- c6612da581306d38a4274b8a62c221b745b07abd — OBSERVABILITY-02B add diagnostic ZIP button to visual UI
+- 8d4add1defab4f4d79eff15c724aa26a09fd7ab4 — Export diagnostic bundle UI helpers
 
 Main diagnostic result:
 
 - TraceAI Diagnostics PASS
-- 126 passed in 3.62s
+- 126 passed in 2.37s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-Current stage: OBSERVABILITY-02A_DONE.
+Current stage: OBSERVABILITY-02B_DIAGNOSTIC_PASS.
 
-Next stage: OBSERVABILITY-02B — add Diagnostic ZIP button in visual UI.
+Next stage: local UI validation of Diagnostic ZIP button, then checkpoint as OBSERVABILITY-02B_DONE if the installed/visual app generates a ZIP successfully.
 
-Next implementation rules:
+Next validation rules:
 
-1. Keep UI logic thin.
-2. Use src/ui/diagnostic_bundle_actions.py.
-3. Run ZIP generation in the existing background worker pattern.
-4. Do not add business logic to Tkinter code.
-5. Test immediately after each small change.
+1. Launch visual UI.
+2. Select source folder.
+3. Fill code DS099903883 and lot 105.26.
+4. Choose Diagnostic ZIP output.
+5. Click Generează Diagnostic ZIP.
+6. Confirm ZIP is created and contains build_info.json, source_inventory.json, preflight.json, audit_checklist_ui.json, manifest.json, README.txt and optional reports/*.docx.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, or roadmap/status change.
 
