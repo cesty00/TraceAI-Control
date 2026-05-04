@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01D-1_COMPACT_TABLE_RENDERER_VALIDATED.
+Latest completed stage: REPORT-QUALITY-01D-2_DONE.
 
 Windows validation result:
 
@@ -47,37 +47,39 @@ REPORT-QUALITY-01D-1 compact table renderer:
 
 - 0d89062763af797c961992f289f0ce5b5e70b399 — REPORT-QUALITY-01D-1 add compact audit table renderer
 - 4e6f5921c0d046998ab98148d79c2efe0532834c — Test compact audit table renderer
+- Diagnostic PASS: 138 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid
 
-REPORT-QUALITY-01D-1 diagnostic results:
+REPORT-QUALITY-01D-2 compact table integration:
 
-- Commit: 0d89062763af797c961992f289f0ce5b5e70b399
+- 0dcb0f4b8ae1b9c97096209fce87355974a57a50 — REPORT-QUALITY-01D-2 use compact tables in audit checklist DOCX
+
+REPORT-QUALITY-01D-2 diagnostic result:
+
+- Commit: 0dcb0f4b8ae1b9c97096209fce87355974a57a50
 - TraceAI Diagnostics PASS
-- 135 passed in 2.58s
-- reference_comparison.md = PASS
-- real_audit_checklist_ui.json = valid
-
-- Commit: 4e6f5921c0d046998ab98148d79c2efe0532834c
-- TraceAI Diagnostics PASS
-- 138 passed in 1.44s
+- 138 passed in 1.23s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-Compact table renderer behavior:
+DOCX visual/layout validation:
 
-- full-width table marker: <w:tblW w:w="5000" w:type="pct"/>
-- autofit marker: <w:tblLayout w:type="autofit"/>
-- table look marker: <w:tblLook ... firstRow="1" .../>
-- repeating header marker: <w:tblHeader/>
-- no row split marker: <w:cantSplit/>
-- top-aligned cells marker: <w:vAlign w:val="top"/>
-- compact font sizes for header/body
-- missing values remain explicit: FARA DATE IDENTIFICATE
+- real_audit_checklist_report.docx generated successfully
+- all major audit checklist tables use compact visual table renderer
+- table count in generated DOCX = 11
+- <w:tblHeader/> present 11 times
+- <w:cantSplit/> present 82 times
+- <w:vAlign w:val="top"/> present 642 times
+- <w:tblW w:w="5000" w:type="pct"/> present 11 times
+- <w:tblLayout w:type="autofit"/> present 11 times
+- compact font markers present: <w:sz w:val="14"/> and <w:sz w:val="13"/>
+- 'Ghid rapid pentru auditor' remains present
+- document register still contains 'Bifat' and printable checkbox '☐'
 
-Current stage: REPORT-QUALITY-01D-1_COMPACT_TABLE_RENDERER_VALIDATED.
+Current stage: REPORT-QUALITY-01D-2_DONE.
 
-Next implementation stage: REPORT-QUALITY-01D-2 — integrate compact_audit_table into all major audit checklist DOCX tables, replacing the generic table renderer where appropriate.
+Next recommended stage: REPORT-QUALITY-01D-3 — add auditor verdict card on the first page. Alternative: WINDOWS-VALIDATION-02 using the new compact DOCX report build.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
