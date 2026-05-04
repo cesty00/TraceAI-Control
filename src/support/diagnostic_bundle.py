@@ -18,7 +18,6 @@ from typing import Any
 from src.core.build_info import build_info_to_dict, get_build_info
 from src.core.preflight_report import build_preflight_report, preflight_report_to_dict
 from src.core.source_inventory import build_inventory_report, report_to_dict
-from src.ui.audit_checklist_json import build_audit_checklist_ui_payload
 
 DIAGNOSTIC_SCHEMA_VERSION = "traceai-diagnostic-bundle.v1"
 
@@ -121,6 +120,14 @@ def build_diagnostic_bundle(
             archive.writestr(name, payload)
 
     return output_zip
+
+
+def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lot: str) -> dict[str, Any]:
+    """Load the UI JSON builder lazily to avoid package import side effects."""
+
+    from src.ui.audit_checklist_json import build_audit_checklist_ui_payload as _build_payload
+
+    return _build_payload(source_directory, code, lot)
 
 
 def build_readme(manifest: DiagnosticBundleManifest) -> str:
