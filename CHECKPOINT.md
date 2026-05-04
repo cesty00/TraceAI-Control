@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01B_DONE.
+Latest completed stage: REPORT-QUALITY-01C_DONE.
 
 Windows validation result:
 
@@ -28,37 +28,37 @@ REPORT-QUALITY-01B completed:
 
 - a292db897fd4bc8c89c9ccd63af128c832a19721 — REPORT-QUALITY-01B add printable checkbox to document register
 - f5044210ec2bbeb078d0566525701da9cdaca82d — Test printable checkbox in document register
+- Diagnostic PASS: 131 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid
 
-REPORT-QUALITY-01B diagnostic result:
+REPORT-QUALITY-01C completed:
 
-- Commit: f5044210ec2bbeb078d0566525701da9cdaca82d
+- d691a04ba82f0d5395bd6744d91ade0be3f1493e — REPORT-QUALITY-01C add DOCX table layout helpers
+- 41bf4d76d457a6cfb0f1e7f38368295cfee9c960 — Test DOCX table layout helpers
+- 5345ca52dfb37118de531cb8b418223c57361286 — REPORT-QUALITY-01C apply DOCX layout helpers to checklist literal tables
+
+REPORT-QUALITY-01C diagnostic result:
+
+- Commit: 5345ca52dfb37118de531cb8b418223c57361286
 - TraceAI Diagnostics PASS
-- 131 passed in 1.96s
+- 135 passed in 1.60s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-DOCX quality validation:
+DOCX layout validation:
 
-- real_audit_checklist_report.docx contains 'Ghid rapid pentru auditor'
-- all five quick auditor guide points are present
-- document register contains 'Bifat' column
-- document register contains printable checkbox symbol '☐'
-- document register explains that the table can be used as a printed checklist
+- real_audit_checklist_report.docx contains WordprocessingML layout markers
+- <w:tblHeader/> present
+- <w:cantSplit/> present
+- <w:vAlign w:val="top"/> present
+- <w:tblW w:w="5000" w:type="pct"/> present
+- <w:tblLook .../> present
+- Layout markers currently applied to checklist literal tables, including build information table
 
-Current stage: REPORT-QUALITY-01B_DONE.
+Current stage: REPORT-QUALITY-01C_DONE.
 
-Next implementation stage: REPORT-QUALITY-01C — page layout / aranjare în pagină DOCX.
-
-REPORT-QUALITY-01C scope:
-
-- improve table layout stability
-- repeat table headers on page breaks where supported by WordprocessingML
-- avoid row splitting across pages
-- align table cell content to top
-- keep report landscape and audit data unchanged
-- do not change TraceabilityCase, rules, balances, quantities or UI JSON contract
+Next recommended stage: REPORT-QUALITY-01D — extend layout helper integration to all audit checklist tables, if broader table layout control is required. Alternative: WINDOWS-VALIDATION-02 using the new report quality build.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
