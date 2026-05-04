@@ -22,7 +22,10 @@ on:
       - "src/**"
       - "tests/**"
       - "samples/**"
+      - "installer/windows/**"
       - ".github/workflows/traceai-diagnostics.yml"
+      - "CHECKPOINT.md"
+      - "README.md"
       - "*.csv"
       - "*.xlsx"
       - "*.zip"
@@ -31,7 +34,10 @@ on:
       - "src/**"
       - "tests/**"
       - "samples/**"
+      - "installer/windows/**"
       - ".github/workflows/traceai-diagnostics.yml"
+      - "CHECKPOINT.md"
+      - "README.md"
 
 permissions:
   contents: read
