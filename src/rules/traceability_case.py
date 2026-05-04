@@ -18,6 +18,7 @@ from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from src.quality.data_quality_gate import run_data_quality_gate
 from src.rules.order_traceability_mapping import build_order_traceability_rows
 from src.rules.prd_table_mapping import build_source_specific_rows
 from src.rules.run_rules_pipeline import RulesPipelineResult
@@ -128,11 +129,17 @@ class TraceabilityCase:
 def build_traceability_case(result: RulesPipelineResult, code: str, lot: str) -> TraceabilityCase:
     detection = result.case_type_detection
     evidence = [TraceabilityCaseEvidence(item.source_key, item.source_name, item.sheet_name, item.row_number, item.message) for item in detection.evidence]
+    data_quality = run_data_quality_gate(
+        result.core.normalized_dataset.source_directory,
+        dataset=result.core.normalized_dataset,
+        inventory=result.core.inventory,
+    )
     sections = {
         "core_validation_status": result.core.validation.status,
         "selected_record_count": len(result.core.selection.records),
         "inventory_problem_count": len(result.core.inventory.problems),
         "dataset_problem_count": len(result.core.normalized_dataset.problems),
+        "data_quality": data_quality.compact_summary(),
     }
     observations = list(detection.observations)
     if any(is_alisol_auxiliary_record(record) for record in result.core.selection.records):
