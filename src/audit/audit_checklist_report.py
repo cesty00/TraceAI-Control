@@ -136,6 +136,7 @@ class AuditChecklistReport:
     conclusion_status: str
     conclusion_text: str
     observations: list[str] = field(default_factory=list)
+    data_quality: dict[str, Any] = field(default_factory=dict)
 
 
 def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditChecklistReport:
@@ -172,7 +173,7 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
     ]
     exercise = ChecklistExercise(report.exercise.code, report.exercise.lot, report.exercise.product_name, report.exercise.case_type, report.exercise.traceability_result, report.exercise.data_sources, balance.observation)
     return AuditChecklistReport(
-        conformity=build_conformity_items(balance, downstream, upstream, production_consumption, lot_flows, document_register),
+        conformity=build_conformity_items(balance, downstream, upstream, production_consumption, lot_flows, document_register, report.data_quality),
         exercise=exercise,
         balance=balance,
         downstream=downstream,
@@ -183,6 +184,7 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
         conclusion_status=report.conclusion.status,
         conclusion_text=report.conclusion.summary,
         observations=report.conclusion.observations,
+        data_quality=dict(report.data_quality),
     )
 
 
@@ -218,14 +220,49 @@ def build_production_consumption(report: AuditTraceabilityReport) -> list[Checkl
     return rows
 
 
-def build_conformity_items(balance: ChecklistFinishedProductBalance, downstream: list[ChecklistDownstreamDelivery], upstream: list[ChecklistUpstreamLine], production_consumption: list[ChecklistProductionConsumption], lot_flows: list[ChecklistLotFlow], document_register: list[ChecklistDocumentRegisterLine]) -> list[ChecklistConformityItem]:
-    return [
+def build_conformity_items(balance: ChecklistFinishedProductBalance, downstream: list[ChecklistDownstreamDelivery], upstream: list[ChecklistUpstreamLine], production_consumption: list[ChecklistProductionConsumption], lot_flows: list[ChecklistLotFlow], document_register: list[ChecklistDocumentRegisterLine], data_quality: dict[str, Any] | None = None) -> list[ChecklistConformityItem]:
+    items = [
+        ChecklistConformityItem("00_DATA_QUALITY — verificare surse înainte de raport", data_quality_status_for_checklist(data_quality), data_quality_evidence(data_quality), data_quality_observation(data_quality)),
         ChecklistConformityItem("01_EXERCITIU — fișa principală și bilanț produs finit", "DA" if balance.status != MISSING else "NU", f"PRD={balance.prd_produced}; WMS production-out={balance.wms_production_out}; WMS livrat={balance.wms_delivered}", balance.observation),
         ChecklistConformityItem("02_TABEL_I_AMONTE — materii prime, ambalaje, auxiliare/gaz", "DA" if upstream else "NU", f"{len(upstream)} linie/linii amonte", "Include lot, consum, recepție/furnizor/document/stoc unde există în surse."),
         ChecklistConformityItem("03_TABEL_II_AVAL — livrări produs finit", "DA" if downstream else "NU", f"{len(downstream)} livrare/livrări aval", "Include client, document WMS, cantitate și dată/adresă dacă există în sursă."),
         ChecklistConformityItem("04_PRODUCTIE_CONSUM — detaliere pe comenzi de producție", "DA" if production_consumption else "NU", f"{len(production_consumption)} rând(uri) consum pe comenzi", "Comenzile sunt separate de tabelul amonte agregat."),
         ChecklistConformityItem("05_FLUX_LOTURI_SI_DOCUMENTE — fluxuri și registru documente", "DA" if lot_flows and document_register else "NU", f"{len(lot_flows)} flux(uri), {len(document_register)} document(e) în registru", "Registrul documentelor fizice este generat pentru pregătirea auditului."),
     ]
+    return items
+
+
+def data_quality_status_for_checklist(data_quality: dict[str, Any] | None) -> str:
+    status = str((data_quality or {}).get("status", "NOT_AVAILABLE"))
+    if status == "OK":
+        return "DA"
+    if status == "WARNING":
+        return "DA_CU_OBSERVATII"
+    if status == "ERROR":
+        return "NU"
+    return "NECLAR"
+
+
+def data_quality_evidence(data_quality: dict[str, Any] | None) -> str:
+    summary = data_quality or {}
+    return (
+        f"Status={summary.get('status', 'NOT_AVAILABLE')}; "
+        f"surse={summary.get('sources_found', 0)}/{summary.get('source_count', 0)}; "
+        f"erori={summary.get('error_count', 0)}; "
+        f"warning={summary.get('warning_count', 0)}; "
+        f"issues={summary.get('issue_count', 0)}"
+    )
+
+
+def data_quality_observation(data_quality: dict[str, Any] | None) -> str:
+    status = str((data_quality or {}).get("status", "NOT_AVAILABLE"))
+    if status == "OK":
+        return "Sursele obligatorii au trecut verificarea Data Quality inițială."
+    if status == "WARNING":
+        return "Raportul poate fi citit, dar există observații Data Quality de verificat."
+    if status == "ERROR":
+        return "Există erori Data Quality; verifică sursele înainte de concluzia finală."
+    return "Sumarul Data Quality nu este disponibil pentru acest raport."
 
 
 def parse_receipt_summary(summary: str) -> dict[str, str]:
