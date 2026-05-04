@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 
 from src.ui.branding import apply_app_icon
 
@@ -13,7 +14,9 @@ def run_branded_visual_app() -> int:
 
     import tkinter as tk
 
-    visual = importlib.import_module("src.ui.visual")
+    visual = sys.modules.get("src.ui.visual")
+    if visual is None:
+        visual = importlib.import_module("src.ui.visual")
     original_tk = tk.Tk
 
     def create_root(*args: object, **kwargs: object) -> object:
