@@ -4,7 +4,9 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01D-4_DONE.
+Latest completed implementation stage: REPORT-QUALITY-01D-4_DONE.
+
+Current documentation/spec stage: REPORT-QUALITY-01E_SPEC_DEFINED.
 
 Windows validation result:
 
@@ -17,6 +19,7 @@ REPORT-QUALITY-01 completed/active documents:
 
 - docs/report_quality_01.md
 - docs/report_visual_design_01d.md
+- docs/report_content_quality_01e.md
 
 REPORT-QUALITY-01A completed:
 
@@ -100,9 +103,26 @@ REPORT-QUALITY-01D-4 dynamic DOCX header/footer metadata:
 - No extraction logic, source mapping, quantities, balances, verdict rules or audit DTOs changed
 - PP-03 is out of scope
 
-Current stage: REPORT-QUALITY-01D-4_DONE.
+REPORT-QUALITY-01E audit content/table description specification:
 
-Next recommended stage: REPORT-QUALITY-01D-5 — final visual validation on Windows artifact using the new dynamic DOCX header/footer report build. Alternative: REPORT-QUALITY-01E — visual exception/status zone based on existing audit data only.
+- PR: #67 — REPORT-QUALITY-01E define audit content and table descriptions
+- Branch: report-quality-01e-exception-zone
+- Commit: 54f6cd3719456362b33f5ec2c625134e6b935387 — REPORT-QUALITY-01E add audit content specification
+- Document: docs/report_content_quality_01e.md
+- Status: REPORT-QUALITY-01E_SPEC_DEFINED
+- Scope: audit content quality, source-role explanations, table descriptions and safe rules for a future visual exception/status zone
+- No production code changed
+- No DOCX renderer changed
+- No tests changed
+- No extraction logic, source mapping, quantities, balances, verdict rules, audit DTOs or UI JSON changed
+- Safety decision: do not edit the large DOCX renderer through a truncated file view; implement future content changes one text block at a time with focused tests
+- PP-03 is out of scope
+
+Current stage: REPORT-QUALITY-01E_SPEC_DEFINED.
+
+Latest implemented and diagnostics-validated report behavior: REPORT-QUALITY-01D-4_DONE.
+
+Next recommended stage: merge PR #67 after review, then either REPORT-QUALITY-01E-1 — implement one approved table-description text block with focused tests, or REPORT-QUALITY-01D-5 — final visual validation on Windows artifact using the dynamic DOCX header/footer report build.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
