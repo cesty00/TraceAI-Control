@@ -6,8 +6,8 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Audit Checklist / UI / Packaging / Observability
-etapă curentă: OBSERVABILITY-02A_DONE
-următoarea etapă: OBSERVABILITY-02B — Diagnostic ZIP button in visual UI
+etapă curentă: OBSERVABILITY-02B_DIAGNOSTIC_PASS
+următoarea etapă: local UI validation pentru butonul Diagnostic ZIP
 ultimul diagnostic validat: 126 passed, reference_comparison PASS, audit_checklist_ui JSON valid
 checkpoint oficial: CHECKPOINT.md
 ```
@@ -57,6 +57,7 @@ Funcții validate:
 ```text
 Verifică surse
 Previzualizează audit checklist
+Generează Diagnostic ZIP
 Generează raport DOCX
 ```
 
@@ -64,7 +65,7 @@ Următorul pas activ este urmărit în `CHECKPOINT.md`.
 
 ## Diagnostic local
 
-Generatorul local de diagnostic ZIP este disponibil:
+Generatorul local de diagnostic ZIP este disponibil din CLI și din UI:
 
 ```powershell
 python -m src.support.diagnostic_bundle <sources> --code <code> --lot <lot> --output <zip>
