@@ -5,14 +5,16 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ## Status curent
 
 ```text
-stadiu: Audit Checklist / UI / Packaging / Observability / Report Quality
-etapă curentă: REPORT-QUALITY-01D-4_DONE
-următoarea etapă recomandată: REPORT-QUALITY-01D-5 sau REPORT-QUALITY-01E
-ultimul diagnostic validat: 140 passed, reference_comparison PASS, audit checklist DOCX header/footer verificat
-checkpoint oficial: CHECKPOINT.md
+stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
+etapă curentă: ERRORS-01_PR2_2_DONE
+următoarea etapă recomandată: REPORT-QUALITY-01E-1 — primul text block din specificația 01E, cu test dedicat
+alternativă: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
+ultimul checkpoint oficial: CHECKPOINT.md
+ultimul diagnostic inspectat direct în sesiunea curentă: 152 passed, reference_comparison PASS
+ultimul PR merge-uit cu validare direct inspectată: #76
 ```
 
-Etapa activă este documentată în `CHECKPOINT.md`. La reluarea proiectului se citește întâi `CHECKPOINT.md`, nu această pagină.
+Etapa activă și starea oficială se citesc din `CHECKPOINT.md`.
 
 ## Flux validat
 
@@ -46,6 +48,8 @@ DOCX și UI folosesc aceeași sursă de adevăr audit.
 Unitățile de măsură nu se convertesc automat.
 Gazul / ALISOL rămâne auxiliar / consumabil tehnologic.
 Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
+Rapoartele FINISHED_PRODUCT cu dovezi esențiale lipsă se marchează explicit INCOMPLETE.
+Erorile blocante uzuale sunt clasificate în engine ca typed errors înainte de a ajunge în UI.
 PP-03 este în afara fluxului curent Report Quality.
 ```
 
@@ -59,9 +63,12 @@ card verdict auditor pe prima pagină
 ghid rapid auditor
 secțiuni numerotate
 tabele compacte cu header repetabil
+rezumat de conformare checklist
+sumar Data Quality în conformitate
 registru documente fizice cu checkbox tipărit
 header cu titlu raport, cod produs, lot și denumire produs
 footer cu versiune aplicație, commit, canal build, dată generare și număr pagină
+marcare explicită a cazurilor incomplete pentru audit strict
 ```
 
 ## UI
@@ -77,7 +84,15 @@ Generează Diagnostic ZIP
 Generează raport DOCX
 ```
 
-Diagnostic ZIP tratează raportul DOCX ca atașament opțional: dacă fișierul există, îl include; dacă lipsește, afișează o notă clară și generează ZIP-ul fără DOCX.
+Mesajele UI pot returna acum:
+
+```text
+mesaj pentru utilizator
+detaliu tehnic separat
+acțiune recomandată
+```
+
+prin `TraceAIError`, fără stack trace brut în fluxul normal.
 
 ## Diagnostic local
 
@@ -119,9 +134,9 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-140 passed
-reference_comparison.md = PASS
-real_audit_checklist_report.docx = generat cu header/footer dinamic verificat
+ultimul artifact inspectat direct: 152 passed, reference_comparison.md = PASS
+ultimul PR merge-uit cu validare inspectată direct: #76
+real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
 ```
 
 ## Checkpoint

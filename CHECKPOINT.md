@@ -4,123 +4,133 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: DATA-QUALITY-02_DONE.
+Latest completed stage: ERRORS-01_PR2_2_DONE.
+
+Merged on 2026-05-04 and now part of current `main`:
+
+- DATA-QUALITY-02_DONE
+- ERRORS-01_FOUNDATION_DONE
+- ERRORS-01_PR2_2_DONE
+- STRICT-AUDIT-01_DONE
 
 ## Latest validation
 
-DATA-QUALITY-02 checkpoint validation:
+Directly inspected diagnostics artifacts in this session:
 
-- Diagnostics artifact reviewed: TraceAI-Diagnostics (26).zip
-- Commit validated by diagnostics artifact: 6f3c3f581a5269874f62f0e1ffe338cbd1430f67
-- TraceAI Diagnostics PASS
-- 144 passed in 1.58s
-- reference_comparison.md = PASS
-- real_audit_checklist_report.docx generated successfully
-- real_audit_checklist_ui.json generated and valid
-- UI JSON contains `sections[].key = data_quality`
-- UI JSON conformity rows include `00_DATA_QUALITY — verificare surse înainte de raport`
-- Data Quality summary for real case DS099903883 / 105.26 remains visible: `Status=ERROR; surse=4/4; erori=1; warning=7; issues=8`
-- Real case DS099903883 / 105.26 remains PASS in reference comparison
+Primary validation for ERRORS-01 PR 2.2:
 
-Previous checkpoint validation:
+- Artifact reviewed: `01-TraceAI-Diagnostics-6-.zip`
+- Commit validated by artifact: `fa5b60a230663b430bc8023a29e09999b1866d0d`
+- `152 passed in 1.81s`
+- `reference_comparison.md = PASS`
+- `real_traceability_report.docx` generated
+- `real_audit_traceability_report.docx` generated
+- `real_audit_checklist_report.docx` generated
+- `real_audit_checklist_ui.json` generated
 
-- Diagnostics artifact reviewed: TraceAI-Diagnostics (25).zip
-- Commit validated by diagnostics artifact: 6f44205dea9fa2d14d1428b5040f00fefd39af3b
-- TraceAI Diagnostics PASS
-- 144 passed in 1.73s
-- reference_comparison.md = PASS
+Earlier validation inspected in this session:
+
+- Artifact reviewed: `01-TraceAI-Diagnostics-3-.zip`
+- Commit validated by artifact: `f1a1215ea1af7e22c50074fa524a927182d3f195`
+- `147 passed in 1.83s`
+- `reference_comparison.md = PASS`
+
+Latest merged strict-audit validation note:
+
+- PR: #74 — STRICT-AUDIT-01
+- Merged at: 2026-05-04 18:08 UTC
+- Head validated in PR notes: `234870d3574eaae846e324374657f65c7f90280d`
+- Reported validation: TraceAI Diagnostics success, `149 passed`, checklist DOCX/UI JSON generated, reference comparison step completed successfully
 
 ## Completed stages summary
 
-REPORT-QUALITY-01A completed:
+REPORT-QUALITY-01 completed:
 
 - Added quick auditor guide to DOCX.
-- Diagnostic PASS: 130 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid.
-
-REPORT-QUALITY-01B completed:
-
 - Added printable checkbox to document register.
-- Diagnostic PASS: 131 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid.
-
-REPORT-QUALITY-01C completed:
-
 - Added and applied DOCX table layout helpers.
-- Diagnostic PASS: 135 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid.
-
-REPORT-QUALITY-01D completed:
-
-- Added visual design specification, compact audit table renderer, auditor verdict card and dynamic DOCX header/footer metadata.
-- Latest related diagnostics PASS: 140 passed, reference_comparison PASS, real_audit_checklist_report.docx generated successfully.
-- DOCX remains a printable audit file, not a raw export.
-- Header includes report title, product code, lot and product name.
-- Footer includes app version, short commit, build channel, generation timestamp and Word PAGE field.
-- Landscape page settings preserved.
-- PP-03 is out of scope.
+- Added checklist-specific dynamic header/footer metadata.
+- Latest implemented and validated renderer behavior from this line remains `REPORT-QUALITY-01D-4_DONE`.
+- PP-03 remains out of scope.
 
 DATA-QUALITY-01 completed:
 
 - PR: #68 — Add initial Data Quality Gate.
-- Squash merge commit: d55c1a6563450216099d539ece9f5e971802cd53.
-- Diagnostics artifact reviewed: TraceAI-Diagnostics (20).zip.
-- TraceAI Diagnostics PASS: 144 passed in 1.68s.
-- Added `src/quality/models.py` and `src/quality/data_quality_gate.py`.
-- Added typed DataQualityReport, DataQualityIssue, DataQualityStatus and source summaries.
-- Data Quality Gate checks required source presence, required code/lot/quantity columns and invalid quantity values.
-- `TraceabilityCase.sections` includes compact `data_quality` summary.
-- Report generation is not blocked yet.
-- DOCX layout unchanged at this stage.
-- UI business logic unchanged.
-- PP-03 is out of scope.
+- Adds `src/quality/models.py` and `src/quality/data_quality_gate.py`.
+- Adds `DataQualityReport`, `DataQualityIssue`, `DataQualityStatus` and source summaries.
+- Checks required source presence, required columns and invalid quantity values.
 
-DATA-QUALITY-02 UI JSON exposure completed:
+DATA-QUALITY-02 completed:
 
 - PR: #69 — Expose Data Quality summary in UI JSON.
-- Squash merge commit: 36af5db93ac6e891e4bc1a9e8d38eb2ffb9722cf.
-- Diagnostics artifacts reviewed: TraceAI-Diagnostics (21).zip and TraceAI-Diagnostics (22).zip.
-- TraceAI Diagnostics PASS: 144 passed.
-- UI JSON `sections` includes `data_quality` after `conformity`.
-- UI JSON `report` includes `data_quality`.
-- View-model tests locate sections by key instead of fragile list indexes.
-- Extraction, source mapping, quantities, balances and verdict rules unchanged.
-- PP-03 is out of scope.
-
-DATA-QUALITY-02 DOCX exposure completed:
-
 - PR: #70 — Display Data Quality summary in audit checklist DOCX.
-- Squash merge commit: cb1142a0ca05aca5eaf58e960b5d3cbca5fa420e.
-- Diagnostics artifacts reviewed: TraceAI-Diagnostics (23).zip, TraceAI-Diagnostics (24).zip, TraceAI-Diagnostics (25).zip and TraceAI-Diagnostics (26).zip.
-- TraceAI Diagnostics PASS: 144 passed.
-- reference_comparison.md = PASS.
-- real_audit_checklist_report.docx generated successfully.
-- real_audit_checklist_ui.json generated and valid.
-- DOCX `Rezumat de conformare checklist` contains `00_DATA_QUALITY — verificare surse înainte de raport`.
-- DOCX contains `Status=ERROR; surse=4/4; erori=1; warning=7; issues=8` for real case DS099903883 / 105.26.
-- UI JSON conformity rows also include `00_DATA_QUALITY`.
-- UI JSON `sections[].key = data_quality` remains present.
-- Extraction, source mapping, quantities, balances, verdict rules and DOCX layout helpers unchanged.
-- Report generation is still not blocked by Data Quality.
-- PP-03 is out of scope.
+- UI JSON `report` includes `data_quality`.
+- UI JSON `sections` includes `data_quality` after conformity.
+- DOCX conformity summary contains `00_DATA_QUALITY — verificare surse înainte de raport`.
+- Report generation is still not blocked by Data Quality at this stage.
+
+ERRORS-01 foundation completed:
+
+- PR: #72 — ERRORS-01 PR 2.1: Add typed TraceAI errors.
+- Adds `src/errors.py` with `TraceAIError` and typed subclasses.
+- UI orchestrator handles `TraceAIError` before generic exceptions.
+- UI result can separate user message from technical detail / recommended action.
+
+ERRORS-01 PR 2.2 completed:
+
+- PR: #76 — Map blocking core failures to typed errors.
+- Squash merge commit: `6f662bff6f1ce7f880117e60060b4fc09e6d3061`.
+- `run_traceability_case()` now raises typed errors for the most common blocking user-facing failures.
+- Covered blocking cases:
+  - no official sources found in the selected folder
+  - blocking required-column gaps that prevent usable selection
+  - no matching records for the requested code and lot
+- Error classification remains in the engine layer, not in UI.
+- Focused regression tests added in `tests/test_run_traceability_case.py`.
+
+STRICT-AUDIT-01 completed:
+
+- PR: #74 — mark incomplete finished-product reports explicitly.
+- For `FINISHED_PRODUCT`, the report is marked `INCOMPLETE` when one or more essential evidence groups are missing.
+- Minimum strict-audit evidence set:
+  - PRD production evidence
+  - `WMS production-out`
+  - upstream evidence (`raw_materials`, `packaging`, or `auxiliaries_gas`)
+- Shared audit/report layer now makes incomplete cases explicit without moving business logic into UI.
+- UI JSON and DOCX continue to derive from the same audit source of truth.
+
+REPORT-QUALITY-01E specification available as docs-only guidance:
+
+- `docs/report_content_quality_01e.md` defines recommended audit texts and safe future exception-zone rules.
+- Old PR #67 must not be merged as-is because its branch is stale and would rewind checkpoint state.
+- Safe path: keep the specification docs-only on top of current `main`, then implement one approved text block at a time with focused tests.
 
 ## Windows validation result
 
-- Result file: installer/windows/VALIDATION_RESULT_2026-05-04.md
-- Commit validated by Windows artifact: 08fd6dad191ee508f3cd5ae8ce0a3699a718d68a
+- Result file: `installer/windows/VALIDATION_RESULT_2026-05-04.md`
+- Commit validated by Windows artifact: `08fd6dad191ee508f3cd5ae8ce0a3699a718d68a`
 - Environment: Microsoft Windows 10 Pro, Version 10.0.19045 Build 19045, CEZAR-PC
 - Verdict: ACCEPTED
 
 ## Active documents
 
-- docs/report_quality_01.md
-- docs/report_visual_design_01d.md
-- docs/TraceAI_Control_Roadmap_GitHub.md
+- `docs/report_quality_01.md`
+- `docs/report_visual_design_01d.md`
+- `docs/report_content_quality_01e.md`
+- `docs/TraceAI_Control_Roadmap_GitHub.md`
 
 ## Next recommended stage
 
-ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
+REPORT-QUALITY-01E-1 — implement one approved text block from the 01E specification into `audit_checklist_docx.py` with a focused test.
 
-Alternative: DATA-QUALITY-03 — expose detailed Data Quality issues in JSON/Audit Pack after typed errors are in place.
+Alternative:
+
+- continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
+- or expose detailed Data Quality issues in JSON / Audit Pack
 
 ## Rules
 
-- Update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
-- Engineering conduct rule: at every checkpoint update and development step, behave as a programmer, software engineer, and software architect: make small verifiable changes, preserve architecture boundaries, test immediately, avoid assumptions, and keep documentation current.
+- Update `CHECKPOINT.md` and `README.md` after every merged PR, important green diagnostic, Windows validation, or roadmap/status change.
+- Do not move business logic into UI.
+- Do not let DOCX or UI drift away from the shared audit source of truth.
+- Keep changes small, verifiable and architecture-safe.
