@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01C_DONE.
+Latest completed stage: REPORT-QUALITY-01D-1_COMPACT_TABLE_RENDERER_VALIDATED.
 
 Windows validation result:
 
@@ -13,10 +13,10 @@ Windows validation result:
 - Environment: Microsoft Windows 10 Pro, Version 10.0.19045 Build 19045, CEZAR-PC
 - Verdict: ACCEPTED
 
-REPORT-QUALITY-01 document:
+REPORT-QUALITY-01 completed/active documents:
 
 - docs/report_quality_01.md
-- Commit: 2eae644a25c7f880079b0277ee3f053c04081040
+- docs/report_visual_design_01d.md
 
 REPORT-QUALITY-01A completed:
 
@@ -35,30 +35,49 @@ REPORT-QUALITY-01C completed:
 - d691a04ba82f0d5395bd6744d91ade0be3f1493e — REPORT-QUALITY-01C add DOCX table layout helpers
 - 41bf4d76d457a6cfb0f1e7f38368295cfee9c960 — Test DOCX table layout helpers
 - 5345ca52dfb37118de531cb8b418223c57361286 — REPORT-QUALITY-01C apply DOCX layout helpers to checklist literal tables
+- Diagnostic PASS: 135 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid
 
-REPORT-QUALITY-01C diagnostic result:
+REPORT-QUALITY-01D product/design decision:
 
-- Commit: 5345ca52dfb37118de531cb8b418223c57361286
+- The DOCX report should look and behave like a printable audit file, not a raw export.
+- Visual design specification committed in docs/report_visual_design_01d.md.
+- Commit: a99021e74c4c8ff653b5d934c4158cc32116d294 — REPORT-QUALITY-01D add visual design specification
+
+REPORT-QUALITY-01D-1 compact table renderer:
+
+- 0d89062763af797c961992f289f0ce5b5e70b399 — REPORT-QUALITY-01D-1 add compact audit table renderer
+- 4e6f5921c0d046998ab98148d79c2efe0532834c — Test compact audit table renderer
+
+REPORT-QUALITY-01D-1 diagnostic results:
+
+- Commit: 0d89062763af797c961992f289f0ce5b5e70b399
 - TraceAI Diagnostics PASS
-- 135 passed in 1.60s
+- 135 passed in 2.58s
+- reference_comparison.md = PASS
+- real_audit_checklist_ui.json = valid
+
+- Commit: 4e6f5921c0d046998ab98148d79c2efe0532834c
+- TraceAI Diagnostics PASS
+- 138 passed in 1.44s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-DOCX layout validation:
+Compact table renderer behavior:
 
-- real_audit_checklist_report.docx contains WordprocessingML layout markers
-- <w:tblHeader/> present
-- <w:cantSplit/> present
-- <w:vAlign w:val="top"/> present
-- <w:tblW w:w="5000" w:type="pct"/> present
-- <w:tblLook .../> present
-- Layout markers currently applied to checklist literal tables, including build information table
+- full-width table marker: <w:tblW w:w="5000" w:type="pct"/>
+- autofit marker: <w:tblLayout w:type="autofit"/>
+- table look marker: <w:tblLook ... firstRow="1" .../>
+- repeating header marker: <w:tblHeader/>
+- no row split marker: <w:cantSplit/>
+- top-aligned cells marker: <w:vAlign w:val="top"/>
+- compact font sizes for header/body
+- missing values remain explicit: FARA DATE IDENTIFICATE
 
-Current stage: REPORT-QUALITY-01C_DONE.
+Current stage: REPORT-QUALITY-01D-1_COMPACT_TABLE_RENDERER_VALIDATED.
 
-Next recommended stage: REPORT-QUALITY-01D — extend layout helper integration to all audit checklist tables, if broader table layout control is required. Alternative: WINDOWS-VALIDATION-02 using the new report quality build.
+Next implementation stage: REPORT-QUALITY-01D-2 — integrate compact_audit_table into all major audit checklist DOCX tables, replacing the generic table renderer where appropriate.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
