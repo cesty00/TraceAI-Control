@@ -25,6 +25,14 @@ THIRD_PARTY_YES = "DA"
 THIRD_PARTY_UNKNOWN = "NECLAR"
 THIRD_PARTY_NOT_APPLICABLE = "NU_SE_APLICA"
 MISSING = "FARA DATE IDENTIFICATE"
+DEFAULT_DATA_QUALITY_SUMMARY = {
+    "status": "NOT_AVAILABLE",
+    "source_count": 0,
+    "sources_found": 0,
+    "error_count": 0,
+    "warning_count": 0,
+    "issue_count": 0,
+}
 DATE_FIELD_ALIASES = (
     "Data", "Dată", "Data document", "Dată document", "Data livrare", "Dată livrare",
     "Data recepție", "Dată recepție", "Data receptie", "Data producției", "Data productie",
@@ -153,6 +161,7 @@ class AuditTraceabilityReport:
     physical_documents: list[PhysicalDocumentRequirement]
     observations: list[str]
     conclusion: AuditConclusion
+    data_quality: dict[str, Any] = field(default_factory=dict)
 
 
 def build_audit_traceability_report(traceability_case: TraceabilityCase) -> AuditTraceabilityReport:
@@ -186,7 +195,19 @@ def build_audit_traceability_report(traceability_case: TraceabilityCase) -> Audi
         physical_documents=documents,
         observations=observations,
         conclusion=conclusion,
+        data_quality=normalize_data_quality_summary(traceability_case.sections.get("data_quality")),
     )
+
+
+def normalize_data_quality_summary(data_quality: Any) -> dict[str, Any]:
+    """Return the compact Data Quality summary using a stable report shape."""
+
+    source = data_quality if isinstance(data_quality, dict) else {}
+    summary = dict(DEFAULT_DATA_QUALITY_SUMMARY)
+    for key in summary:
+        if key in source:
+            summary[key] = source[key]
+    return summary
 
 
 def build_downstream(table: TraceabilityReportTable) -> list[FinishedProductDelivery]:
