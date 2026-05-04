@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from src.errors import MissingSourceFileError
 from src.rules.traceability_case import TraceabilityCase, TraceabilityCaseSubject
 from src.ui.orchestrator import (
     UiGenerationRequest,
@@ -72,6 +73,32 @@ def test_generate_report_from_ui_request_returns_validation_error_without_engine
     assert result.output_path is None
     assert result.error == "Câmpuri obligatorii lipsă: code"
     assert calls == []
+
+
+def test_generate_report_from_ui_request_returns_typed_traceai_error() -> None:
+    def failing_runner(source_directory: str, code: str, lot: str) -> TraceabilityCase:
+        raise MissingSourceFileError(
+            user_message="Nu pot genera raportul: lipsește o sursă obligatorie.",
+            technical_detail="Fișier lipsă: trasabilitate_wms.csv",
+            recommended_action="Exportă WMS cu layout-ul standard și reîncearcă.",
+        )
+
+    result = generate_report_from_ui_request(
+        UiGenerationRequest(
+            source_directory="/data",
+            code="DS0001",
+            lot="L001",
+            output_docx_path="/tmp/report.docx",
+        ),
+        traceability_case_runner=failing_runner,
+    )
+
+    assert result.success is False
+    assert result.output_path is None
+    assert result.message == "Nu pot genera raportul: lipsește o sursă obligatorie."
+    assert result.error is not None
+    assert "Fișier lipsă: trasabilitate_wms.csv" in result.error
+    assert "Acțiune recomandată: Exportă WMS cu layout-ul standard și reîncearcă." in result.error
 
 
 def test_generate_report_from_ui_request_returns_engine_error() -> None:
