@@ -23,6 +23,13 @@ from .audit_checklist_view_model import (
     validate_audit_checklist_ui_payload,
 )
 from .cli import build_parser, build_request_from_args, main
+from .diagnostic_bundle_actions import (
+    VisualDiagnosticBundleResult,
+    submit_diagnostic_bundle_form_values,
+    submit_diagnostic_bundle_form_values_async,
+    suggest_diagnostic_zip_path,
+    validate_diagnostic_bundle_form_values,
+)
 from .orchestrator import (
     DocxReportGenerator,
     TraceabilityCaseRunner,
@@ -57,6 +64,7 @@ __all__ = [
     "UiGenerationRequest",
     "UiGenerationResult",
     "VisualAuditChecklistResult",
+    "VisualDiagnosticBundleResult",
     "build_audit_checklist_ui_view_model",
     "build_parser",
     "build_request_from_args",
@@ -76,10 +84,14 @@ __all__ = [
     "rows_to_tsv",
     "run_visual_app",
     "submit_audit_checklist_form_values",
+    "submit_diagnostic_bundle_form_values",
+    "submit_diagnostic_bundle_form_values_async",
     "submit_visual_form_values",
+    "suggest_diagnostic_zip_path",
     "truncate_display_text",
     "validate_audit_checklist_form_values",
     "validate_audit_checklist_ui_payload",
+    "validate_diagnostic_bundle_form_values",
     "validate_ui_generation_request",
     "write_selected_section_tsv",
 ]
