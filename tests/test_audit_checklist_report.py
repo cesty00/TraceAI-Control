@@ -2,7 +2,7 @@ from src.audit.audit_checklist_report import (
     audit_checklist_report_to_dict,
     build_audit_checklist_report,
 )
-from src.audit.audit_traceability_report import build_audit_traceability_report
+from src.audit.audit_traceability_report import STATUS_INCOMPLETE, build_audit_traceability_report
 from tests.test_audit_traceability_report import make_case
 
 
@@ -25,6 +25,20 @@ def test_audit_checklist_report_exposes_required_checklist_sections() -> None:
     for requirement in required_existing_sections:
         assert requirement in items_by_requirement
         assert items_by_requirement[requirement].status == "DA"
+
+
+def test_audit_checklist_report_marks_incomplete_finished_product_result() -> None:
+    traceability_case = make_case()
+    traceability_case.report_tables.raw_materials.rows.clear()
+    traceability_case.report_tables.packaging.rows.clear()
+    traceability_case.report_tables.auxiliaries_gas.rows.clear()
+    traceability_case.report_tables.order_traceability.rows.clear()
+
+    checklist = build_audit_checklist_report(build_audit_traceability_report(traceability_case))
+
+    assert checklist.exercise.result == STATUS_INCOMPLETE
+    assert checklist.conclusion_status == STATUS_INCOMPLETE
+    assert any("Raport preliminar/incomplet" in observation for observation in checklist.observations)
 
 
 def test_audit_checklist_report_maps_downstream_columns_required_by_checklist() -> None:

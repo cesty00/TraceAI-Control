@@ -1,4 +1,5 @@
 from src.audit.audit_traceability_report import (
+    STATUS_INCOMPLETE,
     STATUS_PASS,
     THIRD_PARTY_NO,
     THIRD_PARTY_NOT_APPLICABLE,
@@ -274,6 +275,21 @@ def test_build_audit_traceability_report_maps_core_audit_sections() -> None:
     assert report.production_orders[0].packaging[0].code == "10002"
     assert report.production_orders[0].auxiliaries_gas[0].code == "60001"
     assert report.conclusion.status == STATUS_PASS
+
+
+def test_build_audit_traceability_report_marks_missing_finished_product_evidence_as_incomplete() -> None:
+    traceability_case = make_case()
+    traceability_case.report_tables.raw_materials.rows.clear()
+    traceability_case.report_tables.packaging.rows.clear()
+    traceability_case.report_tables.auxiliaries_gas.rows.clear()
+    traceability_case.report_tables.order_traceability.rows.clear()
+
+    report = build_audit_traceability_report(traceability_case)
+
+    assert report.exercise.traceability_result == STATUS_INCOMPLETE
+    assert report.conclusion.status == STATUS_INCOMPLETE
+    assert any("Raport preliminar/incomplet" in observation for observation in report.observations)
+    assert "Lipsesc una sau mai multe dovezi esențiale" in report.conclusion.summary
 
 
 def test_audit_report_to_dict_is_json_ready_and_keeps_document_register() -> None:
