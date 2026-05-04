@@ -150,3 +150,34 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
     assert "Ghid rapid pentru auditor" in document_xml
     assert "Rezumat de conformare checklist" in document_xml
     assert "Informații build raport" in document_xml
+
+
+def test_generate_audit_checklist_docx_report_writes_case_metadata_header_footer(tmp_path: Path) -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    output = tmp_path / "audit_checklist.docx"
+    build_info = BuildInfo(
+        app_name="TraceAI Control",
+        app_version="1.2.3",
+        build_commit="abcdef1234567890",
+        build_date="build-date",
+        build_channel="test-channel",
+        generated_at="2026-05-04T11:00:00+00:00",
+    )
+
+    generate_audit_checklist_docx_report(report, output, build_info=build_info)
+
+    with zipfile.ZipFile(output) as package:
+        document_xml = package.read("word/document.xml").decode("utf-8")
+        header_xml = package.read("word/header1.xml").decode("utf-8")
+        footer_xml = package.read("word/footer1.xml").decode("utf-8")
+
+    assert '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>' in document_xml
+    assert "TraceAI Control — Test de trasabilitate pentru audit" in header_xml
+    assert report.exercise.code in header_xml
+    assert report.exercise.lot in header_xml
+    assert report.exercise.product_name in header_xml
+    assert "TraceAI Control 1.2.3" in footer_xml
+    assert "commit abcdef123456" in footer_xml
+    assert "canal test-channel" in footer_xml
+    assert "generat 2026-05-04T11:00:00+00:00" in footer_xml
+    assert 'w:instr="PAGE"' in footer_xml
