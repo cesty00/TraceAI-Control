@@ -6,8 +6,8 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Audit Checklist / UI / Packaging / Observability
-etapă curentă: OBSERVABILITY-02B_DIAGNOSTIC_PASS
-următoarea etapă: local UI validation pentru butonul Diagnostic ZIP
+etapă curentă: OBSERVABILITY-02B_DONE
+următoarea etapă recomandată: OBSERVABILITY-03 — diagnostic bundle UX pentru atașare DOCX opțională
 ultimul diagnostic validat: 126 passed, reference_comparison PASS, audit_checklist_ui JSON valid
 checkpoint oficial: CHECKPOINT.md
 ```
@@ -116,4 +116,4 @@ Starea completă și următorul pas se află în:
 CHECKPOINT.md
 ```
 
-Regulă: `CHECKPOINT.md` și `README.md` se actualizează după fiecare PR merge-uit, diagnostic verde important sau schimbare de etapă.
+Regulă: `CHECKPOINT.md` și `README.md` se actualizează după fiecare PR merge-uit, diagnostic verde important, validare locală sau schimbare de etapă.
