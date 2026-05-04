@@ -4,41 +4,33 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-main diagnostic commit: 8d4add1defab4f4d79eff15c724aa26a09fd7ab4
+main diagnostic commit: 806c48e782f29c5fc50bf806be84286ea9faf53d
 
-Latest completed stage: OBSERVABILITY-02B add Diagnostic ZIP button in visual UI.
+Latest completed stage: OBSERVABILITY-03 improve diagnostic bundle UX for optional DOCX attachment.
 
 Implemented commits:
 
-- c6612da581306d38a4274b8a62c221b745b07abd — OBSERVABILITY-02B add diagnostic ZIP button to visual UI
-- 8d4add1defab4f4d79eff15c724aa26a09fd7ab4 — Export diagnostic bundle UI helpers
+- 5085280ddda6bfd049396a8f7c6d8af96fc068c1 — OBSERVABILITY-03 handle optional DOCX attachment in diagnostic UI actions
+- 806c48e782f29c5fc50bf806be84286ea9faf53d — Test optional DOCX attachment handling in diagnostic UI actions
 
 Main diagnostic result:
 
 - TraceAI Diagnostics PASS
-- 126 passed in 2.37s
+- 129 passed in 1.38s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-Local UI validation result:
+Current stage: OBSERVABILITY-03_DONE.
 
-- Diagnostic ZIP generated from installed/visual app
-- build_info.json present
-- source_inventory.json present
-- preflight.json present
-- audit_checklist_ui.json present
-- manifest.json present
-- README.txt present
-- manifest errors = none
-- build_commit = 8d4add1defab4f4d79eff15c724aa26a09fd7ab4
-- build_channel = github-actions-installer
-- preflight status = WARNING, not BLOCKER
+Behavior now:
 
-Current stage: OBSERVABILITY-02B_DONE.
+- If optional generated_report_path exists, it is attached under reports/ in the diagnostic ZIP.
+- If optional generated_report_path is missing, UI actions skip the attachment and show a clear user-facing note.
+- The ZIP generator no longer receives a missing DOCX path from the visual UI boundary.
 
-Next stage recommendation: OBSERVABILITY-03 improve diagnostic bundle UX for optional generated DOCX attachment, because the local ZIP warning showed generated_report_path not found when the DOCX was not available at bundle-generation time.
+Next stage recommendation: WINDOWS-VALIDATION / installed app smoke validation, or REPORT-QUALITY-01 if continuing report polishing.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, or roadmap/status change.
 
