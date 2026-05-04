@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import types
-
 from src.ui.branding import apply_app_icon
 
 
@@ -25,10 +23,7 @@ def run_branded_visual_app() -> int:
     try:
         return visual.main()
     finally:
-        if isinstance(original_tk, types.BuiltinFunctionType):
-            tk.Tk = original_tk  # type: ignore[assignment]
-        else:
-            tk.Tk = original_tk  # type: ignore[assignment]
+        tk.Tk = original_tk  # type: ignore[assignment]
 
 
 
