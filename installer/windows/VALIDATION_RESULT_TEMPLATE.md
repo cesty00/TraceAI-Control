@@ -14,6 +14,7 @@ installer/windows/VALIDATION_CHECKLIST.md
 | Operator |  |
 | Tested commit |  |
 | Branch |  |
+| Artifact tested |  |
 | Windows version |  |
 | Python version |  |
 | PyInstaller version |  |
@@ -24,23 +25,31 @@ installer/windows/VALIDATION_CHECKLIST.md
 | Artifact | Path | Status |
 |---|---|---|
 | PyInstaller executable | `dist\\TraceAI-Control\\TraceAI-Control.exe` |  |
+| Build metadata | `traceai_build_info.json` |  |
 | Inno Setup installer | `installer\\windows\\output\\TraceAI-Control-Setup.exe` |  |
+| Diagnostic ZIP generated during smoke test |  |  |
 | DOCX generated during smoke test |  |  |
+| TSV export generated during smoke test |  |  |
 
 ## Step results
 
 | Step | Expected result | Result | Notes |
 |---|---|---|---|
-| Test suite | `python -m pytest -q` passes |  |  |
+| Test suite | `python -m pytest -q` passes, at least 129 passed |  |  |
 | PyInstaller build | `build_windows.ps1` completes |  |  |
 | Build verification | `verify_windows_build.ps1` confirms executable |  |  |
 | Direct executable smoke test | UI opens |  |  |
-| Direct executable DOCX test | DOCX is generated |  |  |
-| Inno Setup build | installer is generated |  |  |
-| Installation test | application installs |  |  |
+| UI source preflight | Verifică surse works, no BLOCKER |  |  |
+| UI audit checklist preview | Sections render in UI |  |  |
+| UI copy/export section | Text/TSV export works |  |  |
+| UI Diagnostic ZIP | ZIP is generated with required files |  |  |
+| Direct executable DOCX test | DOCX is generated and opens |  |  |
+| Inno Setup build | Installer is generated |  |  |
+| Installation test | Application installs |  |  |
 | Installed app smoke test | UI opens from installed app |  |  |
+| Installed app Diagnostic ZIP | ZIP is generated from installed app |  |  |
 | Installed app DOCX test | DOCX is generated |  |  |
-| Uninstall test | application uninstalls |  |  |
+| Uninstall test | Application uninstalls |  |  |
 
 Use one of:
 
@@ -49,6 +58,31 @@ ACCEPTED
 REJECTED
 NOT_APPLICABLE
 ```
+
+## Diagnostic ZIP validation
+
+| File | Status | Notes |
+|---|---|---|
+| build_info.json |  |  |
+| source_inventory.json |  |  |
+| preflight.json |  |  |
+| audit_checklist_ui.json or audit_checklist_ui_error.json |  |  |
+| manifest.json |  |  |
+| README.txt |  |  |
+| reports/*.docx optional |  |  |
+
+## Report/DOCX validation
+
+| Check | Status | Notes |
+|---|---|---|
+| Opens in Word/LibreOffice |  |  |
+| Contains audit checklist sections |  |  |
+| Contains upstream/amonte table |  |  |
+| Contains downstream/aval table |  |  |
+| Contains production/consumption section |  |  |
+| Contains document register |  |  |
+| Contains build info |  |  |
+| Build commit matches tested artifact |  |  |
 
 ## Issues found
 
@@ -86,5 +120,6 @@ NOTE
 [ ] UI does not calculate balances
 [ ] UI does not generate DOCX directly from CSV/XLSX
 [ ] Installer does not modify Core/Rules/Report Engine
-[ ] DOCX is generated through TraceabilityCase
+[ ] DOCX and UI use the same audit source of truth
+[ ] Diagnostic ZIP is generated through support/UI boundaries
 ```
