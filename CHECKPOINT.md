@@ -136,6 +136,18 @@ DATA-QUALITY-02 UI JSON exposure:
 - Extraction, source mapping, quantities, balances and verdict rules unchanged
 - PP-03 is out of scope
 
+DATA-QUALITY-02 UI JSON post-merge validation:
+
+- Diagnostics artifact reviewed: TraceAI-Diagnostics (22).zip
+- Commit validated by diagnostics artifact: d58d2d76157345a62dea6331646bb1b53a5b82aa
+- TraceAI Diagnostics PASS
+- 144 passed in 1.92s
+- reference_comparison.md = PASS
+- real_audit_checklist_ui.json generated and valid
+- UI JSON contains `sections[].key = data_quality`
+- UI JSON contains `report.data_quality`
+- Real case DS099903883 / 105.26 remains PASS in reference comparison
+
 Current stage: DATA-QUALITY-02_UI_JSON_DONE.
 
 Next recommended stage: DATA-QUALITY-02_DOCX — display the compact Data Quality summary in the audit checklist DOCX using existing report data only. Alternative: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
