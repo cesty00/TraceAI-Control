@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01D-4_DONE.
+Latest completed stage: DATA-QUALITY-01_DONE.
 
 Windows validation result:
 
@@ -100,9 +100,28 @@ REPORT-QUALITY-01D-4 dynamic DOCX header/footer metadata:
 - No extraction logic, source mapping, quantities, balances, verdict rules or audit DTOs changed
 - PP-03 is out of scope
 
-Current stage: REPORT-QUALITY-01D-4_DONE.
+DATA-QUALITY-01 initial gate:
 
-Next recommended stage: REPORT-QUALITY-01D-5 — final visual validation on Windows artifact using the new dynamic DOCX header/footer report build. Alternative: REPORT-QUALITY-01E — visual exception/status zone based on existing audit data only.
+- PR: #68 — Add initial Data Quality Gate
+- Squash merge commit: d55c1a6563450216099d539ece9f5e971802cd53
+- Diagnostics artifact reviewed: TraceAI-Diagnostics (20).zip
+- Commit validated by diagnostics artifact: 60742cabece1ebb891dbdd00db76af2be91e107d
+- TraceAI Diagnostics PASS
+- 144 passed in 1.68s
+- reference_comparison.md = PASS
+- real_audit_checklist_ui.json generated and valid
+- Added `src/quality/models.py` and `src/quality/data_quality_gate.py`
+- Added typed DataQualityReport, DataQualityIssue, DataQualityStatus and source summaries
+- Data Quality Gate checks required source presence, required code/lot/quantity columns and invalid quantity values
+- `TraceabilityCase.sections` now includes compact `data_quality` summary
+- Report generation is not blocked yet
+- DOCX layout unchanged
+- UI business logic unchanged
+- PP-03 is out of scope
+
+Current stage: DATA-QUALITY-01_DONE.
+
+Next recommended stage: DATA-QUALITY-02 — display Data Quality summary in audit checklist UI JSON and DOCX without changing source extraction rules. Alternative: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
