@@ -238,6 +238,7 @@ def build_document_xml(
     metadata = build_info or get_build_info()
     body: list[str] = []
     body.extend(build_title_block(report, metadata))
+    body.extend(build_auditor_verdict_card_section(report, policy))
     body.extend(build_quick_auditor_guide_section())
     body.extend(build_conformity_section(report, policy))
     body.extend(build_exercise_section(report, policy))
@@ -260,6 +261,26 @@ def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> li
         paragraph(f"{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}", bold=True, align="center"),
         paragraph("Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.", align="center"),
         literal_paragraph(f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}", align="center"),
+    ]
+
+
+def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
+    return [
+        paragraph("Card verdict auditor", style="Heading1"),
+        paragraph("Rezumat executiv pentru prima pagină: identifică rapid produsul, lotul, verdictul și zonele care trebuie verificate în dosarul de audit."),
+        table(
+            ["Indicator audit", "Status / valoare"],
+            [
+                ["Verdict audit", report.conclusion_status],
+                ["Cod produs", report.exercise.code],
+                ["Lot", report.exercise.lot],
+                ["Denumire produs", policy.name(report.exercise.product_name)],
+                ["Bilanț PRD vs WMS", f"{report.balance.status} — {policy.short(report.balance.observation, 90)}"],
+                ["Aval / livrări", f"{len(report.downstream)} livrări identificate" if report.downstream else MISSING],
+                ["Amonte / loturi sursă", f"{len(report.upstream)} linii amonte identificate" if report.upstream else MISSING],
+                ["Documente fizice", f"{len(report.document_register)} documente de pregătit" if report.document_register else MISSING],
+            ],
+        ),
     ]
 
 
