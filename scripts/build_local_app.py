@@ -38,8 +38,10 @@ class LocalBuildMetadata:
     build_channel: str
 
 
+
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
 
 
 def run_command(args: list[str], cwd: Path | None = None) -> str:
@@ -53,11 +55,13 @@ def run_command(args: list[str], cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
+
 def detect_git_commit(root: Path) -> str:
     try:
         return run_command(["git", "rev-parse", "HEAD"], cwd=root)
     except (OSError, subprocess.SubprocessError):
         return "UNKNOWN"
+
 
 
 def build_metadata(version: str, channel: str, commit: str | None = None) -> LocalBuildMetadata:
@@ -70,11 +74,13 @@ def build_metadata(version: str, channel: str, commit: str | None = None) -> Loc
     )
 
 
+
 def write_build_info_file(output_dir: Path, metadata: LocalBuildMetadata) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / BUILD_INFO_FILENAME
     path.write_text(json.dumps(asdict(metadata), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
+
 
 
 def clean_build_outputs(root: Path) -> None:
@@ -84,9 +90,11 @@ def clean_build_outputs(root: Path) -> None:
             shutil.rmtree(target)
 
 
+
 def pyinstaller_add_data_arg(source: Path, target_name: str) -> str:
     separator = ";" if sys.platform.startswith("win") else ":"
     return f"{source}{separator}{target_name}"
+
 
 
 def run_pyinstaller(root: Path, metadata_file: Path, onefile: bool = False) -> None:
@@ -94,7 +102,7 @@ def run_pyinstaller(root: Path, metadata_file: Path, onefile: bool = False) -> N
     if pyinstaller is None:
         raise RuntimeError("PyInstaller nu este instalat. Rulează: pip install pyinstaller")
 
-    entry_script = root / "src" / "ui" / "visual.py"
+    entry_script = root / "src" / "ui" / "launch.py"
     command = [
         pyinstaller,
         "--noconfirm",
@@ -112,6 +120,7 @@ def run_pyinstaller(root: Path, metadata_file: Path, onefile: bool = False) -> N
     subprocess.run(command, cwd=root, check=True)
 
 
+
 def copy_metadata_next_to_onedir_executable(root: Path, metadata_file: Path) -> Path | None:
     """Copy metadata next to onedir executable for direct inspection/use."""
 
@@ -123,6 +132,7 @@ def copy_metadata_next_to_onedir_executable(root: Path, metadata_file: Path) -> 
     return target
 
 
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build local TraceAI Control app with build metadata.")
     parser.add_argument("--version", default=DEFAULT_VERSION, help="Application version written to build metadata.")
@@ -132,6 +142,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--onefile", action="store_true", help="Build a one-file PyInstaller executable instead of onedir.")
     parser.add_argument("--no-clean", action="store_true", help="Do not remove build/ and dist/ before building.")
     return parser.parse_args(argv)
+
 
 
 def main(argv: list[str] | None = None) -> int:
