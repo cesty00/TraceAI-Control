@@ -31,14 +31,11 @@ from src.report.audit_docx import (
     CONTENT_TYPES_XML,
     CORE_XML,
     DOCUMENT_RELS_XML,
-    FOOTER_XML,
-    HEADER_XML,
     ROOT_RELS_XML,
     STYLES_XML,
     bullets,
     page_break,
     paragraph,
-    table as base_audit_table,
     wrap_document,
 )
 from src.report.docx_layout import (
@@ -208,6 +205,55 @@ def table(headers: list[str], rows: list[list[object]]) -> str:
     return compact_audit_table(headers, rows)
 
 
+def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
+    """Build the audit checklist DOCX header with case metadata.
+
+    The checklist report is intended to be printed and reviewed page by page, so
+    every page needs enough context to identify the audit case without changing
+    the document body or any extraction logic.
+    """
+
+    code = _header_footer_text(report.exercise.code)
+    lot = _header_footer_text(report.exercise.lot)
+    product_name = _header_footer_text(report.exercise.product_name)
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr><w:spacing w:after="0"/></w:pPr>
+    <w:r><w:rPr><w:b/><w:sz w:val="15"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>TraceAI Control — Test de trasabilitate pentru audit</w:t></w:r>
+    <w:r><w:rPr><w:sz w:val="15"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t> | Cod {code} | Lot {lot}</w:t></w:r>
+  </w:p>
+  <w:p>
+    <w:pPr><w:spacing w:after="0"/></w:pPr>
+    <w:r><w:rPr><w:sz w:val="13"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>{product_name}</w:t></w:r>
+  </w:p>
+</w:hdr>
+'''
+
+
+def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
+    """Build the audit checklist DOCX footer with build and page metadata."""
+
+    version = _header_footer_text(build_info.app_version)
+    commit = _header_footer_text(build_info.short_commit)
+    channel = _header_footer_text(build_info.build_channel)
+    generated_at = _header_footer_text(build_info.generated_at)
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr>
+    <w:r><w:rPr><w:sz w:val="13"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>TraceAI Control {version} | commit {commit} | canal {channel} | generat {generated_at} | pagina </w:t></w:r>
+    <w:fldSimple w:instr="PAGE"><w:r><w:rPr><w:sz w:val="13"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>1</w:t></w:r></w:fldSimple>
+  </w:p>
+</w:ftr>
+'''
+
+
+def _header_footer_text(value: object) -> str:
+    text = str(value).strip() if value is not None else MISSING
+    return html.escape(text or MISSING, quote=False)
+
+
 def generate_audit_checklist_docx_report(
     report: AuditChecklistReport,
     output_path: str | Path,
@@ -224,8 +270,8 @@ def generate_audit_checklist_docx_report(
         package.writestr("docProps/core.xml", CORE_XML)
         package.writestr("word/_rels/document.xml.rels", DOCUMENT_RELS_XML)
         package.writestr("word/styles.xml", STYLES_XML)
-        package.writestr("word/header1.xml", HEADER_XML)
-        package.writestr("word/footer1.xml", FOOTER_XML)
+        package.writestr("word/header1.xml", build_checklist_header_xml(report, metadata))
+        package.writestr("word/footer1.xml", build_checklist_footer_xml(report, metadata))
         package.writestr("word/document.xml", build_document_xml(report, policy, metadata))
     return output
 
