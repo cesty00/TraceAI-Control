@@ -41,6 +41,11 @@ from src.report.audit_docx import (
     table,
     wrap_document,
 )
+from src.report.docx_layout import (
+    apply_cell_layout_properties,
+    apply_table_layout_properties,
+    table_row_properties_xml,
+)
 from src.rules.run_traceability_case import run_traceability_case
 
 MISSING = "FARA DATE IDENTIFICATE"
@@ -372,11 +377,12 @@ def literal_table(headers: list[str], rows: list[list[object]]) -> str:
     xml_rows = [literal_table_row(headers, is_header=True)]
     xml_rows.extend(literal_table_row(row) for row in rows)
     borders = "<w:tblBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/></w:tblBorders>"
-    return f"<w:tbl><w:tblPr><w:tblStyle w:val=\"TraceAITable\"/><w:tblW w:w=\"0\" w:type=\"auto\"/><w:tblLayout w:type=\"autofit\"/>{borders}</w:tblPr>{''.join(xml_rows)}</w:tbl>"
+    table_properties = apply_table_layout_properties('<w:tblStyle w:val="TraceAITable"/>')
+    return f"<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{''.join(xml_rows)}</w:tbl>"
 
 
 def literal_table_row(values: Iterable[object], is_header: bool = False) -> str:
-    return f"<w:tr>{''.join(literal_table_cell(value, is_header=is_header) for value in values)}</w:tr>"
+    return f"<w:tr>{table_row_properties_xml(is_header)}{''.join(literal_table_cell(value, is_header=is_header) for value in values)}</w:tr>"
 
 
 def literal_table_cell(value: object, is_header: bool = False) -> str:
@@ -384,7 +390,10 @@ def literal_table_cell(value: object, is_header: bool = False) -> str:
     bold_xml = "<w:b/>" if is_header else ""
     size = "15" if is_header else "14"
     text = str(value).strip() if value is not None else MISSING
-    return f"<w:tc><w:tcPr>{shading_xml}<w:tcMar><w:top w:w=\"40\" w:type=\"dxa\"/><w:left w:w=\"40\" w:type=\"dxa\"/><w:bottom w:w=\"40\" w:type=\"dxa\"/><w:right w:w=\"40\" w:type=\"dxa\"/></w:tcMar></w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz w:val=\"{size}\"/><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\"/></w:rPr><w:t>{html.escape(text or MISSING, quote=False)}</w:t></w:r></w:p></w:tc>"
+    cell_properties = apply_cell_layout_properties(
+        f'{shading_xml}<w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tcMar>'
+    )
+    return f"<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz w:val=\"{size}\"/><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\"/></w:rPr><w:t>{html.escape(text or MISSING, quote=False)}</w:t></w:r></w:p></w:tc>"
 
 
 def extract_document_text_from_xml(document_xml: str) -> str:
