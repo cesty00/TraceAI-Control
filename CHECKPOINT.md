@@ -6,20 +6,29 @@ Data checkpoint: 2026-05-04
 
 Latest completed stage: OBSERVABILITY-03_DONE.
 
-Last validated diagnostic commit:
+Current active stage: WINDOWS-VALIDATION_PREPARED_NEEDS_WINDOWS_RUN.
 
-- 806c48e782f29c5fc50bf806be84286ea9faf53d
+Latest validated diagnostic commit:
+
+- 5db576d00531669063889a2e8089bc764b0079db
 - TraceAI Diagnostics PASS
-- 129 passed in 1.38s
+- 129 passed in 1.61s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
+- schema_version = audit-checklist-ui.v1
+- DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-Current active stage: WINDOWS-VALIDATION_PREPARED_NEEDS_RUN.
+Actions fix validated:
 
-Preparation commits:
+- TraceAI Diagnostics now triggers for checkpoint, README and installer/windows validation document changes.
+- Commit: 5db576d00531669063889a2e8089bc764b0079db — Trigger diagnostics on checkpoint and validation docs changes.
+
+WINDOWS-VALIDATION preparation commits:
 
 - c89fa163ade9d862504468b1b1498b541fc4dceb — Refresh Windows validation checklist for current UI
 - 08fd6dad191ee508f3cd5ae8ce0a3699a718d68a — Refresh Windows validation result template
+- 2f95fc3d893468fed9043daa64dc5f2594cd1289 — Start WINDOWS-VALIDATION stage
+- 5db576d00531669063889a2e8089bc764b0079db — Trigger diagnostics on checkpoint and validation docs changes
 
 Validation documents:
 
