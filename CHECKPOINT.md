@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: DATA-QUALITY-01_DONE.
+Latest completed stage: DATA-QUALITY-02_UI_JSON_DONE.
 
 Windows validation result:
 
@@ -119,9 +119,26 @@ DATA-QUALITY-01 initial gate:
 - UI business logic unchanged
 - PP-03 is out of scope
 
-Current stage: DATA-QUALITY-01_DONE.
+DATA-QUALITY-02 UI JSON exposure:
 
-Next recommended stage: DATA-QUALITY-02 — display Data Quality summary in audit checklist UI JSON and DOCX without changing source extraction rules. Alternative: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
+- PR: #69 — Expose Data Quality summary in UI JSON
+- Squash merge commit: 36af5db93ac6e891e4bc1a9e8d38eb2ffb9722cf
+- Diagnostics artifact reviewed: TraceAI-Diagnostics (21).zip
+- Commit validated by diagnostics artifact: aea989d3c4d16ddf01a296bf158bdacedca4d9c2
+- TraceAI Diagnostics PASS
+- 144 passed in 1.71s
+- reference_comparison.md = PASS
+- real_audit_checklist_ui.json generated and valid
+- UI JSON `sections` now includes `data_quality` after `conformity`
+- UI JSON `report` now includes `data_quality`
+- View-model tests now locate sections by key instead of fragile list indexes
+- DOCX layout unchanged
+- Extraction, source mapping, quantities, balances and verdict rules unchanged
+- PP-03 is out of scope
+
+Current stage: DATA-QUALITY-02_UI_JSON_DONE.
+
+Next recommended stage: DATA-QUALITY-02_DOCX — display the compact Data Quality summary in the audit checklist DOCX using existing report data only. Alternative: ERRORS-01 — add typed TraceAI errors and user-actionable UI messages.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
