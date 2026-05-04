@@ -7,11 +7,13 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
 etapă curentă: ERRORS-01_PR2_2_DONE
-următoarea etapă recomandată: REPORT-QUALITY-01E-1 — primul text block din specificația 01E, cu test dedicat
-alternativă: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
+implementare prezentă pe main, în așteptarea validării: REPORT-QUALITY-01E-1_IMPLEMENTED_PENDING_VALIDATION
+următoarea etapă recomandată: confirmarea validării pentru REPORT-QUALITY-01E-1, apoi promovare la DONE
+alternativă după validare: REPORT-QUALITY-01E-2 sau un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
 ultimul diagnostic inspectat direct în sesiunea curentă: 152 passed, reference_comparison PASS
 ultimul PR merge-uit cu validare direct inspectată: #76
+ultimul commit implementat pentru 01E-1 pe main: 3a65409547d683fc7be5d8633ac88212c3a2fe4a
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`.
@@ -70,6 +72,8 @@ header cu titlu raport, cod produs, lot și denumire produs
 footer cu versiune aplicație, commit, canal build, dată generare și număr pagină
 marcare explicită a cazurilor incomplete pentru audit strict
 ```
+
+Implementarea curentă 01E-1 a introdus primul text block aprobat în `Card verdict auditor`, fără schimbare de business logic, UI JSON sau calcule. Validarea GitHub pentru acest pas nu este încă confirmată în sesiunea curentă.
 
 ## UI
 
@@ -137,6 +141,7 @@ urcă artifact ZIP descărcabil
 ultimul artifact inspectat direct: 152 passed, reference_comparison.md = PASS
 ultimul PR merge-uit cu validare inspectată direct: #76
 real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
+pentru commitul 01E-1 implementat pe main, validarea GitHub nu este încă vizibilă în interogările disponibile din sesiunea curentă
 ```
 
 ## Checkpoint
