@@ -19,29 +19,6 @@ Evidence received:
 - Diagnostic ZIP generated from Windows app: TraceAI-Diagnostic-cod-lot-20260504T085058Z.zip
 - DOCX generated from Windows app: trasabilitate test 88.docx
 
-Diagnostic ZIP validation:
-
-- build_info.json present
-- source_inventory.json present
-- preflight.json present
-- audit_checklist_ui.json present
-- manifest.json present
-- README.txt present
-- reports/trasabilitate test 88.docx present
-- manifest errors = []
-- build_commit = 08fd6dad191ee508f3cd5ae8ce0a3699a718d68a
-- build_channel = github-actions-installer
-
-DOCX validation:
-
-- audit checklist report generated for DS099903883 / 105.26
-- upstream/amonte table present
-- downstream/aval table present
-- production/consumption section present
-- document register present
-- build info present
-- build commit matches tested artifact
-
 Latest validated CI diagnostic before Windows validation:
 
 - 5db576d00531669063889a2e8089bc764b0079db
@@ -50,9 +27,31 @@ Latest validated CI diagnostic before Windows validation:
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 
-Current stage: WINDOWS-VALIDATION_DONE.
+Current stage: REPORT-QUALITY-01_SPEC_DEFINED.
 
-Next stage: REPORT-QUALITY-01.
+REPORT-QUALITY-01 document:
+
+- docs/report_quality_01.md
+- Commit: 2eae644a25c7f880079b0277ee3f053c04081040
+
+REPORT-QUALITY-01 scope:
+
+- Improve DOCX presentation, readability and usefulness for auditors.
+- Do not change TraceabilityCase, rules, balances, quantities, unit handling or source parsing.
+- Keep DOCX and UI based on the same audit source of truth.
+
+Next implementation stage:
+
+REPORT-QUALITY-01A — add quick auditor guide to the DOCX after the title block.
+
+Acceptance for REPORT-QUALITY-01A:
+
+- DOCX XML contains 'Ghid rapid pentru auditor'.
+- DOCX XML contains the five guide points defined in docs/report_quality_01.md.
+- pytest remains PASS.
+- TraceAI Diagnostics remains PASS.
+- reference_comparison.md remains PASS.
+- real_audit_checklist_ui.json remains valid.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
