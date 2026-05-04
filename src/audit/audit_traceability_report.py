@@ -466,6 +466,10 @@ def build_physical_document_requirements(exercise: AuditExercise, downstream: li
 
 def collect_observations(traceability_case: TraceabilityCase, upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace], balance: FinishedProductBalance) -> list[str]:
     observations = list(traceability_case.observations)
+    if is_incomplete_finished_product_case(traceability_case):
+        observations.append(
+            "Raport preliminar/incomplet: pentru produs finit lipsesc una sau mai multe dovezi esențiale (PRD, WMS production-out, amonte)."
+        )
     if balance.balance_observation != MISSING:
         observations.append(balance.balance_observation)
     if any(line.third_party_delivery_status == THIRD_PARTY_NO for line in upstream if line.category == "raw_material"):
@@ -480,13 +484,56 @@ def collect_observations(traceability_case: TraceabilityCase, upstream: list[Ups
 
 
 def build_conclusion_summary(exercise: AuditExercise, balance: FinishedProductBalance, downstream: list[FinishedProductDelivery], upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace]) -> str:
+    if exercise.traceability_result == STATUS_INCOMPLETE:
+        return (
+            f"Raport preliminar/incomplet pentru {exercise.code} / {exercise.lot}. "
+            "Lipsesc una sau mai multe dovezi esențiale pentru produs finit: PRD, WMS production-out sau amonte. "
+            f"Comenzi identificate: {len(production_orders)}. Livrări aval: {len(downstream)}. Linii amonte: {len(upstream)}."
+        )
     upstream_with_receipts = sum(1 for line in upstream if line.receipt_summary != MISSING)
     upstream_with_stock = sum(1 for line in upstream if line.stock_at_moment != MISSING)
     return f"Pentru {exercise.code} / {exercise.lot}, raportul audit conține {len(production_orders)} comandă/comenzi de producție, {len(downstream)} livrare/livrări aval și {len(upstream)} linie/linii amonte. Recepții WMS mapate: {upstream_with_receipts}. Stocuri mapate: {upstream_with_stock}. Status bilanț: {balance.balance_status}."
 
 
+def is_incomplete_finished_product_case(traceability_case: TraceabilityCase) -> bool:
+    if traceability_case.subject.case_type != "FINISHED_PRODUCT":
+        return False
+    return not (
+        has_finished_product_production_evidence(traceability_case)
+        and has_finished_product_wms_production_out(traceability_case)
+        and has_finished_product_upstream_evidence(traceability_case)
+    )
+
+
+def has_finished_product_production_evidence(traceability_case: TraceabilityCase) -> bool:
+    return bool(
+        traceability_case.report_tables.production.rows
+        or (
+            traceability_case.report_tables.order_traceability is not None
+            and traceability_case.report_tables.order_traceability.rows
+        )
+    )
+
+
+def has_finished_product_wms_production_out(traceability_case: TraceabilityCase) -> bool:
+    order_table = traceability_case.report_tables.order_traceability
+    if order_table is None:
+        return False
+    return any(value(row, "WMS production-out") != MISSING for row in order_table.rows)
+
+
+def has_finished_product_upstream_evidence(traceability_case: TraceabilityCase) -> bool:
+    return bool(
+        traceability_case.report_tables.raw_materials.rows
+        or traceability_case.report_tables.packaging.rows
+        or traceability_case.report_tables.auxiliaries_gas.rows
+    )
+
+
 def detect_report_status(traceability_case: TraceabilityCase) -> str:
     if traceability_case.subject.case_type == "UNKNOWN":
+        return STATUS_INCOMPLETE
+    if is_incomplete_finished_product_case(traceability_case):
         return STATUS_INCOMPLETE
     if not traceability_case.report_tables.production.rows and not traceability_case.report_tables.finished_goods_deliveries.rows:
         return STATUS_INCOMPLETE
