@@ -13,6 +13,7 @@ from tests.test_audit_traceability_report import make_case
 
 EXPECTED_SECTION_KEYS = [
     "conformity",
+    "data_quality",
     "exercise",
     "balance",
     "downstream",
@@ -29,7 +30,7 @@ EXPECTED_BALANCE_SUMMARY = "PRD produs coincide cu WMS PRODUCTION-OUT. Livrăril
 
 def build_payload() -> dict:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
-    return audit_checklist_ui_payload_from_report(report)
+    return audit_checklist_ui_payload_from_report(report, data_quality={"status": "WARNING", "source_count": 4, "sources_found": 4, "error_count": 0, "warning_count": 2, "issue_count": 2})
 
 
 def test_audit_checklist_ui_payload_has_schema_version_subject_and_report() -> None:
@@ -54,6 +55,7 @@ def test_audit_checklist_ui_payload_has_schema_version_subject_and_report() -> N
         "balance_summary": EXPECTED_BALANCE_SUMMARY,
     }
     assert payload["report"]["balance"]["prd_produced"] == "168 BUCATA"
+    assert payload["report"]["data_quality"]["status"] == "WARNING"
 
 
 def test_audit_checklist_ui_sections_keep_expected_display_order() -> None:
@@ -62,6 +64,7 @@ def test_audit_checklist_ui_sections_keep_expected_display_order() -> None:
     assert [section["key"] for section in payload["sections"]] == EXPECTED_SECTION_KEYS
     assert [section["title"] for section in payload["sections"]] == [
         "Rezumat de conformare checklist",
+        "Data Quality — verificare surse",
         "01_EXERCITIU — Fișa principală",
         "Bilanț produs finit",
         "03_TABEL_II_AVAL — Livrări produs finit",
@@ -73,11 +76,13 @@ def test_audit_checklist_ui_sections_keep_expected_display_order() -> None:
     ]
 
 
-def test_audit_checklist_ui_sections_expose_downstream_upstream_and_balance() -> None:
+def test_audit_checklist_ui_sections_expose_downstream_upstream_balance_and_data_quality() -> None:
     payload = build_payload()
     sections = {section["key"]: section for section in payload["sections"]}
 
     assert sections["balance"]["data"] == payload["report"]["balance"]
+    assert sections["data_quality"]["data"] == payload["report"]["data_quality"]
+    assert sections["data_quality"]["data"]["source_count"] == 4
     assert sections["downstream"]["rows"] == payload["report"]["downstream"]
     assert sections["upstream"]["rows"] == payload["report"]["upstream"]
     assert len(sections["downstream"]["rows"]) == 1
@@ -92,6 +97,7 @@ def test_audit_checklist_ui_payload_is_json_serializable_and_writable(tmp_path: 
 
     dumped = json.dumps(payload, ensure_ascii=False)
     assert "audit-checklist-ui.v1" in dumped
+    assert "data_quality" in dumped
 
     result = write_audit_checklist_ui_json(payload, output)
 
