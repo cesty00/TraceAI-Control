@@ -4,30 +4,30 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-main: 2f1317ef2013512590a220d300f92ab6a60c7c59
+main diagnostic commit: 2f1317ef2013512590a220d300f92ab6a60c7c59
 
-Latest integrated stage: OBSERVABILITY-02A add UI diagnostic ZIP action helpers.
+Latest completed stage: OBSERVABILITY-02A add UI diagnostic ZIP action helpers.
 
-PR #63 was closed as manually integrated after the branch diverged from documentation commits.
+Main diagnostic result:
 
-Integrated main commits:
+- TraceAI Diagnostics PASS
+- 126 passed in 3.62s
+- reference_comparison.md = PASS
+- real_audit_checklist_ui.json = valid
+- schema_version = audit-checklist-ui.v1
+- DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-- d892d759f4e439431c4e4a63859882280c7b1ae5 — Add UI diagnostic bundle action helpers
-- 2f1317ef2013512590a220d300f92ab6a60c7c59 — Add tests for UI diagnostic bundle action helpers
+Current stage: OBSERVABILITY-02A_DONE.
 
-Previous validation for the same code on merge/test commit bb6369ab3e127c4a2f3487044e579d3e3e99f61b:
+Next stage: OBSERVABILITY-02B — add Diagnostic ZIP button in visual UI.
 
-- 126 passed
-- reference_comparison PASS
-- audit checklist UI JSON valid
+Next implementation rules:
 
-Current stage: OBSERVABILITY-02A_INTEGRATED_NEEDS_MAIN_DIAGNOSTIC.
-
-Next steps:
-
-1. Run TraceAI Diagnostics on current main.
-2. If PASS, start OBSERVABILITY-02B: add Diagnostic ZIP button in visual UI.
-3. Keep UI logic thin and call src/ui/diagnostic_bundle_actions.py.
+1. Keep UI logic thin.
+2. Use src/ui/diagnostic_bundle_actions.py.
+3. Run ZIP generation in the existing background worker pattern.
+4. Do not add business logic to Tkinter code.
+5. Test immediately after each small change.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, or roadmap/status change.
 
