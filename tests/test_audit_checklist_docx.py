@@ -49,6 +49,13 @@ def test_audit_checklist_docx_contains_auditor_verdict_card_before_quick_guide()
         assert expected_text in xml
 
 
+def test_audit_checklist_docx_auditor_verdict_card_uses_approved_01e_text() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice." in xml
+
+
 def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
