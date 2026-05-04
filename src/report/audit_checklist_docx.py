@@ -364,7 +364,12 @@ def build_downstream_section(report: AuditChecklistReport, policy: AuditReportPo
     rows = [[d.client, d.address, d.delivery_date, d.delivered_quantity, d.delivery_document_type, d.delivery_document_number, d.wms_order, policy.downstream_observation(d.observation)] for d in report.downstream]
     if not rows:
         rows = [[MISSING] * 8]
-    return [paragraph("03_TABEL_II_AVAL — Livrări produs finit", style="Heading1"), paragraph("Tabelul II prezintă traseul lotului de produs finit către clienți. Pentru fiecare livrare sunt afișate clientul, adresa sau depozitul identificat, data livrării, cantitatea livrată și documentul WMS care susține ieșirea din gestiune."), table(["Client", "Adresă", "Dată livrare", "Cantitate livrată", "Tip document", "Număr document", "Comandă WMS", "Observații"], rows)]
+    return [
+        paragraph("03_TABEL_II_AVAL — Livrări produs finit", style="Heading1"),
+        paragraph("Tabelul II prezintă traseul lotului de produs finit către clienți. Pentru fiecare livrare sunt afișate clientul, adresa sau depozitul identificat, data livrării, cantitatea livrată și documentul WMS care susține ieșirea din gestiune."),
+        paragraph("Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare și cu documentele WMS indicate."),
+        table(["Client", "Adresă", "Dată livrare", "Cantitate livrată", "Tip document", "Număr document", "Comandă WMS", "Observații"], rows),
+    ]
 
 
 def build_upstream_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -426,7 +431,13 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 
 
 def build_conclusion_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
-    return [paragraph("Concluzie audit intern", style="Heading1"), paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirmă trasabilitatea produsului finit în aval și în amonte pe baza surselor WMS și PRD disponibile."), paragraph(f"Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}"), *bullets(compact_conclusion_observations(report, policy))]
+    return [
+        paragraph("Concluzie audit intern", style="Heading1"),
+        paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirmă trasabilitatea produsului finit în aval și în amonte pe baza surselor WMS și PRD disponibile."),
+        paragraph("Concluzia sintetizează rezultatul verificării pe baza datelor WMS și PRD disponibile. Ea nu înlocuiește verificarea documentelor fizice, ci indică ce a fost identificat și ce trebuie atașat dosarului de audit."),
+        paragraph(f"Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}"),
+        *bullets(compact_conclusion_observations(report, policy)),
+    ]
 
 
 def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
