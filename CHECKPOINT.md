@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01D-2_DONE.
+Latest completed stage: REPORT-QUALITY-01D-3_DONE.
 
 Windows validation result:
 
@@ -52,12 +52,18 @@ REPORT-QUALITY-01D-1 compact table renderer:
 REPORT-QUALITY-01D-2 compact table integration:
 
 - 0dcb0f4b8ae1b9c97096209fce87355974a57a50 — REPORT-QUALITY-01D-2 use compact tables in audit checklist DOCX
+- Diagnostic PASS: 138 passed, reference_comparison PASS, real_audit_checklist_ui JSON valid
 
-REPORT-QUALITY-01D-2 diagnostic result:
+REPORT-QUALITY-01D-3 auditor verdict card:
 
-- Commit: 0dcb0f4b8ae1b9c97096209fce87355974a57a50
+- e468c7d014c40f32d8749d09f31b0799fc130841 — REPORT-QUALITY-01D-3 add auditor verdict card
+- b818be08c834514e29b82416003038a7b1f3f109 — Test auditor verdict card in audit checklist DOCX
+
+REPORT-QUALITY-01D-3 diagnostic result:
+
+- Commit: b818be08c834514e29b82416003038a7b1f3f109
 - TraceAI Diagnostics PASS
-- 138 passed in 1.23s
+- 139 passed in 2.29s
 - reference_comparison.md = PASS
 - real_audit_checklist_ui.json = valid
 - schema_version = audit-checklist-ui.v1
@@ -66,20 +72,21 @@ REPORT-QUALITY-01D-2 diagnostic result:
 DOCX visual/layout validation:
 
 - real_audit_checklist_report.docx generated successfully
-- all major audit checklist tables use compact visual table renderer
-- table count in generated DOCX = 11
-- <w:tblHeader/> present 11 times
-- <w:cantSplit/> present 82 times
-- <w:vAlign w:val="top"/> present 642 times
-- <w:tblW w:w="5000" w:type="pct"/> present 11 times
-- <w:tblLayout w:type="autofit"/> present 11 times
-- compact font markers present: <w:sz w:val="14"/> and <w:sz w:val="13"/>
-- 'Ghid rapid pentru auditor' remains present
+- 'Card verdict auditor' present
+- card appears before 'Ghid rapid pentru auditor'
+- card contains: Verdict audit, Bilanț PRD vs WMS, Aval / livrări, Amonte / loturi sursă, Documente fizice
+- all major audit checklist tables remain compact
+- table count in generated DOCX = 12
+- <w:tblHeader/> present 12 times
+- <w:cantSplit/> present 90 times
+- <w:vAlign w:val="top"/> present 660 times
+- <w:tblW w:w="5000" w:type="pct"/> present 12 times
+- <w:tblLayout w:type="autofit"/> present 12 times
 - document register still contains 'Bifat' and printable checkbox '☐'
 
-Current stage: REPORT-QUALITY-01D-2_DONE.
+Current stage: REPORT-QUALITY-01D-3_DONE.
 
-Next recommended stage: REPORT-QUALITY-01D-3 — add auditor verdict card on the first page. Alternative: WINDOWS-VALIDATION-02 using the new compact DOCX report build.
+Next recommended stage: REPORT-QUALITY-01D-4 — better header/footer metadata with product code, lot and build context. Alternative: WINDOWS-VALIDATION-02 using the new visual DOCX report build.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
