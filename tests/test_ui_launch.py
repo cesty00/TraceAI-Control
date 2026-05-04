@@ -1,6 +1,7 @@
 import sys
 import types
 
+import src.ui as ui_package
 from src.ui import launch
 
 
@@ -22,8 +23,11 @@ def test_run_branded_visual_app_patches_tk_creation_and_applies_icon(monkeypatch
         events["main_root"] = fake_tk.Tk()
         return 123
 
+    fake_visual = types.SimpleNamespace(main=fake_visual_main)
+
     monkeypatch.setitem(sys.modules, "tkinter", fake_tk)
-    monkeypatch.setitem(sys.modules, "src.ui.visual", types.SimpleNamespace(main=fake_visual_main))
+    monkeypatch.setitem(sys.modules, "src.ui.visual", fake_visual)
+    monkeypatch.setattr(ui_package, "visual", fake_visual, raising=False)
     monkeypatch.setattr(launch, "apply_app_icon", fake_apply_app_icon)
 
     result = launch.run_branded_visual_app()
