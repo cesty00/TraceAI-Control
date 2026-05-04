@@ -22,19 +22,24 @@ Main diagnostic result:
 - schema_version = audit-checklist-ui.v1
 - DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 
-Current stage: OBSERVABILITY-02B_DIAGNOSTIC_PASS.
+Local UI validation result:
 
-Next stage: local UI validation of Diagnostic ZIP button, then checkpoint as OBSERVABILITY-02B_DONE if the installed/visual app generates a ZIP successfully.
+- Diagnostic ZIP generated from installed/visual app
+- build_info.json present
+- source_inventory.json present
+- preflight.json present
+- audit_checklist_ui.json present
+- manifest.json present
+- README.txt present
+- manifest errors = none
+- build_commit = 8d4add1defab4f4d79eff15c724aa26a09fd7ab4
+- build_channel = github-actions-installer
+- preflight status = WARNING, not BLOCKER
 
-Next validation rules:
+Current stage: OBSERVABILITY-02B_DONE.
 
-1. Launch visual UI.
-2. Select source folder.
-3. Fill code DS099903883 and lot 105.26.
-4. Choose Diagnostic ZIP output.
-5. Click Generează Diagnostic ZIP.
-6. Confirm ZIP is created and contains build_info.json, source_inventory.json, preflight.json, audit_checklist_ui.json, manifest.json, README.txt and optional reports/*.docx.
+Next stage recommendation: OBSERVABILITY-03 improve diagnostic bundle UX for optional generated DOCX attachment, because the local ZIP warning showed generated_report_path not found when the DOCX was not available at bundle-generation time.
 
-Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, or roadmap/status change.
+Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, or roadmap/status change.
 
 Engineering conduct rule: at every checkpoint update and development step, behave as a programmer, software engineer, and software architect: make small verifiable changes, preserve architecture boundaries, test immediately, avoid assumptions, and keep documentation current.
