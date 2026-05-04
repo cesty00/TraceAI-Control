@@ -19,6 +19,7 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     xml = build_document_xml(report)
 
     assert "TEST DE TRASABILITATE PENTRU AUDIT" in xml
+    assert "Card verdict auditor" in xml
     assert "Ghid rapid pentru auditor" in xml
     assert "Rezumat de conformare checklist" in xml
     assert "01_EXERCITIU — Fișa principală a exercițiului" in xml
@@ -29,6 +30,21 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     assert "Registru documente fizice de pregătit pentru auditor" in xml
     assert "Concluzie audit intern" in xml
     assert "Informații build raport" in xml
+
+
+def test_audit_checklist_docx_contains_auditor_verdict_card_before_quick_guide() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert xml.index("Card verdict auditor") < xml.index("Ghid rapid pentru auditor")
+    for expected_text in [
+        "Verdict audit",
+        "Bilanț PRD vs WMS",
+        "Aval / livrări",
+        "Amonte / loturi sursă",
+        "Documente fizice",
+    ]:
+        assert expected_text in xml
 
 
 def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
@@ -130,6 +146,7 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
         assert "word/document.xml" in names
         document_xml = package.read("word/document.xml").decode("utf-8")
     assert "TEST DE TRASABILITATE PENTRU AUDIT" in document_xml
+    assert "Card verdict auditor" in document_xml
     assert "Ghid rapid pentru auditor" in document_xml
     assert "Rezumat de conformare checklist" in document_xml
     assert "Informații build raport" in document_xml
