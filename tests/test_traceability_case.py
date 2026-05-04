@@ -2,7 +2,7 @@ from src.core.dataset_validation import ValidationReport
 from src.core.normalized_dataset import NormalizedColumn, NormalizedDataSet, NormalizedRow, NormalizedTable
 from src.core.record_selection import select_records_by_code_lot
 from src.core.run_pipeline import CorePipelineResult
-from src.core.source_inventory import InventoryReport
+from src.core.source_inventory import InventoryReport, SourceInventory
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT, detect_case_type
 from src.rules.run_rules_pipeline import RulesPipelineResult
 from src.rules.traceability_case import (
@@ -43,7 +43,11 @@ def make_rules_result(tables: list[NormalizedTable]) -> RulesPipelineResult:
     selection = select_records_by_code_lot(dataset, "DS0001", "L001")
     detection = detect_case_type(dataset, selection, "DS0001", "L001")
     core = CorePipelineResult(
-        inventory=InventoryReport(source_directory="/tmp/data", expected_sources=[], sources=[]),
+        inventory=InventoryReport(
+            source_directory="/tmp/data",
+            expected_sources=["rapoarte productie.csv"],
+            sources=[SourceInventory("rapoarte productie.csv", "/tmp/data/rapoarte productie.csv", True, "csv", row_count=1, columns=["cod", "lot"])],
+        ),
         normalized_dataset=dataset,
         validation=ValidationReport(status="VALID"),
         selection=selection,
@@ -58,6 +62,7 @@ def test_build_traceability_case_maps_rules_pipeline_metadata() -> None:
     assert traceability_case["evidence"]
     assert traceability_case["sections"]["core_validation_status"] == "VALID"
     assert traceability_case["sections"]["selected_record_count"] == 1
+    assert traceability_case["sections"]["data_quality"]["status"] in {"OK", "WARNING", "ERROR"}
     assert traceability_case["report_tables"]["production"]["title"] == "Producția lotului"
     assert traceability_case["report_tables"]["stock"]["empty_message"]
     assert "order_traceability" in traceability_case["report_tables"]
