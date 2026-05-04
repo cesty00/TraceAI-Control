@@ -1,407 +1,125 @@
 # TraceAI Control — Modul Trasabilitate
 
-TraceAI Control — Modul Trasabilitate generează un raport DOCX auditabil pentru trasabilitatea unui articol și lot.
-
-Utilizatorul introduce:
-
-```text
-Cod articol
-Lot
-```
-
-Livrabilul principal este:
-
-```text
-Raport DOCX de trasabilitate
-```
-
-Raportul este narativ, auditabil și construit din `TraceabilityCase`, nu prin citirea directă a fișierelor în Report Engine.
+TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui articol și lot.
 
 ## Status curent
 
-Stadiul tehnic curent:
+```text
+main: 40d0c09a65e5e114781be1a9b996a9191cb9e834
+stadiu: Audit Checklist / UI / Packaging / Observability
+ultimul diagnostic validat: 126 passed, reference_comparison PASS
+checkpoint oficial: CHECKPOINT.md
+```
+
+Etapa activă este documentată în `CHECKPOINT.md`. La reluarea proiectului se citește întâi `CHECKPOINT.md`, nu această pagină.
+
+## Flux validat
 
 ```text
-Core Engine v1: integrat
-Rules Engine v1: integrat
-TraceabilityCase + report_tables: integrat
-Bilanț preliminar conservator: integrat
-Report Engine DOCX cu tabele Word reale: integrat
-Șablon DOCX profesional minimal: integrat
-Randare bilanț preliminar în DOCX: integrată
-Flux E2E controlat DOCX: integrat
-Runner demonstrativ DOCX controlat: integrat, testat și documentat
-Contract UI -> engine: integrat
-Funcție UI de orchestrare: integrată și testată
-CLI/UI shell minimal peste orchestrator: integrat și testat
-UI vizual minimal peste orchestrator: integrat și testat
-Pregătire installer Windows: script PyInstaller + documentație integrate
-Verificare build Windows: script PowerShell integrat
-Pregătire installer Inno Setup: script .iss + build PowerShell integrate
-Checklist validare Windows: integrat
-Șablon rezultat validare Windows: integrat
-Task GitHub validare Windows reală: #37 deschis
-GitHub Actions Windows installer artifact: workflow integrat
-Installer Windows complet: pregătit tehnic, dar nevalidat încă pe Windows real
+surse reale
+-> TraceabilityCase
+-> AuditTraceabilityReport
+-> AuditChecklistReport
+-> Audit Checklist DOCX
+-> audit-checklist-ui.v1 JSON
 ```
 
 ## Surse oficiale
 
-Aplicația folosește doar:
+Aplicația caută și normalizează aliasuri pentru:
 
 ```text
-trasabilitate_wms.csv
-rapoarte productie.csv
+trasabilitate_wms.csv / trasabilitate_wms.zip
+raport_productie.csv / rapoarte productie.csv / rapoarte_productie.csv
 nomenclator.xlsx
-stoc la moment original.xlsx
-```
-
-## Surse excluse
-
-Aplicația nu folosește:
-
-```text
-WME / fișă magazie
-PP-03
-OperatorView
-patch-uri vechi
-fișiere debug
-```
-
-## Tipuri de cazuri suportate
-
-Rules Engine detectează automat tipul cazului:
-
-```text
-FINISHED_PRODUCT
-RAW_MATERIAL
-WMS_ONLY_PRODUCT
-UNKNOWN
+stoc_la_moment_original.xlsx / stoc la moment original.xlsx
 ```
 
 ## Reguli importante
 
-- WMS este sursa pentru mișcări, documente, parteneri, loturi, cantități și documente comerciale.
-- PRD este sursa pentru producție, comenzi și consumuri.
-- Document intrare, Numar comanda și Document comanda se iau din WMS.
-- GAZ ALIMENTAR ALISOL este material auxiliar / consumabil tehnologic.
-- Gazul nu este materie primă alimentară.
-- Unitățile de măsură se păstrează așa cum apar în surse.
-- Nu se fac conversii automate de unități de măsură.
-- Dacă nu există date într-o secțiune, raportul spune explicit acest lucru.
-- UI-ul nu conține logică de business.
+```text
+UI nu conține logică de business.
+UI nu citește direct CSV/XLSX.
+UI nu parsează DOCX.
+DOCX și UI folosesc aceeași sursă de adevăr audit.
+Unitățile de măsură nu se convertesc automat.
+Gazul / ALISOL rămâne auxiliar / consumabil tehnologic.
+Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
+```
 
-## Arhitectură curentă
+## UI
 
-Fluxul tehnic curent este:
+UI-ul vizual este Tkinter și orchestrează fluxul validat fără business logic.
+
+Funcții validate:
 
 ```text
-Core Engine
--> Rules Engine
--> TraceabilityCase
--> Report Engine DOCX
+Verifică surse
+Previzualizează audit checklist
+Generează raport DOCX
 ```
 
-Stratul UI/CLI/visual este doar orchestration-only:
+Următorul pas activ este urmărit în `CHECKPOINT.md`.
 
-```text
-UI/CLI/visual shell
--> UiGenerationRequest
--> generate_report_from_ui_request()
--> engine existent
-```
+## Diagnostic local
 
-Module principale:
-
-```text
-src/core/
-src/rules/
-src/report/
-src/ui/
-samples/
-tests/
-installer/windows/
-.github/workflows/
-```
-
-`TraceabilityCase` conține:
-
-```text
-subject
-evidence
-observations
-sections
-report_tables
-preliminary_balance
-```
-
-## Raport DOCX
-
-Raportul DOCX include:
-
-```text
-antet raport
-secțiune metadate raport
-rezumat executiv
-identificarea cazului
-surse utilizate
-interpretarea tipului de caz
-dovezi folosite
-observații tehnice
-tabele operaționale din TraceabilityCase
-bilanț preliminar
-secțiuni fără date
-concluzie preliminară
-recomandare operațională
-documente de pregătit pentru audit
-semnături
-```
-
-DOCX-ul include tabele Word reale, stiluri, antet, subsol și o secțiune de bilanț preliminar.
-
-## Runner demonstrativ DOCX
-
-Runnerul demonstrativ generează un raport DOCX dintr-un dataset sintetic controlat.
-
-Fișier:
-
-```text
-samples/demo_docx_runner.py
-```
-
-Rulare:
-
-```bash
-python samples/demo_docx_runner.py --output samples/output/demo_traceability_report.docx
-```
-
-Output așteptat:
-
-```text
-samples/output/demo_traceability_report.docx
-```
-
-Documentația runnerului este în:
-
-```text
-samples/README.md
-```
-
-## CLI/UI shell minimal
-
-CLI-ul minimal apelează funcția UI de orchestrare și nu conține logică de business.
-
-Fișier:
-
-```text
-src/ui/cli.py
-```
-
-Rulare:
-
-```bash
-python -m src.ui.cli "cale/catre/date" --code DS099903883 --lot 105.26 --output raport_trasabilitate.docx
-```
-
-## UI vizual minimal
-
-UI-ul vizual minimal este implementat cu Tkinter și apelează același orchestrator.
-
-Fișier:
-
-```text
-src/ui/visual.py
-```
-
-Rulare:
-
-```bash
-python -m src.ui.visual
-```
-
-UI-ul vizual minimal include:
-
-```text
-câmp folder surse oficiale
-câmp cod articol
-câmp lot
-câmp raport DOCX output
-buton generare raport DOCX
-mesaj succes / eroare
-```
-
-Limitări UI/CLI/visual:
-
-```text
-nu citește direct surse operaționale
-nu clasifică tipuri de caz
-nu calculează bilanțuri
-nu generează DOCX direct din CSV/XLSX
-nu conține logică de business
-```
-
-Documentație UI:
-
-```text
-docs/UI_ENGINE_CONTRACT.md
-src/ui/README.md
-```
-
-## Pregătire installer Windows
-
-Pregătirea pentru executabil și installer Windows este în:
-
-```text
-installer/windows/
-.github/workflows/windows-installer.yml
-```
-
-Fișiere:
-
-```text
-installer/windows/README.md
-installer/windows/build_windows.ps1
-installer/windows/verify_windows_build.ps1
-installer/windows/TraceAI-Control.iss
-installer/windows/build_inno_setup.ps1
-installer/windows/VALIDATION_CHECKLIST.md
-installer/windows/VALIDATION_RESULT_TEMPLATE.md
-.github/workflows/windows-installer.yml
-```
-
-Build executabil PyInstaller:
+Generatorul local de diagnostic ZIP este disponibil:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\installer\windows\build_windows.ps1
+python -m src.support.diagnostic_bundle <sources> --code <code> --lot <lot> --output <zip>
 ```
 
-Verificare build după generarea executabilului:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\installer\windows\verify_windows_build.ps1
-```
-
-Build installer Inno Setup:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\installer\windows\build_inno_setup.ps1
-```
-
-Build installer prin GitHub Actions:
+Output best-effort:
 
 ```text
-Actions -> Build Windows Installer -> Run workflow
+build_info.json
+source_inventory.json
+preflight.json
+audit_checklist_ui.json sau error JSON
+manifest.json
+README.txt
+opțional reports/*.docx
 ```
 
-Artifact descărcabil după rularea workflow-ului:
+## Build Windows
+
+Workflow-ul GitHub Actions pentru artifact Windows este disponibil:
 
 ```text
-TraceAI-Control-Windows-Installer
+.github/workflows/windows-app-build.yml
 ```
 
-Conține:
+Scop:
 
 ```text
-TraceAI-Control-Setup.exe
-```
-
-Output executabil așteptat:
-
-```text
-dist/TraceAI-Control/TraceAI-Control.exe
-```
-
-Output installer local așteptat:
-
-```text
-installer/windows/output/TraceAI-Control-Setup.exe
-```
-
-Checklistul de validare Windows este în:
-
-```text
-installer/windows/VALIDATION_CHECKLIST.md
-```
-
-Șablonul pentru rezultatul validării este în:
-
-```text
-installer/windows/VALIDATION_RESULT_TEMPLATE.md
-```
-
-Taskul deschis pentru validarea reală Windows este:
-
-```text
-#37 — Validate Windows build and installer on a real Windows machine
-https://github.com/cesty00/TraceAI-Control/issues/37
-```
-
-Checklistul acoperă test suite, build executabil, verificare artefact, smoke test, generare DOCX, build installer, instalare, test aplicație instalată, dezinstalare și verdict final.
-
-Șablonul de rezultat include mediul de validare, artefactele așteptate, rezultatele pe pași, problemele găsite și verdictul final ACCEPTED / REJECTED.
-
-Scriptul de build rulează testele înainte de build, cu excepția cazului în care este folosit parametrul `-SkipTests`.
-
-Scriptul de verificare confirmă existența executabilului și afișează pașii manuali de smoke test. Nu pornește automat UI-ul și nu apelează engine-ul.
-
-Scriptul Inno Setup împachetează conținutul din `dist/TraceAI-Control` și creează un installer Windows cu shortcut în Start Menu și opțional pe Desktop.
-
-Workflow-ul GitHub Actions construiește installerul pe `windows-latest`, încarcă `TraceAI-Control-Windows-Installer` ca artifact și nu marchează validarea reală ca finalizată.
-
-Limitări curente installer:
-
-```text
-nu există încă semnare executabil
-nu există icon final
-nu există validare reală finalizată pe o mașină Windows
+construiește artifact Windows
+injectează traceai_build_info.json
+verifică build_commit == GITHUB_SHA
+urcă artifact ZIP descărcabil
 ```
 
 ## Testare
 
-Rulare test suite:
+Rulare locală:
 
 ```bash
 python -m pytest -q
 ```
 
-Status curent:
+Ultimul diagnostic confirmat în checkpoint:
 
 ```text
-39 passed
-```
-
-Testele acoperă:
-
-```text
-Core Engine
-Rules Engine
-TraceabilityCase
-bilanț preliminar conservator
-Report Engine DOCX
-flux E2E controlat
-runner demonstrativ DOCX
-funcție UI de orchestrare
-CLI/UI shell minimal
-UI vizual minimal
-```
-
-## Limitări curente
-
-Nu există încă:
-
-```text
-trasabilitate amonte/aval calculată
-bilanțuri detaliate / reconciliere operațională completă
-branding complet / logo / paginare avansată / cuprins automat
-validare reală installer Windows
+126 passed
+reference_comparison.md = PASS
+real_audit_checklist_ui.json = valid
 ```
 
 ## Checkpoint
 
-Starea completă de lucru este păstrată în:
+Starea completă și următorul pas se află în:
 
 ```text
 CHECKPOINT.md
 ```
 
-La reluarea proiectului, se continuă de la `CHECKPOINT.md`, nu de la presupuneri vechi.
+Regulă: `CHECKPOINT.md` și `README.md` se actualizează după fiecare PR merge-uit, diagnostic verde important sau schimbare de etapă.
