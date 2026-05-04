@@ -426,7 +426,13 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 
 
 def build_conclusion_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
-    return [paragraph("Concluzie audit intern", style="Heading1"), paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirmă trasabilitatea produsului finit în aval și în amonte pe baza surselor WMS și PRD disponibile."), paragraph(f"Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}"), *bullets(compact_conclusion_observations(report, policy))]
+    return [
+        paragraph("Concluzie audit intern", style="Heading1"),
+        paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirmă trasabilitatea produsului finit în aval și în amonte pe baza surselor WMS și PRD disponibile."),
+        paragraph("Concluzia sintetizează rezultatul verificării pe baza datelor WMS și PRD disponibile. Ea nu înlocuiește verificarea documentelor fizice, ci indică ce a fost identificat și ce trebuie atașat dosarului de audit."),
+        paragraph(f"Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}"),
+        *bullets(compact_conclusion_observations(report, policy)),
+    ]
 
 
 def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
