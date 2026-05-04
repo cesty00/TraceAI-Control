@@ -31,6 +31,12 @@ from src.ui.audit_checklist_view_model import (
     AuditChecklistUiViewModel,
     build_audit_checklist_ui_view_model,
 )
+from src.ui.diagnostic_bundle_actions import (
+    VisualDiagnosticBundleResult,
+    submit_diagnostic_bundle_form_values,
+    submit_diagnostic_bundle_form_values_async,
+    suggest_diagnostic_zip_path,
+)
 from src.ui.orchestrator import UiGenerationRequest, UiGenerationResult, generate_report_from_ui_request
 
 VisualRequestHandler = Callable[[UiGenerationRequest], UiGenerationResult]
@@ -38,6 +44,7 @@ AuditChecklistPayloadBuilder = Callable[[str, str, str], dict[str, Any]]
 AuditChecklistViewModelBuilder = Callable[[dict[str, Any]], AuditChecklistUiViewModel]
 AuditChecklistRequestHandler = Callable[[str, str, str], "VisualAuditChecklistResult"]
 PreflightRequestHandler = Callable[[str, str, str], "VisualPreflightResult"]
+DiagnosticBundleRequestHandler = Callable[[str, str, str, str, str | None], VisualDiagnosticBundleResult]
 
 APP_TITLE = "TraceAI Control — Modul Trasabilitate"
 
@@ -318,6 +325,7 @@ def run_visual_app(
     request_handler: VisualRequestHandler = generate_report_from_ui_request,
     audit_request_handler: AuditChecklistRequestHandler = submit_audit_checklist_form_values,
     preflight_request_handler: PreflightRequestHandler = submit_preflight_form_values,
+    diagnostic_request_handler: DiagnosticBundleRequestHandler = submit_diagnostic_bundle_form_values,
 ) -> int:
     """Run the minimal Tkinter visual shell."""
 
@@ -326,8 +334,8 @@ def run_visual_app(
 
     root = tk.Tk()
     root.title(APP_TITLE)
-    root.geometry("1120x760")
-    root.minsize(980, 680)
+    root.geometry("1120x800")
+    root.minsize(980, 720)
 
     executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="traceai-ui-worker")
     busy = False
@@ -341,7 +349,7 @@ def run_visual_app(
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
     main_frame.columnconfigure(1, weight=1)
-    main_frame.rowconfigure(8, weight=1)
+    main_frame.rowconfigure(9, weight=1)
 
     ttk.Label(main_frame, text="TraceAI Control — audit checklist și raport DOCX", font=("Segoe UI", 14, "bold")).grid(
         row=0, column=0, columnspan=3, sticky="w", pady=(0, 14)
@@ -351,6 +359,7 @@ def run_visual_app(
     code_var = tk.StringVar()
     lot_var = tk.StringVar()
     output_var = tk.StringVar()
+    diagnostic_zip_var = tk.StringVar()
     status_var = tk.StringVar(value="Completați câmpurile, verificați sursele și generați raportul.")
     build_info_var = tk.StringVar(value=build_info_line)
     section_title_var = tk.StringVar(value="Nicio secțiune selectată")
@@ -360,6 +369,8 @@ def run_visual_app(
         selected = filedialog.askdirectory(title="Alege folderul cu sursele oficiale")
         if selected:
             source_var.set(selected)
+            if not diagnostic_zip_var.get().strip():
+                diagnostic_zip_var.set(suggest_diagnostic_zip_path(selected, code_var.get() or "cod", lot_var.get() or "lot"))
 
     def choose_output_file() -> None:
         selected = filedialog.asksaveasfilename(
@@ -369,6 +380,18 @@ def run_visual_app(
         )
         if selected:
             output_var.set(selected)
+
+    def choose_diagnostic_zip_file() -> None:
+        initial_dir = source_var.get().strip() or str(Path.cwd())
+        initial_file = Path(suggest_diagnostic_zip_path(initial_dir, code_var.get() or "cod", lot_var.get() or "lot")).name
+        selected = filedialog.asksaveasfilename(
+            title="Alege diagnosticul ZIP generat",
+            defaultextension=".zip",
+            initialfile=initial_file,
+            filetypes=[("ZIP archive", "*.zip"), ("All files", "*.*")],
+        )
+        if selected:
+            diagnostic_zip_var.set(selected)
 
     def set_preview_text(text: str) -> None:
         section_text.configure(state="normal")
@@ -477,6 +500,7 @@ def run_visual_app(
         preflight_button.configure(state=state)
         generate_button.configure(state=state)
         preview_button.configure(state=state)
+        diagnostic_button.configure(state=state)
         if message:
             status_var.set(message)
         root.update_idletasks()
@@ -496,6 +520,30 @@ def run_visual_app(
         if result.success:
             messagebox.showinfo(APP_TITLE, f"{result.message}\n\n{build_info_line}")
         else:
+            messagebox.showerror(APP_TITLE, result.error or result.message)
+
+    def poll_diagnostic_bundle(future: Future[VisualDiagnosticBundleResult]) -> None:
+        if not future.done():
+            root.after(100, poll_diagnostic_bundle, future)
+            return
+        set_busy(False)
+        try:
+            result = future.result()
+        except Exception as exc:  # pragma: no cover
+            status_var.set(str(exc))
+            set_preview_text(str(exc))
+            messagebox.showerror(APP_TITLE, str(exc))
+            return
+        status_var.set(result.message if result.success else result.error or result.message)
+        section_title_var.set("Diagnostic ZIP local")
+        if result.success:
+            message = f"{result.message}\n\nPath: {result.output_zip_path or ''}\n"
+            section_summary_var.set("Diagnostic ZIP generat cu succes.")
+            set_preview_text(message)
+            messagebox.showinfo(APP_TITLE, result.message)
+        else:
+            section_summary_var.set("Diagnostic ZIP nu a fost generat.")
+            set_preview_text(result.error or result.message)
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
     def poll_preflight(future: Future[VisualPreflightResult]) -> None:
@@ -558,6 +606,24 @@ def run_visual_app(
         )
         root.after(100, poll_docx_generation, future)
 
+    def on_generate_diagnostic_zip() -> None:
+        if busy:
+            return
+        if not diagnostic_zip_var.get().strip():
+            base_dir = source_var.get().strip() or str(Path.cwd())
+            diagnostic_zip_var.set(suggest_diagnostic_zip_path(base_dir, code_var.get() or "cod", lot_var.get() or "lot"))
+        set_busy(True, "Generare diagnostic ZIP în curs... aplicația rămâne disponibilă.")
+        future = submit_diagnostic_bundle_form_values_async(
+            source_directory=source_var.get(),
+            code=code_var.get(),
+            lot=lot_var.get(),
+            output_zip_path=diagnostic_zip_var.get(),
+            generated_report_path=output_var.get() or None,
+            executor=executor,
+            request_handler=diagnostic_request_handler,
+        )
+        root.after(100, poll_diagnostic_bundle, future)
+
     def on_preflight() -> None:
         if busy:
             return
@@ -602,20 +668,26 @@ def run_visual_app(
     ttk.Entry(main_frame, textvariable=output_var).grid(row=4, column=1, sticky="ew", pady=4, padx=(8, 8))
     ttk.Button(main_frame, text="Alege...", command=choose_output_file).grid(row=4, column=2, sticky="ew", pady=4)
 
+    ttk.Label(main_frame, text="Diagnostic ZIP output").grid(row=5, column=0, sticky="w", pady=4)
+    ttk.Entry(main_frame, textvariable=diagnostic_zip_var).grid(row=5, column=1, sticky="ew", pady=4, padx=(8, 8))
+    ttk.Button(main_frame, text="Alege...", command=choose_diagnostic_zip_file).grid(row=5, column=2, sticky="ew", pady=4)
+
     button_frame = ttk.Frame(main_frame)
-    button_frame.grid(row=5, column=1, columnspan=2, sticky="e", pady=(16, 8))
+    button_frame.grid(row=6, column=1, columnspan=2, sticky="e", pady=(16, 8))
     preflight_button = ttk.Button(button_frame, text="Verifică surse", command=on_preflight)
     preflight_button.grid(row=0, column=0, padx=(0, 8))
     preview_button = ttk.Button(button_frame, text="Previzualizează audit checklist", command=on_preview_audit)
     preview_button.grid(row=0, column=1, padx=(0, 8))
+    diagnostic_button = ttk.Button(button_frame, text="Generează Diagnostic ZIP", command=on_generate_diagnostic_zip)
+    diagnostic_button.grid(row=0, column=2, padx=(0, 8))
     generate_button = ttk.Button(button_frame, text="Generează raport DOCX", command=on_generate)
-    generate_button.grid(row=0, column=2)
+    generate_button.grid(row=0, column=3)
 
-    ttk.Label(main_frame, textvariable=status_var, wraplength=980).grid(row=6, column=0, columnspan=3, sticky="ew", pady=(10, 2))
-    ttk.Label(main_frame, textvariable=build_info_var, wraplength=980).grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 8))
+    ttk.Label(main_frame, textvariable=status_var, wraplength=980).grid(row=7, column=0, columnspan=3, sticky="ew", pady=(10, 2))
+    ttk.Label(main_frame, textvariable=build_info_var, wraplength=980).grid(row=8, column=0, columnspan=3, sticky="ew", pady=(0, 8))
 
     preview_frame = ttk.LabelFrame(main_frame, text="Verificare surse / Audit checklist pe secțiuni")
-    preview_frame.grid(row=8, column=0, columnspan=3, sticky="nsew")
+    preview_frame.grid(row=9, column=0, columnspan=3, sticky="nsew")
     preview_frame.columnconfigure(1, weight=1)
     preview_frame.rowconfigure(0, weight=1)
 
