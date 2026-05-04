@@ -50,6 +50,17 @@ def validate_diagnostic_bundle_form_values(
     return None
 
 
+def resolve_optional_generated_report_path(generated_report_path: str | None) -> tuple[str | None, str | None]:
+    """Return an attachable DOCX path and an optional user-facing note."""
+
+    if not generated_report_path or not str(generated_report_path).strip():
+        return None, None
+    report_path = Path(generated_report_path).expanduser()
+    if report_path.is_file():
+        return str(report_path), None
+    return None, f"Raport DOCX opțional neatâșat: fișierul nu există la {report_path}."
+
+
 def submit_diagnostic_bundle_form_values(
     source_directory: str,
     code: str,
@@ -69,9 +80,11 @@ def submit_diagnostic_bundle_form_values(
             error=validation_error,
         )
 
+    attachable_report_path, attachment_note = resolve_optional_generated_report_path(generated_report_path)
+
     try:
         builder = bundle_builder or default_diagnostic_bundle_builder
-        output = builder(source_directory, code, lot, output_zip_path, generated_report_path)
+        output = builder(source_directory, code, lot, output_zip_path, attachable_report_path)
     except Exception as exc:  # pragma: no cover - exact exception belongs to support/core layers
         return VisualDiagnosticBundleResult(
             success=False,
@@ -80,10 +93,13 @@ def submit_diagnostic_bundle_form_values(
             error=str(exc),
         )
 
+    message = f"Diagnostic ZIP generat: {output}"
+    if attachment_note:
+        message = f"{message}\n{attachment_note}"
     return VisualDiagnosticBundleResult(
         success=True,
         output_zip_path=str(output),
-        message=f"Diagnostic ZIP generat: {output}",
+        message=message,
         error=None,
     )
 
