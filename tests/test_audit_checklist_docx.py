@@ -6,6 +6,7 @@ from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.core.build_info import BuildInfo, format_build_info_line
 from src.report.audit_checklist_docx import (
     AuditReportPolicy,
+    QUICK_AUDITOR_GUIDE_ITEMS,
     build_document_xml,
     generate_audit_checklist_docx_report,
 )
@@ -17,6 +18,7 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     xml = build_document_xml(report)
 
     assert "TEST DE TRASABILITATE PENTRU AUDIT" in xml
+    assert "Ghid rapid pentru auditor" in xml
     assert "Rezumat de conformare checklist" in xml
     assert "01_EXERCITIU — Fișa principală a exercițiului" in xml
     assert "02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare" in xml
@@ -26,6 +28,15 @@ def test_audit_checklist_docx_contains_required_sections_and_title() -> None:
     assert "Registru documente fizice de pregătit pentru auditor" in xml
     assert "Concluzie audit intern" in xml
     assert "Informații build raport" in xml
+
+
+def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Ghid rapid pentru auditor" in xml
+    for guide_item in QUICK_AUDITOR_GUIDE_ITEMS:
+        assert guide_item in xml
 
 
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
@@ -108,5 +119,6 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
         assert "word/document.xml" in names
         document_xml = package.read("word/document.xml").decode("utf-8")
     assert "TEST DE TRASABILITATE PENTRU AUDIT" in document_xml
+    assert "Ghid rapid pentru auditor" in document_xml
     assert "Rezumat de conformare checklist" in document_xml
     assert "Informații build raport" in document_xml
