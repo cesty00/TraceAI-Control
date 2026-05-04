@@ -38,12 +38,13 @@ from src.report.audit_docx import (
     bullets,
     page_break,
     paragraph,
-    table,
+    table as base_audit_table,
     wrap_document,
 )
 from src.report.docx_layout import (
     apply_cell_layout_properties,
     apply_table_layout_properties,
+    compact_audit_table,
     table_row_properties_xml,
 )
 from src.rules.run_traceability_case import run_traceability_case
@@ -199,6 +200,12 @@ class AuditReportPolicy:
 
 
 DEFAULT_POLICY = AuditReportPolicy()
+
+
+def table(headers: list[str], rows: list[list[object]]) -> str:
+    """Render major audit checklist tables using the compact visual design renderer."""
+
+    return compact_audit_table(headers, rows)
 
 
 def generate_audit_checklist_docx_report(
