@@ -6,6 +6,7 @@ from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.core.build_info import BuildInfo, format_build_info_line
 from src.report.audit_checklist_docx import (
     AuditReportPolicy,
+    DOCUMENT_REGISTER_CHECKBOX,
     QUICK_AUDITOR_GUIDE_ITEMS,
     build_document_xml,
     generate_audit_checklist_docx_report,
@@ -37,6 +38,16 @@ def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
     assert "Ghid rapid pentru auditor" in xml
     for guide_item in QUICK_AUDITOR_GUIDE_ITEMS:
         assert guide_item in xml
+
+
+def test_audit_checklist_docx_document_register_is_printable_checklist() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită" in xml
+    assert "Bifat" in xml
+    assert DOCUMENT_REGISTER_CHECKBOX in xml
+    assert "required" in xml
 
 
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
