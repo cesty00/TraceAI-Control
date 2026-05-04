@@ -16,6 +16,7 @@ from typing import Protocol
 
 from src.audit.audit_checklist_report import build_audit_checklist_report
 from src.audit.audit_traceability_report import build_audit_traceability_report
+from src.errors import TraceAIError
 from src.report.audit_checklist_docx import generate_audit_checklist_docx_report
 from src.rules.run_traceability_case import run_traceability_case
 from src.rules.traceability_case import TraceabilityCase
@@ -99,6 +100,13 @@ def generate_report_from_ui_request(
             request.lot,
         )
         output_path = docx_report_generator(traceability_case, request.output_docx_path)
+    except TraceAIError as exc:
+        return UiGenerationResult(
+            success=False,
+            output_path=None,
+            message=exc.user_message,
+            error=format_traceai_error_detail(exc),
+        )
     except Exception as exc:  # pragma: no cover - exact exception belongs to engine layer
         return UiGenerationResult(
             success=False,
@@ -113,6 +121,17 @@ def generate_report_from_ui_request(
         message=f"Raport audit checklist generat cu succes: {output_path}",
         error=None,
     )
+
+
+def format_traceai_error_detail(error: TraceAIError) -> str:
+    """Return UI-safe technical detail for a typed TraceAI error."""
+
+    details: list[str] = []
+    if error.technical_detail:
+        details.append(error.technical_detail)
+    if error.recommended_action:
+        details.append(f"Acțiune recomandată: {error.recommended_action}")
+    return "\n".join(details) if details else error.user_message
 
 
 def validate_ui_generation_request(request: UiGenerationRequest) -> str | None:
