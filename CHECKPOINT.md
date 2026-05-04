@@ -13,6 +13,14 @@ Merged on 2026-05-04 and now part of current `main`:
 - ERRORS-01_PR2_2_DONE
 - STRICT-AUDIT-01_DONE
 
+Implementation now present on `main`, pending validation confirmation:
+
+- REPORT-QUALITY-01E-1_IMPLEMENTED_PENDING_VALIDATION
+  - Approved 01E text block applied to `Card verdict auditor` in `src/report/audit_checklist_docx.py`.
+  - Focused regression test added in `tests/test_audit_checklist_docx.py`.
+  - Commit currently on `main`: `3a65409547d683fc7be5d8633ac88212c3a2fe4a`.
+  - Do not promote this line to `_DONE` until GitHub validation is visible and green.
+
 ## Latest validation
 
 Directly inspected diagnostics artifacts in this session:
@@ -41,6 +49,12 @@ Latest merged strict-audit validation note:
 - Merged at: 2026-05-04 18:08 UTC
 - Head validated in PR notes: `234870d3574eaae846e324374657f65c7f90280d`
 - Reported validation: TraceAI Diagnostics success, `149 passed`, checklist DOCX/UI JSON generated, reference comparison step completed successfully
+
+Validation still not directly visible in this session for the 01E-1 implementation commit:
+
+- GitHub workflow runs for `3a65409547d683fc7be5d8633ac88212c3a2fe4a` were not surfaced by the currently available connector queries.
+- GitHub commit statuses for `3a65409547d683fc7be5d8633ac88212c3a2fe4a` were not surfaced by the currently available connector queries.
+- Treat the implementation as pending validation until a green run is confirmed.
 
 ## Completed stages summary
 
@@ -121,11 +135,12 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Next recommended stage
 
-REPORT-QUALITY-01E-1 — implement one approved text block from the 01E specification into `audit_checklist_docx.py` with a focused test.
+REPORT-QUALITY-01E-1 — validation confirmation for the current implementation on `main`, then promote to `REPORT-QUALITY-01E-1_DONE`.
 
-Alternative:
+After validation:
 
-- continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
+- continue with REPORT-QUALITY-01E-2 using one additional approved text block with a focused test
+- or continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
 - or expose detailed Data Quality issues in JSON / Audit Pack
 
 ## Rules
