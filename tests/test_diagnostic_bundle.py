@@ -1,4 +1,6 @@
+import importlib
 import json
+import sys
 import zipfile
 from pathlib import Path
 
@@ -7,6 +9,16 @@ from src.support.diagnostic_bundle import (
     default_diagnostic_zip_path,
     sanitize_filename_part,
 )
+
+
+def test_diagnostic_bundle_import_does_not_preload_audit_checklist_json() -> None:
+    sys.modules.pop("src.support.diagnostic_bundle", None)
+    sys.modules.pop("src.ui.audit_checklist_json", None)
+
+    module = importlib.import_module("src.support.diagnostic_bundle")
+
+    assert hasattr(module, "build_diagnostic_bundle")
+    assert "src.ui.audit_checklist_json" not in sys.modules
 
 
 def test_build_diagnostic_bundle_writes_support_zip(tmp_path: Path) -> None:
