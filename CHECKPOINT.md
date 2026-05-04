@@ -4,7 +4,7 @@ Data checkpoint: 2026-05-04
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01D-3_DONE.
+Latest completed stage: REPORT-QUALITY-01D-4_DONE.
 
 Windows validation result:
 
@@ -84,9 +84,25 @@ DOCX visual/layout validation:
 - <w:tblLayout w:type="autofit"/> present 12 times
 - document register still contains 'Bifat' and printable checkbox '☐'
 
-Current stage: REPORT-QUALITY-01D-3_DONE.
+REPORT-QUALITY-01D-4 dynamic DOCX header/footer metadata:
 
-Next recommended stage: REPORT-QUALITY-01D-4 — better header/footer metadata with product code, lot and build context. Alternative: WINDOWS-VALIDATION-02 using the new visual DOCX report build.
+- PR: #65 — REPORT-QUALITY-01D-4 dynamic DOCX header footer metadata
+- Squash merge commit: e41f37c70719f05dcd012c38d32825e6fc2d84cd
+- Diagnostics artifact reviewed: TraceAI-Diagnostics (19).zip
+- Commit validated by diagnostics artifact: aff01abac10a55b209450ee90116fea23eb0347e
+- TraceAI Diagnostics PASS
+- 140 passed in 1.89s
+- reference_comparison.md = PASS
+- real_audit_checklist_report.docx generated successfully
+- Header now includes report title, product code, lot and product name
+- Footer now includes app version, short commit, build channel, generation timestamp and Word PAGE field
+- Landscape page settings preserved
+- No extraction logic, source mapping, quantities, balances, verdict rules or audit DTOs changed
+- PP-03 is out of scope
+
+Current stage: REPORT-QUALITY-01D-4_DONE.
+
+Next recommended stage: REPORT-QUALITY-01D-5 — final visual validation on Windows artifact using the new dynamic DOCX header/footer report build. Alternative: REPORT-QUALITY-01E — visual exception/status zone based on existing audit data only.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, local validation, Windows validation, or roadmap/status change.
 
