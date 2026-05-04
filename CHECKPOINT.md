@@ -23,3 +23,5 @@ Next steps:
 3. Start OBSERVABILITY-02B: add Diagnostic ZIP button in visual UI.
 
 Rule: update CHECKPOINT.md and README.md after every merged PR, important green diagnostic, or roadmap/status change.
+
+Engineering conduct rule: at every checkpoint update and development step, behave as a programmer, software engineer, and software architect: make small verifiable changes, preserve architecture boundaries, test immediately, avoid assumptions, and keep documentation current.
