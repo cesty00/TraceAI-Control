@@ -6,9 +6,9 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Audit Checklist / UI / Packaging / Observability
-etapă curentă: OBSERVABILITY-02B_DONE
-următoarea etapă recomandată: OBSERVABILITY-03 — diagnostic bundle UX pentru atașare DOCX opțională
-ultimul diagnostic validat: 126 passed, reference_comparison PASS, audit_checklist_ui JSON valid
+etapă curentă: OBSERVABILITY-03_DONE
+următoarea etapă recomandată: WINDOWS-VALIDATION sau REPORT-QUALITY-01
+ultimul diagnostic validat: 129 passed, reference_comparison PASS, audit_checklist_ui JSON valid
 checkpoint oficial: CHECKPOINT.md
 ```
 
@@ -61,7 +61,7 @@ Generează Diagnostic ZIP
 Generează raport DOCX
 ```
 
-Următorul pas activ este urmărit în `CHECKPOINT.md`.
+Diagnostic ZIP tratează raportul DOCX ca atașament opțional: dacă fișierul există, îl include; dacă lipsește, afișează o notă clară și generează ZIP-ul fără DOCX.
 
 ## Diagnostic local
 
@@ -103,7 +103,7 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-126 passed
+129 passed
 reference_comparison.md = PASS
 real_audit_checklist_ui.json = valid
 ```
