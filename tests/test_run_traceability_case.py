@@ -3,6 +3,9 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+import pytest
+
+from src.errors import MissingRequiredColumnError, MissingSourceFileError, NoMatchingRecordsError
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT
 from src.rules.run_traceability_case import run_traceability_case
 from src.rules.traceability_case import traceability_case_to_dict
@@ -53,29 +56,33 @@ def write_minimal_xlsx(path: Path, sheet_name: str, headers: list[str], row: lis
         workbook.writestr("xl/worksheets/sheet1.xml", sheet_xml)
 
 
-def test_run_traceability_case_returns_minimal_case(tmp_path: Path) -> None:
+def write_valid_minimal_sources(root: Path) -> None:
     write_csv(
-        tmp_path / "trasabilitate_wms.csv",
+        root / "trasabilitate_wms.csv",
         ["Cod articol", "Lot", "Cantitate", "UM"],
         ["DS0001", "L001", "10", "kg"],
     )
     write_csv(
-        tmp_path / "rapoarte productie.csv",
+        root / "rapoarte productie.csv",
         ["Cod produs", "Lot produs", "Cantitate produsa"],
         ["DS0001", "L001", "10"],
     )
     write_minimal_xlsx(
-        tmp_path / "nomenclator.xlsx",
+        root / "nomenclator.xlsx",
         "Articole",
         ["Cod", "Lot", "Denumire"],
         ["DS0001", "L001", "Produs test"],
     )
     write_minimal_xlsx(
-        tmp_path / "stoc la moment original.xlsx",
+        root / "stoc la moment original.xlsx",
         "Stoc",
         ["Cod articol", "Lot", "Stoc", "UM"],
         ["DS0001", "L001", "5", "kg"],
     )
+
+
+def test_run_traceability_case_returns_minimal_case(tmp_path: Path) -> None:
+    write_valid_minimal_sources(tmp_path)
 
     traceability_case = traceability_case_to_dict(run_traceability_case(tmp_path, "DS0001", "L001"))
 
@@ -86,3 +93,52 @@ def test_run_traceability_case_returns_minimal_case(tmp_path: Path) -> None:
     }
     assert traceability_case["evidence"]
     assert traceability_case["sections"]["core_validation_status"] == "VALID"
+
+
+def test_run_traceability_case_raises_missing_source_file_error_when_no_sources_found(tmp_path: Path) -> None:
+    with pytest.raises(MissingSourceFileError) as exc_info:
+        run_traceability_case(tmp_path, "DS0001", "L001")
+
+    assert "nu am găsit sursele oficiale" in exc_info.value.user_message.casefold()
+    assert "trasabilitate_wms.csv" in (exc_info.value.technical_detail or "")
+
+
+def test_run_traceability_case_raises_missing_required_column_error_for_blocking_structure(tmp_path: Path) -> None:
+    write_csv(
+        tmp_path / "trasabilitate_wms.csv",
+        ["Cod articol", "Cantitate", "UM"],
+        ["DS0001", "10", "kg"],
+    )
+    write_csv(
+        tmp_path / "rapoarte productie.csv",
+        ["Cod produs", "Cantitate produsa"],
+        ["DS0001", "10"],
+    )
+    write_minimal_xlsx(
+        tmp_path / "nomenclator.xlsx",
+        "Articole",
+        ["Cod", "Denumire"],
+        ["DS0001", "Produs test"],
+    )
+    write_minimal_xlsx(
+        tmp_path / "stoc la moment original.xlsx",
+        "Stoc",
+        ["Cod articol", "Stoc", "UM"],
+        ["DS0001", "5", "kg"],
+    )
+
+    with pytest.raises(MissingRequiredColumnError) as exc_info:
+        run_traceability_case(tmp_path, "DS0001", "L001")
+
+    assert "coloanele obligatorii" in exc_info.value.user_message.casefold()
+    assert "lot" in (exc_info.value.technical_detail or "").casefold()
+
+
+def test_run_traceability_case_raises_no_matching_records_error_when_case_is_missing(tmp_path: Path) -> None:
+    write_valid_minimal_sources(tmp_path)
+
+    with pytest.raises(NoMatchingRecordsError) as exc_info:
+        run_traceability_case(tmp_path, "DS9999", "L999")
+
+    assert "nu am găsit date" in exc_info.value.user_message.casefold()
+    assert "DS9999" in (exc_info.value.technical_detail or "")
