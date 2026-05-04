@@ -5,9 +5,10 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ## Status curent
 
 ```text
-main: 40d0c09a65e5e114781be1a9b996a9191cb9e834
 stadiu: Audit Checklist / UI / Packaging / Observability
-ultimul diagnostic validat: 126 passed, reference_comparison PASS
+etapă curentă: OBSERVABILITY-02A_DONE
+următoarea etapă: OBSERVABILITY-02B — Diagnostic ZIP button in visual UI
+ultimul diagnostic validat: 126 passed, reference_comparison PASS, audit_checklist_ui JSON valid
 checkpoint oficial: CHECKPOINT.md
 ```
 
@@ -99,14 +100,6 @@ urcă artifact ZIP descărcabil
 ```
 
 ## Testare
-
-Rulare locală:
-
-```bash
-python -m pytest -q
-```
-
-Ultimul diagnostic confirmat în checkpoint:
 
 ```text
 126 passed
