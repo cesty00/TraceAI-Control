@@ -313,7 +313,7 @@ def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> li
 def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     return [
         paragraph("Card verdict auditor", style="Heading1"),
-        paragraph("Rezumat executiv pentru prima pagină: identifică rapid produsul, lotul, verdictul și zonele care trebuie verificate în dosarul de audit."),
+        paragraph("Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice."),
         table(
             ["Indicator audit", "Status / valoare"],
             [
