@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+
 from src.ui.branding import apply_app_icon
 
 
@@ -10,8 +12,8 @@ def run_branded_visual_app() -> int:
     """Run the visual UI while applying the embedded window icon."""
 
     import tkinter as tk
-    from src.ui import visual
 
+    visual = importlib.import_module("src.ui.visual")
     original_tk = tk.Tk
 
     def create_root(*args: object, **kwargs: object) -> object:
