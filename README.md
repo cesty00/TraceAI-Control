@@ -5,10 +5,10 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ## Status curent
 
 ```text
-stadiu: Audit Checklist / UI / Packaging / Observability
-etapă curentă: OBSERVABILITY-03_DONE
-următoarea etapă recomandată: WINDOWS-VALIDATION sau REPORT-QUALITY-01
-ultimul diagnostic validat: 129 passed, reference_comparison PASS, audit_checklist_ui JSON valid
+stadiu: Audit Checklist / UI / Packaging / Observability / Report Quality
+etapă curentă: REPORT-QUALITY-01D-4_DONE
+următoarea etapă recomandată: REPORT-QUALITY-01D-5 sau REPORT-QUALITY-01E
+ultimul diagnostic validat: 140 passed, reference_comparison PASS, audit checklist DOCX header/footer verificat
 checkpoint oficial: CHECKPOINT.md
 ```
 
@@ -46,6 +46,22 @@ DOCX și UI folosesc aceeași sursă de adevăr audit.
 Unitățile de măsură nu se convertesc automat.
 Gazul / ALISOL rămâne auxiliar / consumabil tehnologic.
 Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
+PP-03 este în afara fluxului curent Report Quality.
+```
+
+## Raport DOCX audit
+
+Raportul DOCX este orientat către audit tipărit:
+
+```text
+landscape
+card verdict auditor pe prima pagină
+ghid rapid auditor
+secțiuni numerotate
+tabele compacte cu header repetabil
+registru documente fizice cu checkbox tipărit
+header cu titlu raport, cod produs, lot și denumire produs
+footer cu versiune aplicație, commit, canal build, dată generare și număr pagină
 ```
 
 ## UI
@@ -103,9 +119,9 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-129 passed
+140 passed
 reference_comparison.md = PASS
-real_audit_checklist_ui.json = valid
+real_audit_checklist_report.docx = generat cu header/footer dinamic verificat
 ```
 
 ## Checkpoint
