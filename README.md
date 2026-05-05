@@ -6,17 +6,16 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă: ERRORS-01_PR2_2_DONE
-implementare prezentă pe main, în așteptarea validării: REPORT-QUALITY-01E-1_IMPLEMENTED_PENDING_VALIDATION
-următoarea etapă recomandată: confirmarea validării pentru REPORT-QUALITY-01E-1, apoi promovare la DONE
-alternativă după validare: REPORT-QUALITY-01E-2 sau un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
+etapă curentă: REPORT-QUALITY-01E-1_DONE
+următoarea etapă recomandată: REPORT-QUALITY-01E-2
+alternativă după 01E-2: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic inspectat direct în sesiunea curentă: 152 passed, reference_comparison PASS
-ultimul PR merge-uit cu validare direct inspectată: #76
-ultimul commit implementat pentru 01E-1 pe main: 3a65409547d683fc7be5d8633ac88212c3a2fe4a
+ultimul diagnostic oficial inspectat direct: 159 passed, reference_comparison PASS
+ultimul commit validat oficial pentru 01E-1: da954bd7c2baa92257ee99c9d93481980c81f109
+ultimul PR merge-uit de control procedural: #79
 ```
 
-Etapa activă și starea oficială se citesc din `CHECKPOINT.md`.
+Etapa activă și starea oficială se citesc din `CHECKPOINT.md` și `AGENTS.md`.
 
 ## Flux validat
 
@@ -52,6 +51,7 @@ Gazul / ALISOL rămâne auxiliar / consumabil tehnologic.
 Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
 Rapoartele FINISHED_PRODUCT cu dovezi esențiale lipsă se marchează explicit INCOMPLETE.
 Erorile blocante uzuale sunt clasificate în engine ca typed errors înainte de a ajunge în UI.
+Validarea oficială pentru DONE este doar GitHub Actions / TraceAI Diagnostics cu artifact inspectat.
 PP-03 este în afara fluxului curent Report Quality.
 ```
 
@@ -73,7 +73,7 @@ footer cu versiune aplicație, commit, canal build, dată generare și număr pa
 marcare explicită a cazurilor incomplete pentru audit strict
 ```
 
-Implementarea curentă 01E-1 a introdus primul text block aprobat în `Card verdict auditor`, fără schimbare de business logic, UI JSON sau calcule. Validarea GitHub pentru acest pas nu este încă confirmată în sesiunea curentă.
+Linia `REPORT-QUALITY-01E-1` este validată oficial prin TraceAI Diagnostics pe commitul `da954bd7c2baa92257ee99c9d93481980c81f109`. Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, iar artifactul oficial confirmă și generarea `real_audit_checklist_report.docx` și `real_audit_checklist_ui.json`.
 
 ## UI
 
@@ -118,6 +118,8 @@ README.txt
 opțional reports/*.docx
 ```
 
+Important: diagnosticul local este util pentru investigație și suport, dar nu înlocuiește validarea oficială GitHub necesară pentru promovarea unei etape la `DONE`.
+
 ## Build Windows
 
 Workflow-ul GitHub Actions pentru artifact Windows este disponibil:
@@ -138,10 +140,10 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact inspectat direct: 152 passed, reference_comparison.md = PASS
-ultimul PR merge-uit cu validare inspectată direct: #76
+ultimul artifact oficial inspectat direct: 159 passed, reference_comparison.md = PASS
+ultimul commit validat oficial pentru 01E-1: da954bd7c2baa92257ee99c9d93481980c81f109
 real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
-pentru commitul 01E-1 implementat pe main, validarea GitHub nu este încă vizibilă în interogările disponibile din sesiunea curentă
+AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
 ## Checkpoint
@@ -152,4 +154,4 @@ Starea completă și următorul pas se află în:
 CHECKPOINT.md
 ```
 
-Regulă: `CHECKPOINT.md` și `README.md` se actualizează după fiecare PR merge-uit, diagnostic verde important, validare locală sau schimbare de etapă.
+Regulă: `CHECKPOINT.md` și `README.md` se actualizează împreună după fiecare PR merge-uit, diagnostic verde important, validare Windows sau schimbare de etapă.
