@@ -342,7 +342,7 @@ def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPo
     rows = [[item.requirement, item.status, policy.short(item.evidence, 95), policy.short(item.observation, 95)] for item in report.conformity]
     return [
         paragraph("Rezumat de conformare checklist", style="Heading1"),
-        paragraph("Acest rezumat arată, într-o formă scurtă, dacă principalele cerințe ale exercițiului de trasabilitate sunt acoperite de datele identificate. Statusul DA indică faptul că raportul conține informațiile necesare pentru verificare; observațiile explică eventualele limite sau completări necesare."),
+        paragraph("Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual."),
         table(["Cerință", "Status în test", "Dovezi", "Observații"], rows),
     ]
 
