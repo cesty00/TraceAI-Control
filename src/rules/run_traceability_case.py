@@ -3,7 +3,6 @@ TraceabilityCase runner for TraceAI Control.
 
 This runner executes the Rules Pipeline and returns the minimal
 TraceabilityCase contract that will later feed the DOCX report.
-
 It intentionally does not calculate detailed traceability and does not generate
 DOCX.
 """
@@ -15,6 +14,7 @@ from pathlib import Path
 
 from src.errors import (
     AmbiguousCaseTypeError,
+    DataQualityBlockingError,
     MissingRequiredColumnError,
     MissingSourceFileError,
     NoMatchingRecordsError,
@@ -80,6 +80,29 @@ def raise_typed_traceability_error_if_needed(
             recommended_action="Reexportă sursele cu layout-ul standard și verifică prezența coloanelor pentru cod, lot și cantitate.",
         )
 
+    unreadable_source_issues = [
+        issue
+        for issue in quality_report.issues
+        if (
+            "Nu se poate citi CSV-ul" in issue.message
+            or "Nu se poate citi XLSX-ul" in issue.message
+            or "Fisier XLSX invalid sau corupt" in issue.message
+            or "XML invalid in sheet" in issue.message
+        )
+    ]
+    if unreadable_source_issues and not rules_result.core.selection.records:
+        details = []
+        for issue in unreadable_source_issues[:5]:
+            location = issue.source_name
+            if issue.sheet_name:
+                location = f"{location} / {issue.sheet_name}"
+            details.append(f"{location}: {issue.message}")
+        raise DataQualityBlockingError(
+            user_message="Nu pot genera raportul: una sau mai multe surse oficiale nu pot fi citite corect.",
+            technical_detail="Surse oficiale ilizibile sau corupte: " + "; ".join(details),
+            recommended_action="Reexportă sau înlocuiește fișierul corupt și reîncearcă generarea raportului.",
+        )
+
     if not rules_result.core.selection.records:
         raise NoMatchingRecordsError(
             user_message="Nu pot genera raportul: nu am găsit date pentru codul și lotul cerute.",
@@ -116,7 +139,6 @@ def main(argv: list[str] | None = None) -> int:
 
     traceability_case = run_traceability_case(args.source_directory, args.code, args.lot)
     payload = traceability_case_to_json(traceability_case)
-
     if args.output:
         Path(args.output).write_text(payload + "\n", encoding="utf-8")
     else:
