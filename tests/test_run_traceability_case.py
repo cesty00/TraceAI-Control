@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import zipfile
 from pathlib import Path
@@ -7,6 +9,7 @@ import pytest
 
 from src.errors import (
     AmbiguousCaseTypeError,
+    DataQualityBlockingError,
     MissingRequiredColumnError,
     MissingSourceFileError,
     NoMatchingRecordsError,
@@ -35,29 +38,54 @@ def write_minimal_xlsx(path: Path, sheet_name: str, headers: list[str], row: lis
     sheet_xml = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        f'<sheetData><row r="1">{header_cells}</row><row r="2">{row_cells}</row></sheetData>'
-        '</worksheet>'
+        "<sheetData>"
+        f'<row r="1">{header_cells}</row>'
+        f'<row r="2">{row_cells}</row>'
+        "</sheetData>"
+        "</worksheet>"
+    )
+    workbook_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        "<sheets>"
+        f'<sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/>'
+        "</sheets>"
+        "</workbook>"
+    )
+    workbook_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" '
+        'Target="worksheets/sheet1.xml"/>'
+        "</Relationships>"
+    )
+    root_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+        'Target="xl/workbook.xml"/>'
+        "</Relationships>"
+    )
+    content_types = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/worksheets/sheet1.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        "</Types>"
     )
 
     with zipfile.ZipFile(path, "w") as workbook:
-        workbook.writestr("[Content_Types].xml", "")
-        workbook.writestr(
-            "xl/workbook.xml",
-            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
-            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-            f'<sheets><sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/></sheets>'
-            '</workbook>',
-        )
-        workbook.writestr(
-            "xl/_rels/workbook.xml.rels",
-            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            '<Relationship Id="rId1" '
-            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" '
-            'Target="worksheets/sheet1.xml"/>'
-            '</Relationships>',
-        )
+        workbook.writestr("[Content_Types].xml", content_types)
+        workbook.writestr("_rels/.rels", root_rels)
+        workbook.writestr("xl/workbook.xml", workbook_xml)
+        workbook.writestr("xl/_rels/workbook.xml.rels", workbook_rels)
         workbook.writestr("xl/worksheets/sheet1.xml", sheet_xml)
 
 
@@ -149,7 +177,9 @@ def test_run_traceability_case_raises_no_matching_records_error_when_case_is_mis
     assert "DS9999" in (exc_info.value.technical_detail or "")
 
 
-def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exist_but_classification_stays_unknown(tmp_path: Path) -> None:
+def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exist_but_classification_stays_unknown(
+    tmp_path: Path,
+) -> None:
     write_minimal_xlsx(
         tmp_path / "nomenclator.xlsx",
         "Articole",
@@ -164,3 +194,33 @@ def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exi
     assert "DS0001" in (exc_info.value.technical_detail or "")
     assert "L001" in (exc_info.value.technical_detail or "")
     assert "produs finit" in (exc_info.value.recommended_action or "").casefold()
+
+
+# Focused ERRORS-01_PR2_4 regression: official source exists but is unreadable.
+def test_run_traceability_case_raises_data_quality_blocking_error_for_unreadable_official_source(
+    tmp_path: Path,
+) -> None:
+    write_csv(
+        tmp_path / "trasabilitate_wms.csv",
+        ["Cod articol", "Lot", "Cantitate", "UM"],
+        ["DS9999", "L999", "10", "kg"],
+    )
+    write_csv(
+        tmp_path / "rapoarte productie.csv",
+        ["Cod produs", "Lot produs", "Cantitate produsa"],
+        ["DS9999", "L999", "10"],
+    )
+    write_minimal_xlsx(
+        tmp_path / "nomenclator.xlsx",
+        "Articole",
+        ["Cod", "Lot", "Denumire"],
+        ["DS9999", "L999", "Produs test"],
+    )
+    (tmp_path / "stoc la moment original.xlsx").write_bytes(b"not-a-zip")
+
+    with pytest.raises(DataQualityBlockingError) as exc_info:
+        run_traceability_case(tmp_path, "DS0001", "L001")
+
+    assert "nu pot fi citite" in exc_info.value.user_message.casefold()
+    assert "stoc la moment original.xlsx" in (exc_info.value.technical_detail or "")
+    assert "corupt" in (exc_info.value.technical_detail or "").casefold()
