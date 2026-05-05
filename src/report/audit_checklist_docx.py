@@ -333,7 +333,7 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
 def build_quick_auditor_guide_section() -> list[str]:
     return [
         paragraph("Ghid rapid pentru auditor", style="Heading1"),
-        paragraph("Acest ghid indică ordinea recomandată de citire a raportului și documentele care trebuie verificate prioritar."),
+        paragraph("Ghidul rapid indică ordinea recomandată de citire: verdict, bilanț, aval, amonte, consumuri și registrul documentelor fizice."),
         *bullets(QUICK_AUDITOR_GUIDE_ITEMS),
     ]
 
