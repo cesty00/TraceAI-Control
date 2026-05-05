@@ -67,10 +67,17 @@ jobs:
           python --version
 
       - name: Run pytest
+        id: pytest
+        continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           python -m pytest -q 2>&1 | Tee-Object -FilePath diagnostics\pytest-output.txt
+          $exitCode = $LASTEXITCODE
+          "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          if ($exitCode -ne 0) {
+            Write-Host "Pytest failed with exit code $exitCode. Continuing so diagnostics artifacts can still be uploaded."
+          }
 
       - name: Generate controlled demo DOCX
         shell: pwsh
@@ -320,3 +327,9 @@ jobs:
             diagnostics/source-files-found-after-unzip.txt
             diagnostics/diagnostic-summary.md
           if-no-files-found: warn
+
+      - name: Fail workflow if pytest failed
+        if: always() && steps.pytest.outputs.exit_code != '0'
+        shell: pwsh
+        run: |
+          Write-Error "Pytest failed. See diagnostics/pytest-output.txt in the uploaded TraceAI-Diagnostics artifact."
