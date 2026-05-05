@@ -6,13 +6,13 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă: REPORT-QUALITY-01E-1_DONE
-următoarea etapă recomandată: REPORT-QUALITY-01E-2
-alternativă după 01E-2: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
+etapă curentă: REPORT-QUALITY-01E-2_DONE
+următorul pas recomandat: selectarea explicită a următorului micro-stage
+alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: 159 passed, reference_comparison PASS
-ultimul commit validat oficial pentru 01E-1: da954bd7c2baa92257ee99c9d93481980c81f109
-ultimul PR merge-uit de control procedural: #79
+ultimul diagnostic oficial inspectat direct: 160 passed, reference_comparison PASS
+ultimul commit validat oficial pentru 01E-2: 813c9c874016ae0c8b3570c28e324cc5573513b1
+ultimul PR merge-uit de produs: #81
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md` și `AGENTS.md`.
@@ -73,7 +73,7 @@ footer cu versiune aplicație, commit, canal build, dată generare și număr pa
 marcare explicită a cazurilor incomplete pentru audit strict
 ```
 
-Linia `REPORT-QUALITY-01E-1` este validată oficial prin TraceAI Diagnostics pe commitul `da954bd7c2baa92257ee99c9d93481980c81f109`. Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, iar artifactul oficial confirmă și generarea `real_audit_checklist_report.docx` și `real_audit_checklist_ui.json`.
+Liniile `REPORT-QUALITY-01E-1` și `REPORT-QUALITY-01E-2` sunt validate oficial prin TraceAI Diagnostics. Checklist DOCX-ul generat conține atât textul aprobat din `Card verdict auditor`, cât și textul aprobat din introducerea `Ghid rapid pentru auditor`.
 
 ## UI
 
@@ -140,9 +140,10 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: 159 passed, reference_comparison.md = PASS
-ultimul commit validat oficial pentru 01E-1: da954bd7c2baa92257ee99c9d93481980c81f109
+ultimul artifact oficial inspectat direct: 160 passed, reference_comparison.md = PASS
+ultimul commit validat oficial pentru 01E-2: 813c9c874016ae0c8b3570c28e324cc5573513b1
 real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
+textul aprobat pentru Ghid rapid este prezent în DOCX-ul oficial generat
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
