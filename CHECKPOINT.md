@@ -4,53 +4,40 @@ Data checkpoint: 2026-05-05
 
 ## Current status
 
-Latest completed stage on current `main`: REPORT-QUALITY-01E-3_DONE.
+Latest completed stage on current `main`: ERRORS-01_PR2_3_DONE.
 
-Latest officially validated branch stage pending merge: ERRORS-01_PR2_3_DONE.
+Latest completed `REPORT-QUALITY` stage on current `main`: REPORT-QUALITY-01E-3_DONE.
 
 Merged and now part of current `main`:
 
 - DATA-QUALITY-02_DONE
 - ERRORS-01_FOUNDATION_DONE
 - ERRORS-01_PR2_2_DONE
+- ERRORS-01_PR2_3_DONE
 - STRICT-AUDIT-01_DONE
 - REPORT-QUALITY-01E-1_DONE
 - REPORT-QUALITY-01E-2_DONE
 - REPORT-QUALITY-01E-3_DONE
 
-Current branch validation note:
+ERRORS-01 PR 2.3 is now officially validated on `main`:
 
 - PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
-- Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`.
-- Official TraceAI Diagnostics run `#204` is green and artifact-inspected in this session.
-- This branch stage remains pending merge into `main`.
+- Approved typed-error mapping is present in `src/rules/run_traceability_case.py`.
+- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
+- Official validation artifact inspected in this session confirms the typed-error path is covered and the relevant diagnostic artifacts were generated.
+- Robocop operating rules remain persisted in `AGENTS.md`, with the extended operating guidance documented in `docs/robocop_operating_manual.md`.
 
-REPORT-QUALITY-01E-3 is now officially validated on `main`:
+REPORT-QUALITY-01E-3 remains officially validated on `main`:
 
 - Approved 01E-3 conformity-summary text is present in `Rezumat de conformare checklist` in `src/report/audit_checklist_docx.py`.
 - Approved 01E-3 conformity-summary text is also present in `src/ui/audit_checklist_json.py`.
 - Focused regression coverage exists in `tests/test_audit_checklist_docx.py` and `tests/test_audit_checklist_ui_json.py`.
 - Official validation artifact inspected in this session confirms the generated checklist DOCX contains the approved 01E-3 text.
 - UI JSON conformity description matches the approved 01E-3 text.
-- Robocop operating rules remain persisted in `AGENTS.md`, with the extended operating guidance documented in `docs/robocop_operating_manual.md`.
 
 ## Latest validation
 
-Official validation for REPORT-QUALITY-01E-3 inspected in this session:
-
-- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#199`
-- Head commit validated by run: `c04d227d189b1f5c260432273ac8df6b1aa650e2`
-- Workflow: `TraceAI Diagnostics`
-- `162 passed in 1.86s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
-- Approved 01E-3 text present in generated checklist DOCX
-- UI JSON conformity section description matches the approved 01E-3 text
-
-Previous official validation for ERRORS-01 PR 2.3 inspected in this session:
+Official validation for ERRORS-01 PR 2.3 inspected in this session:
 
 - Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#204`
 - Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`
@@ -63,6 +50,20 @@ Previous official validation for ERRORS-01 PR 2.3 inspected in this session:
 - `real_audit_checklist_report.docx` generated
 - `real_audit_checklist_ui.json` generated
 - Focused ambiguous-case typed-error coverage is present in `tests/test_run_traceability_case.py`
+
+Previous official validation for REPORT-QUALITY-01E-3 inspected in this session:
+
+- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#199`
+- Head commit validated by run: `c04d227d189b1f5c260432273ac8df6b1aa650e2`
+- Workflow: `TraceAI Diagnostics`
+- `162 passed in 1.86s`
+- `reference_comparison.md = PASS`
+- `real_traceability_report.docx` generated
+- `real_audit_traceability_report.docx` generated
+- `real_audit_checklist_report.docx` generated
+- `real_audit_checklist_ui.json` generated
+- Approved 01E-3 text present in generated checklist DOCX
+- UI JSON conformity section description matches the approved 01E-3 text
 
 Previous official validation for REPORT-QUALITY-01E-2 inspected in this session:
 
@@ -184,13 +185,14 @@ ERRORS-01 PR 2.2 completed:
 - Error classification remains in the engine layer, not in UI.
 - Focused regression tests added in `tests/test_run_traceability_case.py`.
 
-ERRORS-01 PR 2.3 completed on branch validation:
+ERRORS-01 PR 2.3 completed:
 
 - PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
 - `run_traceability_case()` now raises `AmbiguousCaseTypeError` when selected records exist but case classification remains `UNKNOWN`.
 - Error classification remains in the engine layer, not in UI.
 - Focused regression coverage exists in `tests/test_run_traceability_case.py`.
 - Official TraceAI Diagnostics validation inspected on head commit `e14ec471fe76959143705b819e677b28271dcfc6` from workflow run `#204`.
+- Merged on `main` through PR #87.
 
 STRICT-AUDIT-01 completed:
 
@@ -227,7 +229,7 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Next recommended stage
 
-No immediate follow-up is required inside REPORT-QUALITY-01E after `01E-3`.
+No immediate follow-up is required inside ERRORS-01_PR2_3 after merge and run `#204`.
 
 Recommended next work should be chosen explicitly as a new small stage, for example:
 
