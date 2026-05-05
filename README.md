@@ -15,7 +15,20 @@ ultimul commit validat oficial pentru 01E-2: 4949314982b55d36ef254300d3521479381
 ultimul PR merge-uit de produs: #81
 ```
 
-Etapa activă și starea oficială se citesc din `CHECKPOINT.md` și `AGENTS.md`.
+Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
+
+## Robocop operating role
+
+Robocop este agentul de software engineering, arhitectură, implementare, validare și project-control pentru `TraceAI-Control`.
+
+Regulile operaționale persistente sunt definite în:
+
+```text
+AGENTS.md
+docs/robocop_operating_manual.md
+```
+
+Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
 
 ## Flux validat
 
