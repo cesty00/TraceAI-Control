@@ -6,16 +6,16 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă pe main: CI-REPAIR-01_DONE
-ultimul stage produs închis pe main: ERRORS-01_PR2_3_DONE
+etapă curentă pe main: ERRORS-01_PR2_4_DONE
+ultimul stage produs închis pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 următorul pas recomandat: selectarea explicită a următorului micro-stage
-alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
+alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos sau continuarea release readiness controlată
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: run #200, smoke pytest 160 passed
-ultimul head validat oficial pentru CI-REPAIR-01: 1eaf9ddbe7637efc705169dd76184f34811039f0
-ultimul PR merge-uit de produs pe main: #85
-ultimul PR procedural de sync docs: #91
+ultimul diagnostic oficial inspectat direct: run #220, smoke pytest 164 passed
+ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
+ultimul PR merge-uit de produs pe main: #93
+ultimul PR procedural de sync docs: #95
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -121,6 +121,8 @@ Secțiunea UI JSON pentru conformitate folosește același text aprobat `01E-3` 
 
 Fluxul engine tratează acum și clasificarea ambiguă a cazului prin `AmbiguousCaseTypeError` înainte de a ajunge în UI.
 
+Fluxul engine tratează acum și sursele oficiale prezente dar ilizibile/corupte prin `DataQualityBlockingError`, înainte de fallback-ul generic de no-match.
+
 ## Diagnostic local
 
 Generatorul local de diagnostic ZIP este disponibil din CLI și din UI:
@@ -163,9 +165,9 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #200
-ultimul head validat oficial pentru CI-REPAIR-01: 1eaf9ddbe7637efc705169dd76184f34811039f0
-smoke pytest: 160 passed in 1.19s
+ultimul artifact oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #220
+ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
+smoke pytest: 164 passed in 0.94s
 artifactul smoke conține pytest-output.txt și diagnostic-summary.md
 reference_comparison.md nu se aplică pe acest smoke-only path
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
