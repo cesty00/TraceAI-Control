@@ -13,7 +13,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from src.errors import MissingRequiredColumnError, MissingSourceFileError, NoMatchingRecordsError
+from src.errors import (
+    AmbiguousCaseTypeError,
+    MissingRequiredColumnError,
+    MissingSourceFileError,
+    NoMatchingRecordsError,
+)
 from src.quality.data_quality_gate import run_data_quality_gate
 from src.rules.run_rules_pipeline import RulesPipelineResult, run_rules_pipeline
 from src.rules.traceability_case import (
@@ -80,6 +85,22 @@ def raise_typed_traceability_error_if_needed(
             user_message="Nu pot genera raportul: nu am găsit date pentru codul și lotul cerute.",
             technical_detail=f"Căutare fără rezultate pentru cod={code!r}, lot={lot!r}.",
             recommended_action="Verifică valorile introduse și confirmă că produsul și lotul există în sursele selectate.",
+        )
+
+    if rules_result.case_type_detection.case_type == "UNKNOWN":
+        observations = rules_result.case_type_detection.observations or [
+            "Detectorul de tip de caz nu a returnat suficiente dovezi pentru clasificare."
+        ]
+        raise AmbiguousCaseTypeError(
+            user_message="Nu pot genera raportul: cazul nu poate fi clasificat în mod sigur din datele disponibile.",
+            technical_detail=(
+                f"Clasificare ambiguă pentru cod={code!r}, lot={lot!r}. "
+                f"Observații detector: {' | '.join(observations)}"
+            ),
+            recommended_action=(
+                "Verifică sursele selectate și confirmă dacă articolul trebuie tratat ca produs finit, "
+                "materie primă sau caz WMS-only."
+            ),
         )
 
 
