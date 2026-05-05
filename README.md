@@ -15,7 +15,7 @@ ultimul checkpoint oficial: CHECKPOINT.md
 ultimul diagnostic oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 ultimul PR merge-uit de produs pe main: #93
-ultimul PR procedural de sync docs: #95
+ultimul PR procedural de sync docs: #96
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
