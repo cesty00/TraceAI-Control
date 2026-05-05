@@ -6,15 +6,15 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă pe main: REPORT-QUALITY-01E-3_DONE
-etapă validată pe branch: ERRORS-01_PR2_3_DONE
-stare branch: PR #87 pending merge
+etapă curentă pe main: ERRORS-01_PR2_3_DONE
+ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 următorul pas recomandat: selectarea explicită a următorului micro-stage
 alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct pe main: run #199, 162 passed, reference_comparison PASS
-ultimul head validat oficial pentru 01E-3: c04d227d189b1f5c260432273ac8df6b1aa650e2
-ultimul PR merge-uit de produs pe main: #84
+ultimul diagnostic oficial inspectat direct: run #204, 161 passed, reference_comparison PASS
+ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
+ultimul PR merge-uit de produs pe main: #87
+ultimul PR procedural de sync docs: #90
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -116,7 +116,9 @@ acțiune recomandată
 
 prin `TraceAIError`, fără stack trace brut în fluxul normal.
 
-Secțiunea UI JSON pentru conformitate folosește acum același text aprobat `01E-3` ca și checklist DOCX.
+Secțiunea UI JSON pentru conformitate folosește același text aprobat `01E-3` ca și checklist DOCX.
+
+Fluxul engine tratează acum și clasificarea ambiguă a cazului prin `AmbiguousCaseTypeError` înainte de a ajunge în UI.
 
 ## Diagnostic local
 
@@ -160,11 +162,10 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct pe main: run #199, 162 passed, reference_comparison.md = PASS
-ultimul head validat oficial pentru 01E-3: c04d227d189b1f5c260432273ac8df6b1aa650e2
+ultimul artifact oficial inspectat direct: run #204, 161 passed, reference_comparison.md = PASS
+ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
 real_traceability_report.docx, real_audit_traceability_report.docx, real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
-textul aprobat pentru Rezumat de conformare checklist este prezent în DOCX-ul oficial generat
-secțiunea conformity din UI JSON folosește textul aprobat 01E-3
+cazul cu clasificare ambiguă și date selectate este acoperit prin test dedicat și typed error în engine
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
