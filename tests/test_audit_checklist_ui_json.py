@@ -76,6 +76,13 @@ def test_audit_checklist_ui_sections_keep_expected_display_order() -> None:
     ]
 
 
+def test_audit_checklist_ui_conformity_section_uses_approved_01e_3_description() -> None:
+    payload = build_payload()
+    sections = {section["key"]: section for section in payload["sections"]}
+
+    assert sections["conformity"]["description"] == "Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual."
+
+
 def test_audit_checklist_ui_sections_expose_downstream_upstream_balance_and_data_quality() -> None:
     payload = build_payload()
     sections = {section["key"]: section for section in payload["sections"]}
