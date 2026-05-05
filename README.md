@@ -6,15 +6,15 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă pe main: REPORT-QUALITY-01E-2_DONE
+etapă curentă pe main: REPORT-QUALITY-01E-3_DONE
 etapă validată pe branch: ERRORS-01_PR2_3_DONE
 stare branch: PR #87 pending merge
 următorul pas recomandat: selectarea explicită a următorului micro-stage
 alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: run #204, 161 passed, reference_comparison PASS
-ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
-ultimul PR merge-uit de produs pe main: #81
+ultimul diagnostic oficial inspectat direct pe main: run #199, 162 passed, reference_comparison PASS
+ultimul head validat oficial pentru 01E-3: c04d227d189b1f5c260432273ac8df6b1aa650e2
+ultimul PR merge-uit de produs pe main: #84
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -89,7 +89,9 @@ footer cu versiune aplicație, commit, canal build, dată generare și număr pa
 marcare explicită a cazurilor incomplete pentru audit strict
 ```
 
-Liniile `REPORT-QUALITY-01E-1` și `REPORT-QUALITY-01E-2` sunt validate oficial prin TraceAI Diagnostics. Checklist DOCX-ul generat conține atât textul aprobat din `Card verdict auditor`, cât și textul aprobat din introducerea `Ghid rapid pentru auditor`.
+Liniile `REPORT-QUALITY-01E-1`, `REPORT-QUALITY-01E-2` și `REPORT-QUALITY-01E-3` sunt validate oficial prin TraceAI Diagnostics.
+
+Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, textul aprobat din introducerea `Ghid rapid pentru auditor` și textul aprobat din `Rezumat de conformare checklist`.
 
 ## UI
 
@@ -113,6 +115,8 @@ acțiune recomandată
 ```
 
 prin `TraceAIError`, fără stack trace brut în fluxul normal.
+
+Secțiunea UI JSON pentru conformitate folosește acum același text aprobat `01E-3` ca și checklist DOCX.
 
 ## Diagnostic local
 
@@ -156,10 +160,11 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: run #204, 161 passed, reference_comparison.md = PASS
-ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
+ultimul artifact oficial inspectat direct pe main: run #199, 162 passed, reference_comparison.md = PASS
+ultimul head validat oficial pentru 01E-3: c04d227d189b1f5c260432273ac8df6b1aa650e2
 real_traceability_report.docx, real_audit_traceability_report.docx, real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
-cazul cu clasificare ambiguă și date selectate este acoperit prin test dedicat și typed error în engine
+textul aprobat pentru Rezumat de conformare checklist este prezent în DOCX-ul oficial generat
+secțiunea conformity din UI JSON folosește textul aprobat 01E-3
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
