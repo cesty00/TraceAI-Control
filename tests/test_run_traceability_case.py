@@ -163,4 +163,4 @@ def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exi
     assert "nu poate fi clasificat" in exc_info.value.user_message.casefold()
     assert "DS0001" in (exc_info.value.technical_detail or "")
     assert "L001" in (exc_info.value.technical_detail or "")
-    assert "tip de caz" in (exc_info.value.recommended_action or "").casefold()
+    assert "produs finit" in (exc_info.value.recommended_action or "").casefold()
