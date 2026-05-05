@@ -1,7 +1,16 @@
+"""
+TraceabilityCase runner for TraceAI Control.
+
+This runner executes the Rules Pipeline and returns the minimal
+TraceabilityCase contract that will later feed the DOCX report.
+
+It intentionally does not calculate detailed traceability and does not generate
+DOCX.
+"""
+
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from src.errors import (
@@ -16,7 +25,7 @@ from src.rules.run_rules_pipeline import RulesPipelineResult, run_rules_pipeline
 from src.rules.traceability_case import (
     TraceabilityCase,
     build_traceability_case,
-    traceability_case_to_dict,
+    traceability_case_to_json,
 )
 
 
@@ -114,8 +123,6 @@ def raise_typed_traceability_error_if_needed(
 
 
 def collect_blocking_source_read_issues(quality_report: object) -> list[str]:
-    """Return deduplicated source read issues that should block generation."""
-
     details: list[str] = []
     seen: set[str] = set()
 
@@ -141,14 +148,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Construieste TraceabilityCase minimal pentru TraceAI Control."
     )
-    parser.add_argument("source_directory", type=Path)
-    parser.add_argument("code")
-    parser.add_argument("lot")
+    parser.add_argument("source_directory", help="Folderul cu sursele oficiale.")
+    parser.add_argument("--code", required=True, help="Cod articol/produs cautat.")
+    parser.add_argument("--lot", required=True, help="Lot cautat.")
+    parser.add_argument("--output", "-o", help="Cale optionala pentru rezultat JSON.")
     args = parser.parse_args(argv)
 
     traceability_case = run_traceability_case(args.source_directory, args.code, args.lot)
-    print(json.dumps(traceability_case_to_dict(traceability_case), ensure_ascii=False, indent=2))
-    return 0
+    payload = traceability_case_to_json(traceability_case)
+
+    if args.output:
+        Path(args.output).write_text(payload + "\n", encoding="utf-8")
+    else:
+        print(payload)
+
+    return 0 if traceability_case.subject.case_type != "UNKNOWN" else 1
 
 
 if __name__ == "__main__":
