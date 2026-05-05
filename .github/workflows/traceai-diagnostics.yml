@@ -46,8 +46,72 @@ env:
   PYTHONPATH: ${{ github.workspace }}
 
 jobs:
+  smoke_pytest:
+    name: Smoke pytest
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest python-docx openpyxl pandas
+          python --version
+
+      - name: Run pytest
+        id: pytest
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p diagnostics
+          set -o pipefail
+          python -m pytest -q 2>&1 | tee diagnostics/pytest-output.txt
+
+      - name: Write smoke summary
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p diagnostics
+          {
+            echo "# TraceAI Diagnostics";
+            echo "";
+            echo "## Smoke pytest";
+            echo "- Event: ${{ github.event_name }}";
+            echo "- Runner: ubuntu-latest";
+            echo "- Step outcome: ${{ steps.pytest.outcome }}";
+            echo "- Artifacts: pytest-output.txt";
+          } > diagnostics/diagnostic-summary.md
+          cat diagnostics/diagnostic-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TraceAI-Diagnostics-Smoke
+          path: |
+            diagnostics/pytest-output.txt
+            diagnostics/diagnostic-summary.md
+          if-no-files-found: warn
+
+      - name: Fail if pytest failed
+        if: steps.pytest.outcome != 'success'
+        shell: bash
+        run: |
+          echo "Smoke pytest failed. See TraceAI-Diagnostics-Smoke artifact." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
   diagnostics:
     name: Tests and diagnostic report
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: windows-latest
 
     steps:
@@ -67,18 +131,27 @@ jobs:
           python --version
 
       - name: Run pytest
+        id: pytest
+        continue-on-error: true
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           python -m pytest -q 2>&1 | Tee-Object -FilePath diagnostics\pytest-output.txt
+          $exitCode = $LASTEXITCODE
+          "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if ($exitCode -ne 0) {
+            "Pytest failed before full diagnostics. Artifacts will still be uploaded." | Tee-Object -FilePath diagnostics\pytest-status.txt
+          }
 
       - name: Generate controlled demo DOCX
+        if: steps.pytest.outputs.exit_code == '0'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force diagnostics | Out-Null
           python samples\demo_docx_runner.py --output diagnostics\demo_traceability_report.docx
 
       - name: Locate and normalize real source files
+        if: steps.pytest.outputs.exit_code == '0'
         id: source-dir
         shell: pwsh
         run: |
@@ -161,21 +234,21 @@ jobs:
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Discover representative traceability cases
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
           python samples\discover_traceability_cases.py "${{ steps.source-dir.outputs.selected }}" --output diagnostics\multi_case_discovery.md --json-output diagnostics\multi_case_discovery.json --limit 15 2>&1 | Tee-Object -FilePath diagnostics\multi-case-discovery-output.txt
 
       - name: Generate multi-case reference matrix
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
           python samples\generate_reference_case_matrix.py "${{ steps.source-dir.outputs.selected }}" --output diagnostics\reference_case_matrix.md --json-output diagnostics\reference_case_matrix.json --finished-limit 4 --component-limit 4 --wms-only-limit 4 2>&1 | Tee-Object -FilePath diagnostics\reference-case-matrix-output.txt
 
       - name: Generate independent reference extraction when data is available
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -186,7 +259,7 @@ jobs:
           python samples\extract_reference_traceability.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_traceability.md --json-output diagnostics\reference_traceability.json 2>&1 | Tee-Object -FilePath diagnostics\reference-extraction-output.txt
 
       - name: Compare app TraceabilityCase with independent reference
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -197,7 +270,7 @@ jobs:
           python samples\compare_traceability_reference.py "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\reference_comparison.md --json-output diagnostics\reference_comparison.json 2>&1 | Tee-Object -FilePath diagnostics\reference-comparison-output.txt
 
       - name: Generate real diagnostic DOCX when data is available
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -209,7 +282,7 @@ jobs:
           python -m src.report.docx_minimal "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_traceability_report.docx 2>&1 | Tee-Object -FilePath diagnostics\real-docx-output.txt
 
       - name: Generate real audit DOCX when data is available
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -221,7 +294,7 @@ jobs:
           python -m src.report.audit_docx "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_audit_traceability_report.docx 2>&1 | Tee-Object -FilePath diagnostics\real-audit-docx-output.txt
 
       - name: Generate real audit checklist DOCX when data is available
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -233,7 +306,7 @@ jobs:
           python -m src.report.audit_checklist_docx "${{ steps.source-dir.outputs.selected }}" --code $code --lot $lot --output diagnostics\real_audit_checklist_report.docx 2>&1 | Tee-Object -FilePath diagnostics\real-audit-checklist-docx-output.txt
 
       - name: Generate real audit checklist UI JSON when data is available
-        if: steps.source-dir.outputs.selected != ''
+        if: steps.pytest.outputs.exit_code == '0' && steps.source-dir.outputs.selected != ''
         continue-on-error: true
         shell: pwsh
         run: |
@@ -257,35 +330,31 @@ jobs:
           $summary += "Code: ${{ github.event.inputs.code }}"
           $summary += "Lot: ${{ github.event.inputs.lot }}"
           $summary += ""
+          $summary += "## Job mode"
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $summary += "- Pull request smoke mode on ubuntu-latest"
+          } else {
+            $summary += "- Full diagnostics mode on windows-latest"
+          }
+          $summary += "- Pytest exit code: ${{ steps.pytest.outputs.exit_code }}"
+          $summary += ""
           $summary += "## Artifacts"
           $summary += "- pytest-output.txt"
-          $summary += "- demo_traceability_report.docx"
-          $summary += "- multi_case_discovery.md/json, representative cases across PRD and WMS"
-          $summary += "- reference_case_matrix.md/json, selected multi-case reference outputs"
-          $summary += "- reference_traceability.md/json, if extraction succeeded"
-          $summary += "- reference_comparison.md/json, app vs independent reference comparison"
-          $summary += "- real_traceability_report.docx, if diagnostic DOCX generation succeeded"
-          $summary += "- real_audit_traceability_report.docx, if audit DOCX generation succeeded"
-          $summary += "- real_audit_checklist_report.docx, if checklist audit DOCX generation succeeded"
-          $summary += "- real_audit_checklist_ui.json, if checklist UI JSON generation succeeded"
-          $summary += "- multi-case-discovery-output.txt"
-          $summary += "- reference-case-matrix-output.txt"
-          $summary += "- reference-extraction-output.txt"
-          $summary += "- reference-comparison-output.txt"
-          $summary += "- real-docx-output.txt"
-          $summary += "- real-audit-docx-output.txt"
-          $summary += "- real-audit-checklist-docx-output.txt"
-          $summary += "- real-audit-checklist-ui-json-output.txt"
+          $summary += "- pytest-status.txt when pytest fails before diagnostics"
+          $summary += "- demo_traceability_report.docx when pytest passes"
+          $summary += "- multi_case_discovery.md/json when source data is available"
+          $summary += "- reference_case_matrix.md/json when source data is available"
+          $summary += "- reference_traceability.md/json when extraction succeeds"
+          $summary += "- reference_comparison.md/json when comparison succeeds"
+          $summary += "- real_traceability_report.docx when generation succeeds"
+          $summary += "- real_audit_traceability_report.docx when generation succeeds"
+          $summary += "- real_audit_checklist_report.docx when generation succeeds"
+          $summary += "- real_audit_checklist_ui.json when generation succeeds"
           $summary += "- source-directory.txt"
           $summary += "- source-files-found.txt"
           $summary += "- source-files-found-after-unzip.txt"
-          $summary += ""
-          $summary += "## Source data rule"
-          $summary += "- trasabilitate_wms.csv OR trasabilitate_wms.zip containing trasabilitate_wms.csv"
-          $summary += "- rapoarte productie.csv OR raport_productie.csv OR rapoarte_productie.csv"
-          $summary += "- nomenclator.xlsx"
-          $summary += "- stoc la moment original.xlsx OR stoc_la_moment_original.xlsx"
           $summary | Set-Content -Path diagnostics\diagnostic-summary.md -Encoding UTF8
+          Get-Content diagnostics\diagnostic-summary.md | ForEach-Object { $_ } >> $env:GITHUB_STEP_SUMMARY
 
       - name: Upload diagnostics artifacts
         if: always()
@@ -294,6 +363,7 @@ jobs:
           name: TraceAI-Diagnostics
           path: |
             diagnostics/pytest-output.txt
+            diagnostics/pytest-status.txt
             diagnostics/demo_traceability_report.docx
             diagnostics/multi_case_discovery.md
             diagnostics/multi_case_discovery.json
@@ -320,3 +390,10 @@ jobs:
             diagnostics/source-files-found-after-unzip.txt
             diagnostics/diagnostic-summary.md
           if-no-files-found: warn
+
+      - name: Fail if pytest failed
+        if: steps.pytest.outputs.exit_code != '0'
+        shell: pwsh
+        run: |
+          Write-Output "Pytest failed. See uploaded TraceAI-Diagnostics artifact and job summary."
+          exit 1
