@@ -1,10 +1,10 @@
 # CHECKPOINT — TraceAI Control
 
-Data checkpoint: 2026-05-04
+Data checkpoint: 2026-05-05
 
 ## Current status
 
-Latest completed stage: ERRORS-01_PR2_2_DONE.
+Latest completed stage: REPORT-QUALITY-01E-1_DONE.
 
 Merged on 2026-05-04 and now part of current `main`:
 
@@ -12,18 +12,31 @@ Merged on 2026-05-04 and now part of current `main`:
 - ERRORS-01_FOUNDATION_DONE
 - ERRORS-01_PR2_2_DONE
 - STRICT-AUDIT-01_DONE
+- REPORT-QUALITY-01E-1_DONE
 
-Implementation now present on `main`, pending validation confirmation:
+REPORT-QUALITY-01E-1 is now officially validated:
 
-- REPORT-QUALITY-01E-1_IMPLEMENTED_PENDING_VALIDATION
-  - Approved 01E text block applied to `Card verdict auditor` in `src/report/audit_checklist_docx.py`.
-  - Focused regression test added in `tests/test_audit_checklist_docx.py`.
-  - Commit currently on `main`: `3a65409547d683fc7be5d8633ac88212c3a2fe4a`.
-  - Do not promote this line to `_DONE` until GitHub validation is visible and green.
+- Approved 01E-1 text is present in `Card verdict auditor` in `src/report/audit_checklist_docx.py`.
+- Focused regression coverage remains in `tests/test_audit_checklist_docx.py`.
+- Official validation artifact inspected in this session confirms the generated checklist DOCX contains the approved 01E-1 text.
+- Agent operating rules are now persisted in `AGENTS.md` after PR #79.
 
 ## Latest validation
 
-Directly inspected diagnostics artifacts in this session:
+Official validation for REPORT-QUALITY-01E-1 inspected in this session:
+
+- Artifact reviewed: `03-TraceAI-Diagnostics-29-.zip`
+- Commit validated by artifact: `da954bd7c2baa92257ee99c9d93481980c81f109`
+- Workflow: `TraceAI Diagnostics`
+- `159 passed in 1.72s`
+- `reference_comparison.md = PASS`
+- `real_traceability_report.docx` generated
+- `real_audit_traceability_report.docx` generated
+- `real_audit_checklist_report.docx` generated
+- `real_audit_checklist_ui.json` generated
+- Approved 01E-1 text present in generated checklist DOCX
+
+Previously inspected validation artifacts:
 
 Primary validation for ERRORS-01 PR 2.2:
 
@@ -50,12 +63,6 @@ Latest merged strict-audit validation note:
 - Head validated in PR notes: `234870d3574eaae846e324374657f65c7f90280d`
 - Reported validation: TraceAI Diagnostics success, `149 passed`, checklist DOCX/UI JSON generated, reference comparison step completed successfully
 
-Validation still not directly visible in this session for the 01E-1 implementation commit:
-
-- GitHub workflow runs for `3a65409547d683fc7be5d8633ac88212c3a2fe4a` were not surfaced by the currently available connector queries.
-- GitHub commit statuses for `3a65409547d683fc7be5d8633ac88212c3a2fe4a` were not surfaced by the currently available connector queries.
-- Treat the implementation as pending validation until a green run is confirmed.
-
 ## Completed stages summary
 
 REPORT-QUALITY-01 completed:
@@ -66,6 +73,14 @@ REPORT-QUALITY-01 completed:
 - Added checklist-specific dynamic header/footer metadata.
 - Latest implemented and validated renderer behavior from this line remains `REPORT-QUALITY-01D-4_DONE`.
 - PP-03 remains out of scope.
+
+REPORT-QUALITY-01E-1 completed:
+
+- PR: #78 — REPORT-QUALITY-01E-1: Add audit conclusion guidance note.
+- Approved `Card verdict auditor` text is present in the checklist DOCX renderer.
+- Additional 01E audit guidance text is present in the conclusion and downstream checklist sections.
+- Focused regression tests exist in `tests/test_audit_checklist_docx.py`.
+- Official TraceAI Diagnostics validation inspected on commit `da954bd7c2baa92257ee99c9d93481980c81f109`.
 
 DATA-QUALITY-01 completed:
 
@@ -128,6 +143,7 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Active documents
 
+- `AGENTS.md`
 - `docs/report_quality_01.md`
 - `docs/report_visual_design_01d.md`
 - `docs/report_content_quality_01e.md`
@@ -135,12 +151,11 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Next recommended stage
 
-REPORT-QUALITY-01E-1 — validation confirmation for the current implementation on `main`, then promote to `REPORT-QUALITY-01E-1_DONE`.
+REPORT-QUALITY-01E-2 — one additional approved text block with a focused regression test, then official TraceAI Diagnostics validation and artifact inspection.
 
-After validation:
+Alternative future tracks after that:
 
-- continue with REPORT-QUALITY-01E-2 using one additional approved text block with a focused test
-- or continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
+- continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
 - or expose detailed Data Quality issues in JSON / Audit Pack
 
 ## Rules
