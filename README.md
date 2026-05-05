@@ -6,13 +6,15 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă: REPORT-QUALITY-01E-2_DONE
+etapă curentă pe main: REPORT-QUALITY-01E-2_DONE
+etapă validată pe branch: ERRORS-01_PR2_3_DONE
+stare branch: PR #87 pending merge
 următorul pas recomandat: selectarea explicită a următorului micro-stage
 alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: 160 passed, reference_comparison PASS
-ultimul commit validat oficial pentru 01E-2: 4949314982b55d36ef254300d352147938178add
-ultimul PR merge-uit de produs: #81
+ultimul diagnostic oficial inspectat direct: run #204, 161 passed, reference_comparison PASS
+ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
+ultimul PR merge-uit de produs pe main: #81
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -64,6 +66,7 @@ Gazul / ALISOL rămâne auxiliar / consumabil tehnologic.
 Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
 Rapoartele FINISHED_PRODUCT cu dovezi esențiale lipsă se marchează explicit INCOMPLETE.
 Erorile blocante uzuale sunt clasificate în engine ca typed errors înainte de a ajunge în UI.
+Cazurile cu date selectate dar clasificare ambiguă rămân blocate în engine prin `AmbiguousCaseTypeError`.
 Validarea oficială pentru DONE este doar GitHub Actions / TraceAI Diagnostics cu artifact inspectat.
 PP-03 este în afara fluxului curent Report Quality.
 ```
@@ -153,10 +156,10 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: 160 passed, reference_comparison.md = PASS
-ultimul commit validat oficial pentru 01E-2: 4949314982b55d36ef254300d352147938178add
-real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
-textul aprobat pentru Ghid rapid este prezent în DOCX-ul oficial generat
+ultimul artifact oficial inspectat direct: run #204, 161 passed, reference_comparison.md = PASS
+ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
+real_traceability_report.docx, real_audit_traceability_report.docx, real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
+cazul cu clasificare ambiguă și date selectate este acoperit prin test dedicat și typed error în engine
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
