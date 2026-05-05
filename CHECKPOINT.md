@@ -4,9 +4,9 @@ Data checkpoint: 2026-05-05
 
 ## Current status
 
-Latest completed stage on current `main`: CI-REPAIR-01_DONE.
+Latest completed stage on current `main`: ERRORS-01_PR2_4_DONE.
 
-Latest completed product stage on current `main`: ERRORS-01_PR2_3_DONE.
+Latest completed product stage on current `main`: ERRORS-01_PR2_4_DONE.
 
 Latest completed `REPORT-QUALITY` stage on current `main`: REPORT-QUALITY-01E-3_DONE.
 
@@ -21,6 +21,8 @@ Merged and now part of current `main`:
 - REPORT-QUALITY-01E-2_DONE
 - REPORT-QUALITY-01E-3_DONE
 - CI-REPAIR-01_DONE
+- RELEASE-GUARDRAILS-01_DONE
+- ERRORS-01_PR2_4_DONE
 
 CI repair for TraceAI Diagnostics observability is now officially validated on `main`:
 
@@ -30,6 +32,26 @@ CI repair for TraceAI Diagnostics observability is now officially validated on `
 - The full Windows diagnostics path remains reserved for `workflow_dispatch` or `main`.
 - The smoke artifact inspected in this session contains both `pytest-output.txt` and `diagnostic-summary.md`.
 - This change improves CI observability without changing product code, DTOs, JSON contracts, calculations, traceability rules, source parsing, or report rendering.
+
+RELEASE-GUARDRAILS-01 is now officially merged on `main`:
+
+- PR: #95 — docs: add release readiness checklist and Robocop stop conditions.
+- Adds `docs/release_readiness_checklist.md`.
+- Adds `docs/robocop_stop_conditions.md`.
+- Scope is docs-only.
+- No production code, tests, workflows, DTOs, JSON contracts, calculations, source mappings, verdict rules, extraction logic, or unit handling changed.
+
+ERRORS-01_PR2_4 is now officially merged on `main`:
+
+- PR: #93 — ERRORS-01_PR2_4: map unreadable official sources to typed error.
+- Squash merge commit on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`.
+- Canonical validated head before merge: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`.
+- `run_traceability_case()` now maps official sources that are present but unreadable/corrupt to `DataQualityBlockingError` before the generic `NoMatchingRecordsError` fallback.
+- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
+- Official validation inspected on PR smoke path from workflow run `#220`.
+- Artifact inspected: `TraceAI-Diagnostics-Smoke`.
+- Artifact contents confirmed: `pytest-output.txt`, `diagnostic-summary.md`.
+- Official pytest result from job log: `164 passed in 0.94s`.
 
 ERRORS-01 PR 2.3 remains officially validated on `main`:
 
@@ -47,6 +69,20 @@ REPORT-QUALITY-01E-3 remains officially validated on `main`:
 - UI JSON conformity description matches the approved 01E-3 text.
 
 ## Latest validation
+
+Official validation for ERRORS-01_PR2_4 inspected in this session:
+
+- Artifact reviewed: `TraceAI-Diagnostics-Smoke` from workflow run `#220`
+- Canonical validated PR head: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`
+- Squash merge commit now on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`
+- Workflow: `TraceAI Diagnostics`
+- Job verified: `Smoke pytest`
+- `164 passed in 0.94s`
+- Artifact contents confirmed:
+  - `pytest-output.txt`
+  - `diagnostic-summary.md`
+- `reference_comparison.md` is not applicable to this smoke-only PR validation path
+- Focused unreadable-source typed-error coverage is present in `tests/test_run_traceability_case.py`
 
 Official validation for CI-REPAIR-01 inspected in this session:
 
@@ -219,6 +255,17 @@ ERRORS-01 PR 2.3 completed:
 - Official TraceAI Diagnostics validation inspected on head commit `e14ec471fe76959143705b819e677b28271dcfc6` from workflow run `#204`.
 - Merged on `main` through PR #87.
 
+ERRORS-01 PR 2.4 completed:
+
+- PR: #93 — ERRORS-01_PR2_4: map unreadable official sources to typed error.
+- Squash merge commit on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`.
+- Canonical validated PR head before merge: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`.
+- `run_traceability_case()` now raises `DataQualityBlockingError` when official sources are present but unreadable/corrupt and case selection cannot complete safely.
+- Error classification remains in the engine layer, not in UI.
+- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
+- Official TraceAI Diagnostics smoke validation inspected from workflow run `#220` with `164 passed in 0.94s`.
+- Artifact inspected: `TraceAI-Diagnostics-Smoke` containing `pytest-output.txt` and `diagnostic-summary.md`.
+
 STRICT-AUDIT-01 completed:
 
 - PR: #74 — mark incomplete finished-product reports explicitly.
@@ -258,20 +305,3 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 - `docs/report_visual_design_01d.md`
 - `docs/report_content_quality_01e.md`
 - `docs/TraceAI_Control_Roadmap_GitHub.md`
-
-## Next recommended stage
-
-No immediate follow-up is required inside CI-REPAIR-01 after merge and smoke validation.
-
-Recommended next work should be chosen explicitly as a new small stage, for example:
-
-- continue ERRORS-01 with another lower-level failure mapped to a typed error
-- expose detailed Data Quality issues in JSON / Audit Pack
-- another approved `REPORT-QUALITY` content slice if specified
-
-## Rules
-
-- Update `CHECKPOINT.md` and `README.md` after every merged PR, important green diagnostic, Windows validation, or roadmap/status change.
-- Do not move business logic into UI.
-- Do not let DOCX or UI drift away from the shared audit source of truth.
-- Keep changes small, verifiable and architecture-safe.
