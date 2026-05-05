@@ -4,7 +4,9 @@ Data checkpoint: 2026-05-05
 
 ## Current status
 
-Latest completed stage on current `main`: ERRORS-01_PR2_3_DONE.
+Latest completed stage on current `main`: CI-REPAIR-01_DONE.
+
+Latest completed product stage on current `main`: ERRORS-01_PR2_3_DONE.
 
 Latest completed `REPORT-QUALITY` stage on current `main`: REPORT-QUALITY-01E-3_DONE.
 
@@ -18,14 +20,23 @@ Merged and now part of current `main`:
 - REPORT-QUALITY-01E-1_DONE
 - REPORT-QUALITY-01E-2_DONE
 - REPORT-QUALITY-01E-3_DONE
+- CI-REPAIR-01_DONE
 
-ERRORS-01 PR 2.3 is now officially validated on `main`:
+CI repair for TraceAI Diagnostics observability is now officially validated on `main`:
+
+- PR: #85 — CI: make TraceAI Diagnostics observable on PR failures.
+- The pull-request path now runs `Smoke pytest` on `ubuntu-latest`.
+- The `pull_request` smoke path uploads `TraceAI-Diagnostics-Smoke` artifacts.
+- The full Windows diagnostics path remains reserved for `workflow_dispatch` or `main`.
+- The smoke artifact inspected in this session contains both `pytest-output.txt` and `diagnostic-summary.md`.
+- This change improves CI observability without changing product code, DTOs, JSON contracts, calculations, traceability rules, source parsing, or report rendering.
+
+ERRORS-01 PR 2.3 remains officially validated on `main`:
 
 - PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
 - Approved typed-error mapping is present in `src/rules/run_traceability_case.py`.
 - Focused regression coverage exists in `tests/test_run_traceability_case.py`.
 - Official validation artifact inspected in this session confirms the typed-error path is covered and the relevant diagnostic artifacts were generated.
-- Robocop operating rules remain persisted in `AGENTS.md`, with the extended operating guidance documented in `docs/robocop_operating_manual.md`.
 
 REPORT-QUALITY-01E-3 remains officially validated on `main`:
 
@@ -37,7 +48,21 @@ REPORT-QUALITY-01E-3 remains officially validated on `main`:
 
 ## Latest validation
 
-Official validation for ERRORS-01 PR 2.3 inspected in this session:
+Official validation for CI-REPAIR-01 inspected in this session:
+
+- Artifact reviewed: `TraceAI-Diagnostics-Smoke` from workflow run `#200`
+- Head commit validated by run: `1eaf9ddbe7637efc705169dd76184f34811039f0`
+- Workflow: `TraceAI Diagnostics`
+- Job verified: `Smoke pytest`
+- `160 passed in 1.19s`
+- `diagnostic-summary.md` confirms:
+  - Event: `pull_request`
+  - Runner: `ubuntu-latest`
+  - Step outcome: `success`
+  - Artifact: `pytest-output.txt`
+- `reference_comparison.md` is not applicable to this smoke-only PR validation path
+
+Previous official validation for ERRORS-01 PR 2.3 inspected in this session:
 
 - Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#204`
 - Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`
@@ -205,10 +230,17 @@ STRICT-AUDIT-01 completed:
 - Shared audit/report layer now makes incomplete cases explicit without moving business logic into UI.
 - UI JSON and DOCX continue to derive from the same audit source of truth.
 
+CI-REPAIR-01 completed:
+
+- PR: #85 — CI: make TraceAI Diagnostics observable on PR failures.
+- Adds a `pull_request` smoke path on `ubuntu-latest`.
+- Preserves artifact-oriented diagnostics intent on CI paths.
+- Smoke validation inspected on head commit `1eaf9ddbe7637efc705169dd76184f34811039f0` from workflow run `#200`.
+- Merged on `main` through PR #85.
+
 REPORT-QUALITY-01E specification available as docs-only guidance:
 
 - `docs/report_content_quality_01e.md` defines recommended audit texts and safe future exception-zone rules.
-- Old PR #67 must not be merged as-is because its branch is stale and would rewind checkpoint state.
 - Safe path: keep the specification docs-only on top of current `main`, then implement one approved text block at a time with focused tests.
 
 ## Windows validation result
@@ -229,7 +261,7 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Next recommended stage
 
-No immediate follow-up is required inside ERRORS-01_PR2_3 after merge and run `#204`.
+No immediate follow-up is required inside CI-REPAIR-01 after merge and smoke validation.
 
 Recommended next work should be chosen explicitly as a new small stage, for example:
 
