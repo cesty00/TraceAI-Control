@@ -20,7 +20,7 @@ REPORT-QUALITY-01E-2 is now officially validated:
 - Approved 01E-2 quick-guide text is present in `Ghid rapid pentru auditor` in `src/report/audit_checklist_docx.py`.
 - Focused regression coverage exists in `tests/test_audit_checklist_docx.py`.
 - Official validation artifact inspected in this session confirms the generated checklist DOCX contains the approved 01E-2 text.
-- Agent operating rules remain persisted in `AGENTS.md` after PR #79.
+- Robocop operating rules remain persisted in `AGENTS.md`, with the extended operating guidance documented in `docs/robocop_operating_manual.md`.
 
 ## Latest validation
 
@@ -163,6 +163,7 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 ## Active documents
 
 - `AGENTS.md`
+- `docs/robocop_operating_manual.md`
 - `docs/report_quality_01.md`
 - `docs/report_visual_design_01d.md`
 - `docs/report_content_quality_01e.md`
