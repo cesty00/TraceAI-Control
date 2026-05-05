@@ -63,6 +63,13 @@ def test_audit_checklist_docx_quick_guide_uses_approved_01e_2_text() -> None:
     assert "Ghidul rapid indică ordinea recomandată de citire: verdict, bilanț, aval, amonte, consumuri și registrul documentelor fizice." in xml
 
 
+def test_audit_checklist_docx_conformity_summary_uses_approved_01e_3_text() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual." in xml
+
+
 def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
