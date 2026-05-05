@@ -86,7 +86,7 @@ def build_ui_sections(report_dict: dict[str, Any]) -> list[dict[str, Any]]:
         {
             "key": "conformity",
             "title": "Rezumat de conformare checklist",
-            "description": "Arată dacă cerințele principale ale exercițiului de trasabilitate sunt acoperite de datele identificate.",
+            "description": "Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual.",
             "rows": report_dict["conformity"],
         },
         {
