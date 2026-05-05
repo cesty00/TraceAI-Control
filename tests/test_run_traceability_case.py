@@ -7,6 +7,7 @@ import pytest
 
 from src.errors import (
     AmbiguousCaseTypeError,
+    DataQualityBlockingError,
     MissingRequiredColumnError,
     MissingSourceFileError,
     NoMatchingRecordsError,
@@ -164,3 +165,32 @@ def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exi
     assert "DS0001" in (exc_info.value.technical_detail or "")
     assert "L001" in (exc_info.value.technical_detail or "")
     assert "produs finit" in (exc_info.value.recommended_action or "").casefold()
+
+
+def test_run_traceability_case_raises_data_quality_blocking_error_for_unreadable_official_source(
+    tmp_path: Path,
+) -> None:
+    write_csv(
+        tmp_path / "trasabilitate_wms.csv",
+        ["Cod articol", "Lot", "Cantitate", "UM"],
+        ["DS9999", "L999", "10", "kg"],
+    )
+    write_csv(
+        tmp_path / "rapoarte productie.csv",
+        ["Cod produs", "Lot produs", "Cantitate produsa"],
+        ["DS9999", "L999", "10"],
+    )
+    write_minimal_xlsx(
+        tmp_path / "nomenclator.xlsx",
+        "Articole",
+        ["Cod", "Lot", "Denumire"],
+        ["DS9999", "L999", "Produs test"],
+    )
+    (tmp_path / "stoc la moment original.xlsx").write_bytes(b"not-a-zip")
+
+    with pytest.raises(DataQualityBlockingError) as exc_info:
+        run_traceability_case(tmp_path, "DS0001", "L001")
+
+    assert "nu pot fi citite" in exc_info.value.user_message.casefold()
+    assert "stoc la moment original.xlsx" in (exc_info.value.technical_detail or "")
+    assert "corupt" in (exc_info.value.technical_detail or "").casefold()

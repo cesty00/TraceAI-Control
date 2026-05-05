@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.errors import (
     AmbiguousCaseTypeError,
+    DataQualityBlockingError,
     MissingRequiredColumnError,
     MissingSourceFileError,
     NoMatchingRecordsError,
@@ -25,6 +26,15 @@ from src.rules.traceability_case import (
     TraceabilityCase,
     build_traceability_case,
     traceability_case_to_json,
+)
+
+
+BLOCKING_SOURCE_READ_MARKERS = (
+    "nu se poate citi",
+    "nu se poate decoda",
+    "invalid sau corupt",
+    "xml invalid",
+    "sheet intern lipsa",
 )
 
 
@@ -80,6 +90,14 @@ def raise_typed_traceability_error_if_needed(
             recommended_action="Reexportă sursele cu layout-ul standard și verifică prezența coloanelor pentru cod, lot și cantitate.",
         )
 
+    blocking_source_read_issues = collect_blocking_source_read_issues(quality_report)
+    if blocking_source_read_issues and not rules_result.core.selection.records:
+        raise DataQualityBlockingError(
+            user_message="Nu pot genera raportul: una sau mai multe surse oficiale sunt corupte sau nu pot fi citite.",
+            technical_detail="Probleme de citire detectate: " + "; ".join(blocking_source_read_issues[:5]),
+            recommended_action="Reexportă sursa afectată și înlocuiește fișierul corupt înainte de a reîncerca.",
+        )
+
     if not rules_result.core.selection.records:
         raise NoMatchingRecordsError(
             user_message="Nu pot genera raportul: nu am găsit date pentru codul și lotul cerute.",
@@ -102,6 +120,28 @@ def raise_typed_traceability_error_if_needed(
                 "materie primă sau caz WMS-only."
             ),
         )
+
+
+def collect_blocking_source_read_issues(quality_report: object) -> list[str]:
+    details: list[str] = []
+    seen: set[str] = set()
+
+    for issue in quality_report.issues:
+        message = issue.message.casefold()
+        if not any(marker in message for marker in BLOCKING_SOURCE_READ_MARKERS):
+            continue
+
+        location = issue.source_name
+        if issue.sheet_name:
+            location = f"{location} / {issue.sheet_name}"
+        detail = f"{location}: {issue.message}"
+        if detail in seen:
+            continue
+
+        seen.add(detail)
+        details.append(detail)
+
+    return details
 
 
 def main(argv: list[str] | None = None) -> int:
