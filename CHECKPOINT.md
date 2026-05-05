@@ -4,7 +4,9 @@ Data checkpoint: 2026-05-05
 
 ## Current status
 
-Latest completed stage: REPORT-QUALITY-01E-2_DONE.
+Latest completed stage on current `main`: REPORT-QUALITY-01E-2_DONE.
+
+Latest officially validated branch stage pending merge: ERRORS-01_PR2_3_DONE.
 
 Merged and now part of current `main`:
 
@@ -15,7 +17,14 @@ Merged and now part of current `main`:
 - REPORT-QUALITY-01E-1_DONE
 - REPORT-QUALITY-01E-2_DONE
 
-REPORT-QUALITY-01E-2 is now officially validated:
+Current branch validation note:
+
+- PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
+- Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`.
+- Official TraceAI Diagnostics run `#204` is green and artifact-inspected in this session.
+- This branch stage remains pending merge into `main`.
+
+REPORT-QUALITY-01E-2 remains officially validated on `main`:
 
 - Approved 01E-2 quick-guide text is present in `Ghid rapid pentru auditor` in `src/report/audit_checklist_docx.py`.
 - Focused regression coverage exists in `tests/test_audit_checklist_docx.py`.
@@ -24,7 +33,21 @@ REPORT-QUALITY-01E-2 is now officially validated:
 
 ## Latest validation
 
-Official validation for REPORT-QUALITY-01E-2 inspected in this session:
+Official validation for ERRORS-01 PR 2.3 inspected in this session:
+
+- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#204`
+- Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`
+- Workflow merge commit recorded inside artifact summary: `f706343eb3ba738663f7503339bb2e547ce0de30`
+- Workflow: `TraceAI Diagnostics`
+- `161 passed in 2.66s`
+- `reference_comparison.md = PASS`
+- `real_traceability_report.docx` generated
+- `real_audit_traceability_report.docx` generated
+- `real_audit_checklist_report.docx` generated
+- `real_audit_checklist_ui.json` generated
+- Focused ambiguous-case typed-error coverage is present in `tests/test_run_traceability_case.py`
+
+Previous official validation for REPORT-QUALITY-01E-2 inspected in this session:
 
 - Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#187`
 - Head commit validated by run: `4949314982b55d36ef254300d352147938178add`
@@ -136,6 +159,14 @@ ERRORS-01 PR 2.2 completed:
 - Error classification remains in the engine layer, not in UI.
 - Focused regression tests added in `tests/test_run_traceability_case.py`.
 
+ERRORS-01 PR 2.3 completed on branch validation:
+
+- PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
+- `run_traceability_case()` now raises `AmbiguousCaseTypeError` when selected records exist but case classification remains `UNKNOWN`.
+- Error classification remains in the engine layer, not in UI.
+- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
+- Official TraceAI Diagnostics validation inspected on head commit `e14ec471fe76959143705b819e677b28271dcfc6` from workflow run `#204`.
+
 STRICT-AUDIT-01 completed:
 
 - PR: #74 — mark incomplete finished-product reports explicitly.
@@ -171,13 +202,13 @@ REPORT-QUALITY-01E specification available as docs-only guidance:
 
 ## Next recommended stage
 
-No further `REPORT-QUALITY-01E` text block is currently defined in the repo as a required next micro-stage beyond 01E-2.
+No immediate follow-up is required inside ERRORS-01_PR2_3 after run `#204`.
 
 Recommended next work should be chosen explicitly as a new small stage, for example:
 
-- another approved `REPORT-QUALITY` content slice if specified
-- continue ERRORS-01 with a later PR that maps additional lower-level failures to typed errors
+- continue ERRORS-01 with another lower-level failure mapped to a typed error
 - expose detailed Data Quality issues in JSON / Audit Pack
+- another approved `REPORT-QUALITY` content slice if specified
 
 ## Rules
 
