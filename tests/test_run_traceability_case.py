@@ -5,7 +5,12 @@ from xml.sax.saxutils import escape
 
 import pytest
 
-from src.errors import MissingRequiredColumnError, MissingSourceFileError, NoMatchingRecordsError
+from src.errors import (
+    AmbiguousCaseTypeError,
+    MissingRequiredColumnError,
+    MissingSourceFileError,
+    NoMatchingRecordsError,
+)
 from src.rules.case_type_detection import CASE_FINISHED_PRODUCT
 from src.rules.run_traceability_case import run_traceability_case
 from src.rules.traceability_case import traceability_case_to_dict
@@ -142,3 +147,20 @@ def test_run_traceability_case_raises_no_matching_records_error_when_case_is_mis
 
     assert "nu am găsit date" in exc_info.value.user_message.casefold()
     assert "DS9999" in (exc_info.value.technical_detail or "")
+
+
+def test_run_traceability_case_raises_ambiguous_case_type_error_when_records_exist_but_classification_stays_unknown(tmp_path: Path) -> None:
+    write_minimal_xlsx(
+        tmp_path / "nomenclator.xlsx",
+        "Articole",
+        ["Cod", "Lot", "Denumire"],
+        ["DS0001", "L001", "Produs test neclasificat"],
+    )
+
+    with pytest.raises(AmbiguousCaseTypeError) as exc_info:
+        run_traceability_case(tmp_path, "DS0001", "L001")
+
+    assert "nu poate fi clasificat" in exc_info.value.user_message.casefold()
+    assert "DS0001" in (exc_info.value.technical_detail or "")
+    assert "L001" in (exc_info.value.technical_detail or "")
+    assert "produs finit" in (exc_info.value.recommended_action or "").casefold()
