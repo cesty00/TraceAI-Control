@@ -6,15 +6,16 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă pe main: ERRORS-01_PR2_3_DONE
+etapă curentă pe main: CI-REPAIR-01_DONE
+ultimul stage produs închis pe main: ERRORS-01_PR2_3_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 următorul pas recomandat: selectarea explicită a următorului micro-stage
 alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos
 ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: run #204, 161 passed, reference_comparison PASS
-ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
-ultimul PR merge-uit de produs pe main: #87
-ultimul PR procedural de sync docs: #90
+ultimul diagnostic oficial inspectat direct: run #200, smoke pytest 160 passed
+ultimul head validat oficial pentru CI-REPAIR-01: 1eaf9ddbe7637efc705169dd76184f34811039f0
+ultimul PR merge-uit de produs pe main: #85
+ultimul PR procedural de sync docs: #91
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -162,10 +163,11 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: run #204, 161 passed, reference_comparison.md = PASS
-ultimul head validat oficial pentru ERRORS-01_PR2_3: e14ec471fe76959143705b819e677b28271dcfc6
-real_traceability_report.docx, real_audit_traceability_report.docx, real_audit_checklist_report.docx și real_audit_checklist_ui.json generate în fluxul de diagnostic
-cazul cu clasificare ambiguă și date selectate este acoperit prin test dedicat și typed error în engine
+ultimul artifact oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #200
+ultimul head validat oficial pentru CI-REPAIR-01: 1eaf9ddbe7637efc705169dd76184f34811039f0
+smoke pytest: 160 passed in 1.19s
+artifactul smoke conține pytest-output.txt și diagnostic-summary.md
+reference_comparison.md nu se aplică pe acest smoke-only path
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
