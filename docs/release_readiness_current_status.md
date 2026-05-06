@@ -68,15 +68,44 @@ daily-use internal release
 - `docs/support_diagnostic_zip.md` există în `main`.
 - `docs/user_daily_workflow.md` există în `main`.
 
+## Pilot Acceptance Position
+
+Release-ul poate fi acceptat doar ca:
+
+```text
+controlled internal pilot
+```
+
+sau
+
+```text
+pre-release usable build
+```
+
+cu limitări cunoscute, observații explicite și canal de feedback pentru corecții ulterioare.
+
+Acest release nu tratează proiectul ca închis.
+Proiectul rămâne activ după release pentru bug fixes, performance improvements, real-case corrections, documentation updates, artifact retention policy și UI timing measurement.
+
 ## Blocking Gaps
 
 The following gaps currently block any claim of `daily-use internal release`:
 
 - lipsește un full diagnostics artifact pe ultimul `main`;
 - lipsește `reference_comparison.md = PASS` pe ultimul `main`;
-- nu toate cazurile din matrice sunt executate;
 - timpii UI nu sunt măsurați;
 - politica de păstrare a artifactelor reale nu este încă documentată.
+
+## Post-Release Validation Expected
+
+Următoarele activități rămân așteptate ca post-release validation / pilot feedback, nu ca precondiție pentru pilotul controlat:
+
+- executarea completă a cazurilor reale din matrice;
+- corecții rezultate din feedback-ul pe cazuri reale;
+- consolidarea regulilor de retenție pentru artifactele reale;
+- măsurarea și documentarea timpilor UI pe fluxurile relevante.
+
+Pentru cazurile cu probleme sau neclarități de date, Diagnostic ZIP trebuie păstrat și cerut explicit.
 
 ## Non-Blocking Gaps
 
@@ -89,7 +118,8 @@ The following gaps currently block any claim of `daily-use internal release`:
 - PR smoke validation pe `pull_request` rămâne mai îngustă decât full diagnostics.
 - `reference_comparison.md` nu este disponibil pe traseul smoke-only.
 - Documentația și consemnarea rezultatelor observate nu înlocuiesc validarea completă cu artifacte oficiale pe ultimul `main`.
-- Starea curentă susține evaluare controlată, nu rollout intern daily-use.
+- Starea curentă susține evaluare controlată și pilot intern, nu rollout intern daily-use.
+- Sunt așteptate validări și ajustări suplimentare după release.
 
 ## Can Release As
 
@@ -103,7 +133,13 @@ or
 controlled internal pilot
 ```
 
-only if the user accepts the remaining release-readiness gaps explicitly.
+or
+
+```text
+pilot release
+```
+
+only if the user accepts the remaining limitations explicitly.
 
 ## Cannot Release As
 
@@ -121,4 +157,4 @@ REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
 ```
 
 Acest document nu pornește automat niciun micro-stage.
-El doar actualizează starea curentă după ce dovezile docs-only pentru cazul local au intrat în `main`.
+El doar actualizează starea curentă după ce dovezile docs-only pentru cazul local au intrat în `main` și mută validarea reală completă în zona de post-release validation.
