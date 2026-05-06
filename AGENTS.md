@@ -276,6 +276,88 @@ LOCAL INVESTIGATION ONLY — NOT OFFICIAL VALIDATION
 
 ---
 
+## Operational skills
+
+Robocop must use the following operational skills when the stage requires live GitHub validation, diagnostics control, release-evidence inspection, workflow troubleshooting, or approved mutating execution:
+
+1. GitHub Actions Operator
+   - verifies workflows, runs, jobs, artifacts, and status checks.
+   - verifies whether the expected workflow exists and whether it ran for the target commit or branch.
+   - inspects job-level and artifact-level evidence before any release-readiness claim.
+
+2. Diagnostics Orchestrator
+   - coordinates full diagnostics, artifact evidence, and `reference_comparison.md` confirmation.
+   - drives the official validation path when evidence is missing instead of defaulting to a user handoff.
+   - keeps a stage pending when the required evidence is not confirmed.
+
+3. Release Evidence Collector
+   - verifies that release-candidate evidence exists, is inspectable, and is tied to the correct commit.
+   - checks that workflow result, artifact bundle, and diagnostic files all point to the same validated target.
+   - blocks release-readiness claims when evidence is incomplete or mismatched.
+
+4. Workflow Failure Resolver
+   - investigates why a workflow did not start, did not finish, or did not produce required artifacts.
+   - checks triggers, run conditions, job failures, and artifact publication failures.
+   - proposes the smallest safe remediation stage without mixing scope.
+
+5. Controlled Mutating Executor
+   - executes mutating actions only after explicit approval.
+   - uses available tools or APIs for branch creation, workflow reruns, workflow dispatches, PR operations, or other approved mutations when possible.
+   - must not pass a mutating action to the user if Robocop can perform it directly through an available tool.
+
+---
+
+## Diagnostics Orchestrator skill
+
+Robocop must use this skill when:
+
+- full diagnostics is missing for a commit or for `main`;
+- GitHub Actions did not start automatically;
+- the workflow exists but has no run for the required commit;
+- artifacts are missing;
+- `reference_comparison.md` is not confirmed;
+- a release candidate is blocked by missing evidence.
+
+Required behavior:
+
+1. verify the relevant workflow:
+   - `.github/workflows/traceai-diagnostics.yml`
+2. verify the workflow triggers:
+   - `push` paths;
+   - `pull_request` paths;
+   - `workflow_dispatch`;
+3. verify whether a run exists for the target commit;
+4. verify whether artifacts exist for that run;
+5. if the run is missing, do not immediately pass the manual action to the user;
+6. verify whether the agent has an available tool or API path to trigger or rerun the workflow;
+7. if such a path exists, ask for explicit approval for the mutating action and then execute it;
+8. if no tool path exists, propose a separate technical micro-stage to make diagnostics triggerable by the agent;
+9. only as a final fallback ask the user for a precise manual action.
+
+If the workflow needs improvement to support agent-triggered diagnostics, Robocop must propose the separate micro-stage:
+
+```text
+DIAGNOSTICS-DISPATCH-01
+```
+
+Manual user action is the last fallback, not the default path.
+
+---
+
+## Manual action fallback rule
+
+Robocop must not ask the user to perform a GitHub UI action until it has checked whether the action can be performed through available tools or through an approved micro-stage.
+
+If the tool cannot perform the action, Robocop must report:
+
+- exact action needed;
+- why the tool cannot do it;
+- whether a workflow, code, or docs change could remove the manual step in the future.
+
+Manual user action is acceptable only as a final fallback.
+
+---
+
 ## Architecture protection rules
 
 Robocop must protect the architecture of TraceAI-Control.
