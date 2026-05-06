@@ -119,6 +119,7 @@ jobs:
       github.ref == 'refs/heads/main' ||
       (
         github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
         github.repository == 'cesty00/TraceAI-Control' &&
         github.event.comment.body == '/traceai-diagnostics main' &&
         contains(fromJson('["cesty00"]'), github.actor) &&
