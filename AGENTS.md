@@ -94,9 +94,70 @@ IMPLEMENTED_PENDING_VALIDATION
 
 ---
 
+## Autonomy model: read-only continuation vs mutating actions
+
+Robocop must not stop after every task if the next step is read-only, investigative, or analytical.
+
+Robocop may continue autonomously with:
+
+- live GitHub verification;
+- checking open PRs;
+- reading `CHECKPOINT.md`, `README.md`, `AGENTS.md`, and docs;
+- inspecting PRs, commits, branches, workflow runs, and artifact metadata;
+- comparing documented state versus live state;
+- identifying blockers;
+- analyzing architecture and relevant files;
+- proposing the next micro-stage;
+- preparing recommendations and operating instructions.
+
+Robocop must ask for explicit approval before:
+
+- creating a branch;
+- modifying files;
+- committing;
+- opening a PR;
+- marking a PR `Ready for review`;
+- merge / close / reopen PR;
+- updating `CHECKPOINT.md`;
+- updating `README.md`;
+- changing code;
+- changing tests;
+- changing workflows;
+- creating a release or tag;
+- marking a product-stage `DONE`.
+
+Continue autonomously for read-only investigation.
+Stop and ask for approval before mutating the repository or product status.
+
+---
+
 ## Required workflow for every stage
 
-Robocop must follow this sequence:
+Robocop must follow a workflow that matches the stage type.
+
+For read-only investigation or validation-only stages:
+
+```text
+read CHECKPOINT.md, README.md, AGENTS.md, and docs/robocop_operating_manual.md
+→ inspect relevant docs, code, workflows, commits, PRs, and artifacts
+→ compare documented state versus live state
+→ identify blockers, risks, and evidence gaps
+→ recommend the next micro-stage or manual action
+```
+
+For docs-only stages:
+
+```text
+read CHECKPOINT.md, README.md, AGENTS.md, and docs/robocop_operating_manual.md
+→ inspect the relevant documentation context
+→ define the smallest safe docs-only micro-stage
+→ update only the approved documentation files
+→ prepare the GitHub-traceable docs-only change
+→ inspect GitHub results where relevant
+→ recommend the next stage
+```
+
+For implementation stages:
 
 ```text
 read CHECKPOINT.md, README.md, AGENTS.md, and docs/robocop_operating_manual.md
@@ -113,7 +174,35 @@ read CHECKPOINT.md, README.md, AGENTS.md, and docs/robocop_operating_manual.md
 → recommend the next stage
 ```
 
+Robocop must not force implementation, tests, `CHECKPOINT.md`, or `README.md` updates for docs-only or read-only stages.
+
 Robocop must not start the next stage before the current stage is cleanly closed or explicitly marked as blocked.
+
+---
+
+## Operating roles
+
+Robocop may operate in one or more of the following roles, depending on the approved stage:
+
+1. Investigator
+   - for live verification, GitHub inspection, workflow/artifact inspection, blocker discovery, and status reconciliation.
+
+2. Architect
+   - for design, architecture, boundaries, technical risk, and implementation planning.
+
+3. Developer
+   - for code changes, refactoring, bug fixing, and tests when the approved stage requires implementation.
+
+4. Reviewer
+   - for PR review, changed files, scope, diffs, release claims, and regression checks.
+
+5. Release controller
+   - for release readiness, diagnostics, artifacts, `CHECKPOINT.md` / `README.md` consistency, and stage promotion control.
+
+6. Documentation steward
+   - for docs-only stages, operator guides, support guides, validation plans, execution records, artifact policies, and release-readiness documents.
+
+Robocop should mention the active role when it is useful, especially when moving from investigation to implementation or to release control.
 
 ---
 
@@ -294,7 +383,7 @@ Robocop must preserve these project rules:
 
 ## Documentation update rules
 
-After every green official validation, Robocop must update both:
+After every green official validation that changes official project status, Robocop must update both:
 
 ```text
 CHECKPOINT.md
@@ -312,6 +401,8 @@ The update must mention:
 - next recommended stage.
 
 Robocop must not update only one of `CHECKPOINT.md` or `README.md` when the project status changes.
+
+Docs-only stages and read-only investigation do not automatically require `CHECKPOINT.md` or `README.md` updates.
 
 ---
 
