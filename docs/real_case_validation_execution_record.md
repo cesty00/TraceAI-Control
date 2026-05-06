@@ -27,12 +27,13 @@ Nu schimbă `CHECKPOINT.md` sau `README.md`.
 Execuția consemnată aici trebuie interpretată împreună cu:
 
 - [docs/real_case_validation_plan.md](docs/real_case_validation_plan.md)
+- [docs/local_case_ds099903883_105_26_execution_procedure.md](docs/local_case_ds099903883_105_26_execution_procedure.md)
 
 Dacă apar cazuri noi, ele trebuie adăugate în plan înainte să fie folosite pentru concluzii de release readiness.
 
 ## 3. Informații execuție
 
-Data testului:
+Data testului: 2026-05-06
 
 Tester:
 
@@ -57,7 +58,7 @@ Note generale de mediu:
 | RCV-03 | WMS-only / PRD missing |  |  |  |  |  |  |  |  |  |  |  | PASS / PASS_WITH_OBSERVATIONS / FAIL |
 | RCV-04 | no matching records |  |  |  |  |  |  |  |  |  |  |  | PASS / PASS_WITH_OBSERVATIONS / FAIL |
 | RCV-05 | corrupt/unreadable official source |  |  |  |  |  |  |  |  |  |  |  | PASS / PASS_WITH_OBSERVATIONS / FAIL |
-| RCV-06 | Caz local utilizator | DS099903883 | 105.26 | folder local utilizator |  |  |  |  |  |  |  |  | PASS / PASS_WITH_OBSERVATIONS / FAIL |
+| RCV-06 | Caz local utilizator | DS099903883 | 105.26 | folder local utilizator; surse oficiale locale; PDF fizic scanat | preview și raport generate; rezultat controlat cu observații | Da, `TEST2000.docx` | Da | Da, `TraceAI-Diagnostic-cod-lot-20260506T070322Z.zip` | `PASS_WITH_OBSERVATIONS` | `ERROR` | UI timings: not measured in this execution | PDF scanat landscape/rotit; Data Quality explicit; rezultat păstrat pentru analiză | PASS_WITH_OBSERVATIONS |
 
 ## 5. Secțiune specială — Caz local utilizator
 
@@ -66,13 +67,19 @@ Note generale de mediu:
 - Cod produs: `DS099903883`
 - Lot: `105.26`
 - Raport generat: `TEST2000.docx`
+- Diagnostic ZIP: `TraceAI-Diagnostic-cod-lot-20260506T070322Z.zip`
+- PDF fizic scanat: `SKM_36726050609130.pdf`
 
-### Rezultat consemnat
+### Rezultat observat
 
 - Verdict: `PASS_WITH_OBSERVATIONS`
 - PRD produs: `734 Kilogram`
 - WMS PRODUCTION-OUT: `734 Kilogram`
 - WMS livrat: `-734 Kilogram`
+- Aval: `3` livrări
+- Amonte: `9` linii
+- Consum pe comenzi: `21` rânduri
+- Documente fizice: `15`
 - Data Quality: `ERROR`
 - Total constatări Data Quality:
   - `1` eroare
@@ -81,18 +88,29 @@ Note generale de mediu:
 
 ### Observații explicite
 
-- PDF-ul scanat poate apărea landscape sau rotit din cauza scannerului.
-- Acest comportament nu este bug TraceAI-Control fără dovadă suplimentară că aplicația a introdus rotația sau orientarea greșită.
-- `PASS_WITH_OBSERVATIONS` rămâne acceptabil dacă rezultatul principal este coerent și problemele de date sunt făcute explicite.
-- Pentru acest caz, Diagnostic ZIP trebuie păstrat și asociat cu rularea consemnată.
+- PDF-ul fizic scanat este landscape/rotit din cauza orientării de scanare.
+- Acest comportament nu este bug TraceAI-Control în lipsa unei dovezi că aplicația a modificat incorect orientarea.
+- `PASS_WITH_OBSERVATIONS` rămâne acceptabil pentru acest caz deoarece rezultatul principal este coerent, iar problema de `Data Quality: ERROR` rămâne explicită și nu este ascunsă.
+- Diagnostic ZIP este parte obligatorie a dovezii pentru acest caz, tocmai pentru că există `Data Quality: ERROR`.
 
-### Dovezi de atașat pentru acest caz
+### Verificări manuale consemnate
+
+- cod produs și lot confirmate în rulare;
+- verdictul confirmat ca `PASS_WITH_OBSERVATIONS`;
+- bilanț PRD vs WMS verificat pe valorile observate;
+- aval verificat: `3` livrări;
+- amonte verificat: `9` linii;
+- consum pe comenzi verificat: `21` rânduri;
+- documente fizice verificate: `15`;
+- secțiunea `Data Quality issues` prezentă și explicită.
+
+### Dovezi atașate pentru acest caz
 
 - rezultat UI observat
 - `TEST2000.docx`
-- `audit_checklist_ui.json` sau fișierul de eroare relevant
-- Diagnostic ZIP al rulării
-- notițe de execuție despre comportamentul observat
+- `audit_checklist_ui.json`
+- `TraceAI-Diagnostic-cod-lot-20260506T070322Z.zip`
+- `SKM_36726050609130.pdf`
 
 ## 6. Semnătură / aprobare
 
@@ -124,7 +142,19 @@ Se consemnează aici probleme sau particularități care nu schimbă verdictul p
 - PDF scanat landscape/rotit din cauza scannerului;
 - mici observații de prezentare care nu schimbă interpretarea auditului.
 
-## 8. Notă explicită
+## 8. Release impact
+
+`PASS_WITH_OBSERVATIONS` este acceptabil ca observație controlată pentru acest caz.
+
+`Data Quality: ERROR` trebuie explicat explicit și trebuie însoțit de Diagnostic ZIP.
+
+Acest rezultat nu declară `daily-use internal release`.
+
+## 9. Timpi observați
+
+UI timings: not measured in this execution.
+
+## 10. Notă explicită
 
 Acest document nu declară `daily-use internal release`.
 
