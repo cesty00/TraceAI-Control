@@ -10,21 +10,23 @@ etapă produs validată oficial pe main: ERRORS-01_PR2_4_DONE
 ultimul stage produs închis oficial pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
-slice deja merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
-status oficial de etapă pentru PREFLIGHT-UI-01 în acest sync: deschis, fără DONE claim
-micro-stage documentar curent: PREFLIGHT-UI-01_POST_MERGE_SYNC
-claim release / production-ready: NU
-următoarea decizie de proiect după acest sync: PREFLIGHT-UI-01B sau REAL-TEST-PILOT-01
+slice completat și merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
+status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
+micro-stage documentar curent: PREFLIGHT-UI-01A_STATUS_SYNC
+claim production-ready: NU
+claim daily-use release: NU
+claim release finalized: NU
+următorul pas oficial: REAL-TEST-PILOT-01
 ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 ultimul PR merge-uit de produs pe main: #113
-ultimul PR documentar / procedural merge-uit pe main: #114
-ultimele PR-uri relevante deja pe main: #111, #112, #113, #114
+ultimul PR documentar / procedural merge-uit pe main: #115
+ultimele PR-uri relevante deja pe main: #113, #114, #115
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar nu promovează un nou `DONE`. El doar așază starea oficială după merge-ul slice-ului `PREFLIGHT-UI-01A` și după consolidarea documentară a modelului Robocop.
+Acest sync documentar marchează clar `PREFLIGHT-UI-01A` ca merged / completed, dar nu promovează `PREFLIGHT-UI-01` la `DONE`.
 
 ## Robocop operating role
 
@@ -45,7 +47,12 @@ Actualizările recente de orchestrare și operare au adăugat reguli pentru auto
 
 ## PREFLIGHT-UI status
 
-`PREFLIGHT-UI-01A` este deja merge-uit pe `main` prin PR #113.
+`PREFLIGHT-UI-01A` este deja merge-uit pe `main` prin PR #113 și este tratat oficial în acest sync ca:
+
+```text
+merged
+completed
+```
 
 Acest slice adaugă:
 
@@ -232,8 +239,8 @@ pre-release internal candidate / controlled internal pilot
 Nu există claim pentru:
 
 ```text
-daily-use internal release
 production-ready
+daily-use internal release
 release finalized
 ```
 

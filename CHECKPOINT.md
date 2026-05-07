@@ -12,9 +12,9 @@ Current active product stage on current `main`:
 
 ```text
 PREFLIGHT-UI-01
-status: opened on main
-merged slice present on main: PREFLIGHT-UI-01A via PR #113
-official DONE claim recorded here: none
+status: active on main
+completed merged slice on main: PREFLIGHT-UI-01A via PR #113
+remaining stage-level DONE claim: none
 ```
 
 Latest official product validation remains:
@@ -27,12 +27,12 @@ validated head for ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 merge commit for ERRORS-01_PR2_4: 31293753d54ad3c23e33f1f335263af86be4877b
 ```
 
-No new product `DONE`, release `DONE`, production-ready, or daily-use release claim is made by this checkpoint refresh.
+No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
 
-## PREFLIGHT-UI-01 post-merge sync status
+## PREFLIGHT-UI-01A status sync
 
 ```text
-micro-stage: PREFLIGHT-UI-01_POST_MERGE_SYNC
+micro-stage: PREFLIGHT-UI-01A_STATUS_SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -41,28 +41,27 @@ release claim: none
 
 Purpose:
 
-- record that `PREFLIGHT-UI-01A` is already merged on `main` via PR #113;
-- record that the Robocop operating model was further consolidated via PR #114;
-- synchronize `CHECKPOINT.md` and `README.md` after the latest post-merge state change;
-- keep the next project decision explicit after this sync.
+- mark `PREFLIGHT-UI-01A` clearly as merged and completed on `main`;
+- keep `PREFLIGHT-UI-01` open as the active product stage without a stage-level `DONE` claim;
+- synchronize `CHECKPOINT.md` and `README.md` with the post-merge state;
+- record the next project step explicitly as `REAL-TEST-PILOT-01`.
 
 Merged changes now part of `main` and relevant to this sync:
 
-- PR #111 — docs: sync release readiness after diagnostics orchestration.
-- PR #112 — docs: specialize Robocop for preflight and pilot phase.
 - PR #113 — `PREFLIGHT-UI-01A`: map operator-facing preflight source status.
 - PR #114 — docs: consolidate Robocop full project operating system.
+- PR #115 — docs: sync `CHECKPOINT.md` and `README.md` after `PREFLIGHT-UI-01A` merge.
 
-PR #113 introduced one small product-facing preflight/UI slice on top of the existing preflight contract:
+`PREFLIGHT-UI-01A` is treated in this sync as:
 
-- operator-facing source status mapping;
-- operator-facing overall guidance for continue / continue with attention / stop before generation;
-- no audit DTO changes;
-- no `audit_checklist_ui.json` contract change;
-- no DOCX renderer change;
-- no business logic moved into UI.
+```text
+merged
+completed
+present on main
+not sufficient alone for PREFLIGHT-UI-01_DONE
+```
 
-This checkpoint sync does not record new GitHub diagnostics evidence for `PREFLIGHT-UI-01A`, so no `DONE` promotion is made here.
+This checkpoint sync does not record new GitHub diagnostics evidence for `PREFLIGHT-UI-01A`, so no stage-level `DONE` promotion is made here.
 
 ## Official project boundaries after sync
 
@@ -82,7 +81,9 @@ Forbidden in this micro-stage:
 - data/source parsing changes;
 - DTO or JSON contract changes;
 - workflow changes;
-- any release-finalized or production-ready claim.
+- any production-ready claim;
+- any daily-use release claim;
+- any release-finalized claim.
 
 ## Product baseline and active stage
 
@@ -100,7 +101,7 @@ Confirmed baseline behavior from the existing validated state:
 - audit DOCX and UI JSON continue to derive from the shared audit source of truth;
 - report quality stage remains `REPORT-QUALITY-01E-3_DONE`.
 
-The currently opened next product-facing stage on `main` is:
+The currently active next product-facing stage on `main` remains:
 
 ```text
 PREFLIGHT-UI-01
@@ -109,8 +110,8 @@ PREFLIGHT-UI-01
 Current recorded state for that stage:
 
 ```text
-slice merged on main: PREFLIGHT-UI-01A
-official validation recorded in this checkpoint: none beyond the existing ERRORS-01_PR2_4 baseline
+completed merged slice on main: PREFLIGHT-UI-01A
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: none
 stage-level DONE claim: none
 ```
 
@@ -140,8 +141,8 @@ pre-release internal candidate / controlled internal pilot only
 The project cannot be claimed as:
 
 ```text
-daily-use internal release
 production-ready
+daily-use internal release
 release finalized
 ```
 
@@ -166,18 +167,19 @@ The active product stage remains:
 PREFLIGHT-UI-01
 ```
 
-The next project decision after this sync is:
+The next project step is now explicitly recorded as:
 
 ```text
-PREFLIGHT-UI-01B
-or
 REAL-TEST-PILOT-01
 ```
 
-Decision guidance:
+Intent:
 
-- continue with `PREFLIGHT-UI-01B` if the project wants the next small implementation slice in the same preflight stage;
-- choose `REAL-TEST-PILOT-01` if the project wants to prioritize controlled pilot evidence before the next preflight implementation slice.
+- run one controlled real-case pilot;
+- keep official-source usage explicit;
+- record operator steps and retained artifacts;
+- classify outcome as `PASS`, `BLOCKED`, or `ISSUE FOUND`;
+- generate Diagnostic ZIP when the defined conditions require it.
 
 ## Active documents
 
@@ -197,6 +199,6 @@ Decision guidance:
 
 ## Control note
 
-This checkpoint sync records official post-merge state after PR #113 and PR #114.
+This checkpoint sync records `PREFLIGHT-UI-01A` as merged and completed on `main`, while keeping `PREFLIGHT-UI-01` open and pointing the project to `REAL-TEST-PILOT-01` next.
 
 It does not promote the application, does not close release readiness, and does not claim `PREFLIGHT-UI-01` as `DONE`.
