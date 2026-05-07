@@ -6,16 +6,16 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 
 ```text
 stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă pe main: ERRORS-01_PR2_4_DONE
+etapă curentă produs pe main: ERRORS-01_PR2_4_DONE
 ultimul stage produs închis pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
-următorul pas recomandat: selectarea explicită a următorului micro-stage
-alternativă imediată: un nou pas ERRORS-01 pentru maparea altor erori de nivel mai jos sau continuarea release readiness controlată
-ultimul checkpoint oficial: CHECKPOINT.md
-ultimul diagnostic oficial inspectat direct: run #220, smoke pytest 164 passed
+micro-stage documentar curent: RELEASE-READINESS-SYNC-01
+claim release / production-ready: NU
+următorul pas produs recomandat: PREFLIGHT-UI-01
+ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 ultimul PR merge-uit de produs pe main: #93
-ultimul PR procedural de sync docs: #96
+ultimele PR-uri de orchestrare / procedural / CI-control: #108, #109, #110
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
@@ -32,6 +32,25 @@ docs/robocop_operating_manual.md
 ```
 
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
+
+Actualizările recente de orchestrare au adăugat reguli pentru autonomie controlată, roluri operaționale și fallback manual pentru diagnostic. Aceste schimbări sunt documentare / operaționale și nu promovează produsul la o etapă nouă.
+
+## Diagnostics orchestration
+
+TraceAI Diagnostics are acum o cale controlată de dispatch pentru orchestrare manuală / agentică.
+
+Status:
+
+```text
+PR #110: ci: add controlled diagnostics dispatch trigger
+scope: workflow-only
+production code changed: no
+tests changed: no
+release claim: no
+product DONE claim: no
+```
+
+Această cale ajută Robocop să declanșeze sau să coordoneze validarea în mod controlat, dar nu înlocuiește regula de validare oficială: `DONE` pentru produs cere workflow verde și artifact inspectat.
 
 ## Flux validat
 
@@ -68,7 +87,9 @@ Valorile lipsă rămân explicite: FARA DATE IDENTIFICATE.
 Rapoartele FINISHED_PRODUCT cu dovezi esențiale lipsă se marchează explicit INCOMPLETE.
 Erorile blocante uzuale sunt clasificate în engine ca typed errors înainte de a ajunge în UI.
 Cazurile cu date selectate dar clasificare ambiguă rămân blocate în engine prin `AmbiguousCaseTypeError`.
+Sursele oficiale prezente dar ilizibile/corupte sunt blocate prin `DataQualityBlockingError` înainte de fallback generic.
 Validarea oficială pentru DONE este doar GitHub Actions / TraceAI Diagnostics cu artifact inspectat.
+Smoke-only validation nu înlocuiește full diagnostics când full diagnostics sunt necesare.
 PP-03 este în afara fluxului curent Report Quality.
 ```
 
@@ -119,10 +140,6 @@ prin `TraceAIError`, fără stack trace brut în fluxul normal.
 
 Secțiunea UI JSON pentru conformitate folosește același text aprobat `01E-3` ca și checklist DOCX.
 
-Fluxul engine tratează acum și clasificarea ambiguă a cazului prin `AmbiguousCaseTypeError` înainte de a ajunge în UI.
-
-Fluxul engine tratează acum și sursele oficiale prezente dar ilizibile/corupte prin `DataQualityBlockingError`, înainte de fallback-ul generic de no-match.
-
 ## Diagnostic local
 
 Generatorul local de diagnostic ZIP este disponibil din CLI și din UI:
@@ -165,12 +182,28 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #220
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #220
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 smoke pytest: 164 passed in 0.94s
 artifactul smoke conține pytest-output.txt și diagnostic-summary.md
 reference_comparison.md nu se aplică pe acest smoke-only path
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
+```
+
+## Release readiness
+
+Starea curentă susține doar evaluare controlată:
+
+```text
+pre-release internal candidate / controlled internal pilot
+```
+
+Nu există claim pentru:
+
+```text
+daily-use internal release
+production-ready
+release finalized
 ```
 
 ## Checkpoint

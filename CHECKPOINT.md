@@ -1,307 +1,172 @@
 # CHECKPOINT — TraceAI Control
 
-Data checkpoint: 2026-05-05
+Data checkpoint: 2026-05-07
 
 ## Current status
-
-Latest completed stage on current `main`: ERRORS-01_PR2_4_DONE.
 
 Latest completed product stage on current `main`: ERRORS-01_PR2_4_DONE.
 
 Latest completed `REPORT-QUALITY` stage on current `main`: REPORT-QUALITY-01E-3_DONE.
 
-Merged and now part of current `main`:
+Latest official product validation remains:
 
-- DATA-QUALITY-02_DONE
-- ERRORS-01_FOUNDATION_DONE
-- ERRORS-01_PR2_2_DONE
-- ERRORS-01_PR2_3_DONE
-- STRICT-AUDIT-01_DONE
-- REPORT-QUALITY-01E-1_DONE
-- REPORT-QUALITY-01E-2_DONE
-- REPORT-QUALITY-01E-3_DONE
-- CI-REPAIR-01_DONE
-- RELEASE-GUARDRAILS-01_DONE
-- ERRORS-01_PR2_4_DONE
+```text
+TraceAI Diagnostics Smoke
+workflow run: #220
+pytest: 164 passed in 0.94s
+validated head for ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
+merge commit for ERRORS-01_PR2_4: 31293753d54ad3c23e33f1f335263af86be4877b
+```
 
-CI repair for TraceAI Diagnostics observability is now officially validated on `main`:
+No new product `DONE`, release `DONE`, production-ready, or daily-use release claim is made by this checkpoint refresh.
 
-- PR: #85 — CI: make TraceAI Diagnostics observable on PR failures.
-- The pull-request path now runs `Smoke pytest` on `ubuntu-latest`.
-- The `pull_request` smoke path uploads `TraceAI-Diagnostics-Smoke` artifacts.
-- The full Windows diagnostics path remains reserved for `workflow_dispatch` or `main`.
-- The smoke artifact inspected in this session contains both `pytest-output.txt` and `diagnostic-summary.md`.
-- This change improves CI observability without changing product code, DTOs, JSON contracts, calculations, traceability rules, source parsing, or report rendering.
+## RELEASE-READINESS-SYNC-01 status
 
-RELEASE-GUARDRAILS-01 is now officially merged on `main`:
+```text
+micro-stage: RELEASE-READINESS-SYNC-01
+scope: documentation sync only
+status: documented
+product-stage claim: none
+release claim: none
+```
 
-- PR: #95 — docs: add release readiness checklist and Robocop stop conditions.
-- Adds `docs/release_readiness_checklist.md`.
-- Adds `docs/robocop_stop_conditions.md`.
-- Scope is docs-only.
-- No production code, tests, workflows, DTOs, JSON contracts, calculations, source mappings, verdict rules, extraction logic, or unit handling changed.
+Purpose:
 
-ERRORS-01_PR2_4 is now officially merged on `main`:
+- record that the Robocop operating model was refreshed after the recent `AGENTS.md` updates;
+- record that TraceAI Diagnostics now has a controlled dispatch path for agentic/manual orchestration;
+- synchronize project-state documents after the latest procedural and CI-control PRs;
+- keep the next product micro-stage explicit and unstarted.
 
-- PR: #93 — ERRORS-01_PR2_4: map unreadable official sources to typed error.
-- Squash merge commit on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`.
-- Canonical validated head before merge: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`.
-- `run_traceability_case()` now maps official sources that are present but unreadable/corrupt to `DataQualityBlockingError` before the generic `NoMatchingRecordsError` fallback.
-- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
-- Official validation inspected on PR smoke path from workflow run `#220`.
-- Artifact inspected: `TraceAI-Diagnostics-Smoke`.
-- Artifact contents confirmed: `pytest-output.txt`, `diagnostic-summary.md`.
-- Official pytest result from job log: `164 passed in 0.94s`.
+Merged procedural / orchestration changes now part of `main`:
 
-ERRORS-01 PR 2.3 remains officially validated on `main`:
+- PR #108 — docs: update Robocop autonomy model and operating roles.
+- PR #109 — docs: add Robocop diagnostics orchestration skill.
+- PR #110 — ci: add controlled diagnostics dispatch trigger.
 
-- PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
-- Approved typed-error mapping is present in `src/rules/run_traceability_case.py`.
-- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
-- Official validation artifact inspected in this session confirms the typed-error path is covered and the relevant diagnostic artifacts were generated.
+PR #110 changed only `.github/workflows/traceai-diagnostics.yml` and added the controlled diagnostics dispatch path. It did not change production code, tests, UI, report generation, audit rules, data extraction, DTOs, source mappings, calculations, unit handling, `CHECKPOINT.md`, or `README.md`.
 
-REPORT-QUALITY-01E-3 remains officially validated on `main`:
+## Official project boundaries after sync
 
-- Approved 01E-3 conformity-summary text is present in `Rezumat de conformare checklist` in `src/report/audit_checklist_docx.py`.
-- Approved 01E-3 conformity-summary text is also present in `src/ui/audit_checklist_json.py`.
-- Focused regression coverage exists in `tests/test_audit_checklist_docx.py` and `tests/test_audit_checklist_ui_json.py`.
-- Official validation artifact inspected in this session confirms the generated checklist DOCX contains the approved 01E-3 text.
-- UI JSON conformity description matches the approved 01E-3 text.
+This sync is documentation-only.
 
-## Latest validation
+Allowed in this micro-stage:
 
-Official validation for ERRORS-01_PR2_4 inspected in this session:
+- `CHECKPOINT.md`
+- `README.md`
+- `docs/release_readiness_current_status.md`
 
-- Artifact reviewed: `TraceAI-Diagnostics-Smoke` from workflow run `#220`
-- Canonical validated PR head: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`
-- Squash merge commit now on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`
-- Workflow: `TraceAI Diagnostics`
-- Job verified: `Smoke pytest`
-- `164 passed in 0.94s`
-- Artifact contents confirmed:
-  - `pytest-output.txt`
-  - `diagnostic-summary.md`
-- `reference_comparison.md` is not applicable to this smoke-only PR validation path
-- Focused unreadable-source typed-error coverage is present in `tests/test_run_traceability_case.py`
+Forbidden in this micro-stage:
 
-Official validation for CI-REPAIR-01 inspected in this session:
+- engine changes;
+- UI changes;
+- DOCX renderer changes;
+- audit/rules changes;
+- data/source parsing changes;
+- DTO or JSON contract changes;
+- workflow behavior changes beyond already-merged PR #110;
+- any release-finalized or production-ready claim.
 
-- Artifact reviewed: `TraceAI-Diagnostics-Smoke` from workflow run `#200`
-- Head commit validated by run: `1eaf9ddbe7637efc705169dd76184f34811039f0`
-- Workflow: `TraceAI Diagnostics`
-- Job verified: `Smoke pytest`
-- `160 passed in 1.19s`
-- `diagnostic-summary.md` confirms:
-  - Event: `pull_request`
-  - Runner: `ubuntu-latest`
-  - Step outcome: `success`
-  - Artifact: `pytest-output.txt`
-- `reference_comparison.md` is not applicable to this smoke-only PR validation path
+## Product state remains unchanged
 
-Previous official validation for ERRORS-01 PR 2.3 inspected in this session:
+The product baseline remains the last officially validated product stage:
 
-- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#204`
-- Head commit validated by run: `e14ec471fe76959143705b819e677b28271dcfc6`
-- Workflow merge commit recorded inside artifact summary: `f706343eb3ba738663f7503339bb2e547ce0de30`
-- Workflow: `TraceAI Diagnostics`
-- `161 passed in 2.66s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
-- Focused ambiguous-case typed-error coverage is present in `tests/test_run_traceability_case.py`
+```text
+ERRORS-01_PR2_4_DONE
+```
 
-Previous official validation for REPORT-QUALITY-01E-3 inspected in this session:
+Confirmed product behavior from the existing baseline:
 
-- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#199`
-- Head commit validated by run: `c04d227d189b1f5c260432273ac8df6b1aa650e2`
-- Workflow: `TraceAI Diagnostics`
-- `162 passed in 1.86s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
-- Approved 01E-3 text present in generated checklist DOCX
-- UI JSON conformity section description matches the approved 01E-3 text
+- blocking source errors are mapped in the engine as typed errors;
+- unreadable/corrupt official sources can raise `DataQualityBlockingError` before the generic no-match fallback;
+- UI receives typed user message, technical detail, and recommended action through the TraceAI error path;
+- audit DOCX and UI JSON continue to derive from the shared audit source of truth;
+- report quality stage remains `REPORT-QUALITY-01E-3_DONE`.
 
-Previous official validation for REPORT-QUALITY-01E-2 inspected in this session:
+## Validation policy remains unchanged
 
-- Artifact reviewed: `TraceAI-Diagnostics` from workflow run `#187`
-- Head commit validated by run: `4949314982b55d36ef254300d352147938178add`
-- Workflow: `TraceAI Diagnostics`
-- `160 passed in 2.82s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
-- Approved 01E-2 text present in generated checklist DOCX
+Official `DONE` for any product stage still requires:
 
-Previous official validation for REPORT-QUALITY-01E-1 inspected in this session:
+- GitHub Actions / TraceAI Diagnostics green;
+- diagnostic artifact inspection;
+- pytest evidence;
+- `reference_comparison.md = PASS` where applicable;
+- generated DOCX / JSON artifacts where applicable;
+- synchronized `CHECKPOINT.md` and `README.md` only after validated merge events.
 
-- Artifact reviewed: `03-TraceAI-Diagnostics-29-.zip`
-- Commit validated by artifact: `da954bd7c2baa92257ee99c9d93481980c81f109`
-- Workflow: `TraceAI Diagnostics`
-- `159 passed in 1.72s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
-- Approved 01E-1 text present in generated checklist DOCX
+Smoke-only validation does not replace full diagnostics where full diagnostics are required.
 
-Primary validation for ERRORS-01 PR 2.2:
+Local tests remain useful for investigation but are not sufficient for official `DONE`.
 
-- Artifact reviewed: `01-TraceAI-Diagnostics-6-.zip`
-- Commit validated by artifact: `fa5b60a230663b430bc8023a29e09999b1866d0d`
-- `152 passed in 1.81s`
-- `reference_comparison.md = PASS`
-- `real_traceability_report.docx` generated
-- `real_audit_traceability_report.docx` generated
-- `real_audit_checklist_report.docx` generated
-- `real_audit_checklist_ui.json` generated
+## Release readiness position
 
-Earlier validation inspected in this session:
+Current release-readiness position remains controlled and conservative:
 
-- Artifact reviewed: `01-TraceAI-Diagnostics-3-.zip`
-- Commit validated by artifact: `f1a1215ea1af7e22c50074fa524a927182d3f195`
-- `147 passed in 1.83s`
-- `reference_comparison.md = PASS`
+```text
+pre-release internal candidate / controlled internal pilot only
+```
 
-Latest merged strict-audit validation note:
+The project cannot be claimed as:
 
-- PR: #74 — STRICT-AUDIT-01
-- Merged at: 2026-05-04 18:08 UTC
-- Head validated in PR notes: `234870d3574eaae846e324374657f65c7f90280d`
-- Reported validation: TraceAI Diagnostics success, `149 passed`, checklist DOCX/UI JSON generated, reference comparison step completed successfully
+```text
+daily-use internal release
+production-ready
+release finalized
+```
 
-## Completed stages summary
+until the missing release-readiness evidence is available and explicitly recorded.
 
-REPORT-QUALITY-01 completed:
+## Current known release-readiness gaps
 
-- Added quick auditor guide to DOCX.
-- Added printable checkbox to document register.
-- Added and applied DOCX table layout helpers.
-- Added checklist-specific dynamic header/footer metadata.
-- Latest implemented and validated renderer behavior from this line remains `REPORT-QUALITY-01D-4_DONE`.
-- PP-03 remains out of scope.
+The following remain relevant before any stronger release claim:
 
-REPORT-QUALITY-01E-1 completed:
+- full diagnostics artifact on the latest `main` where applicable;
+- `reference_comparison.md = PASS` on the relevant full diagnostics path;
+- measured UI timing evidence;
+- artifact retention expectations for real Diagnostic ZIPs;
+- broader real-case validation matrix beyond the single local case;
+- operator-facing packaging / download / rollback guidance.
 
-- PR: #78 — REPORT-QUALITY-01E-1: Add audit conclusion guidance note.
-- Approved `Card verdict auditor` text is present in the checklist DOCX renderer.
-- Additional 01E audit guidance text is present in the conclusion and downstream checklist sections.
-- Focused regression tests exist in `tests/test_audit_checklist_docx.py`.
-- Official TraceAI Diagnostics validation inspected on commit `da954bd7c2baa92257ee99c9d93481980c81f109`.
+## Recommended next micro-stage
 
-REPORT-QUALITY-01E-2 completed:
+Recommended next product-facing micro-stage after this docs sync:
 
-- PR: #81 — REPORT-QUALITY-01E-2: align quick auditor guide intro text.
-- Approved quick-guide introduction text is present in the checklist DOCX renderer.
-- Focused regression test exists in `tests/test_audit_checklist_docx.py`.
-- Official TraceAI Diagnostics validation inspected on head commit `4949314982b55d36ef254300d352147938178add` from workflow run `#187`.
+```text
+PREFLIGHT-UI-01
+```
 
-REPORT-QUALITY-01E-3 completed:
+Goal:
 
-- PR: #84 — REPORT-QUALITY-01E-3: align conformity summary intro text.
-- Approved conformity-summary introduction text is present in the checklist DOCX renderer.
-- Approved conformity-summary description text is present in the checklist UI JSON.
-- Focused regression tests exist in `tests/test_audit_checklist_docx.py` and `tests/test_audit_checklist_ui_json.py`.
-- Official TraceAI Diagnostics validation inspected on head commit `c04d227d189b1f5c260432273ac8df6b1aa650e2` from workflow run `#199`.
+- before report generation, show which official sources were found;
+- show path / status / row counts where safe;
+- warn clearly when mandatory evidence is missing or structurally invalid;
+- keep UI orchestration free of business logic;
+- keep source quality evaluation in existing core/audit/support layers.
 
-DATA-QUALITY-01 completed:
+Alternative documentation / validation micro-stages:
 
-- PR: #68 — Add initial Data Quality Gate.
-- Adds `src/quality/models.py` and `src/quality/data_quality_gate.py`.
-- Adds `DataQualityReport`, `DataQualityIssue`, `DataQualityStatus` and source summaries.
-- Checks required source presence, required columns and invalid quantity values.
-
-DATA-QUALITY-02 completed:
-
-- PR: #69 — Expose Data Quality summary in UI JSON.
-- PR: #70 — Display Data Quality summary in audit checklist DOCX.
-- UI JSON `report` includes `data_quality`.
-- UI JSON `sections` includes `data_quality` after conformity.
-- DOCX conformity summary contains `00_DATA_QUALITY — verificare surse înainte de raport`.
-- Report generation is still not blocked by Data Quality at this stage.
-
-ERRORS-01 foundation completed:
-
-- PR: #72 — ERRORS-01 PR 2.1: Add typed TraceAI errors.
-- Adds `src/errors.py` with `TraceAIError` and typed subclasses.
-- UI orchestrator handles `TraceAIError` before generic exceptions.
-- UI result can separate user message from technical detail / recommended action.
-
-ERRORS-01 PR 2.2 completed:
-
-- PR: #76 — Map blocking core failures to typed errors.
-- Squash merge commit: `6f662bff6f1ce7f880117e60060b4fc09e6d3061`.
-- `run_traceability_case()` now raises typed errors for the most common blocking user-facing failures.
-- Covered blocking cases:
-  - no official sources found in the selected folder
-  - blocking required-column gaps that prevent usable selection
-  - no matching records for the requested code and lot
-- Error classification remains in the engine layer, not in UI.
-- Focused regression tests added in `tests/test_run_traceability_case.py`.
-
-ERRORS-01 PR 2.3 completed:
-
-- PR: #87 — ERRORS-01_PR2_3: map ambiguous case type to typed error.
-- `run_traceability_case()` now raises `AmbiguousCaseTypeError` when selected records exist but case classification remains `UNKNOWN`.
-- Error classification remains in the engine layer, not in UI.
-- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
-- Official TraceAI Diagnostics validation inspected on head commit `e14ec471fe76959143705b819e677b28271dcfc6` from workflow run `#204`.
-- Merged on `main` through PR #87.
-
-ERRORS-01 PR 2.4 completed:
-
-- PR: #93 — ERRORS-01_PR2_4: map unreadable official sources to typed error.
-- Squash merge commit on `main`: `31293753d54ad3c23e33f1f335263af86be4877b`.
-- Canonical validated PR head before merge: `d9fef1be26fb1b3f3ace527d4bc521891f58ccd6`.
-- `run_traceability_case()` now raises `DataQualityBlockingError` when official sources are present but unreadable/corrupt and case selection cannot complete safely.
-- Error classification remains in the engine layer, not in UI.
-- Focused regression coverage exists in `tests/test_run_traceability_case.py`.
-- Official TraceAI Diagnostics smoke validation inspected from workflow run `#220` with `164 passed in 0.94s`.
-- Artifact inspected: `TraceAI-Diagnostics-Smoke` containing `pytest-output.txt` and `diagnostic-summary.md`.
-
-STRICT-AUDIT-01 completed:
-
-- PR: #74 — mark incomplete finished-product reports explicitly.
-- For `FINISHED_PRODUCT`, the report is marked `INCOMPLETE` when one or more essential evidence groups are missing.
-- Minimum strict-audit evidence set:
-  - PRD production evidence
-  - `WMS production-out`
-  - upstream evidence (`raw_materials`, `packaging`, or `auxiliaries_gas`)
-- Shared audit/report layer now makes incomplete cases explicit without moving business logic into UI.
-- UI JSON and DOCX continue to derive from the same audit source of truth.
-
-CI-REPAIR-01 completed:
-
-- PR: #85 — CI: make TraceAI Diagnostics observable on PR failures.
-- Adds a `pull_request` smoke path on `ubuntu-latest`.
-- Preserves artifact-oriented diagnostics intent on CI paths.
-- Smoke validation inspected on head commit `1eaf9ddbe7637efc705169dd76184f34811039f0` from workflow run `#200`.
-- Merged on `main` through PR #85.
-
-REPORT-QUALITY-01E specification available as docs-only guidance:
-
-- `docs/report_content_quality_01e.md` defines recommended audit texts and safe future exception-zone rules.
-- Safe path: keep the specification docs-only on top of current `main`, then implement one approved text block at a time with focused tests.
-
-## Windows validation result
-
-- Result file: `installer/windows/VALIDATION_RESULT_2026-05-04.md`
-- Commit validated by Windows artifact: `08fd6dad191ee508f3cd5ae8ce0a3699a718d68a`
-- Environment: Microsoft Windows 10 Pro, Version 10.0.19045 Build 19045, CEZAR-PC
-- Verdict: ACCEPTED
+```text
+FULL-DIAGNOSTICS-MAIN-01
+UI-PERF-01A
+ARTIFACT-RETENTION-01
+REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
+```
 
 ## Active documents
 
 - `AGENTS.md`
+- `README.md`
+- `CHECKPOINT.md`
 - `docs/robocop_operating_manual.md`
+- `docs/release_readiness_current_status.md`
+- `docs/release_readiness_checklist.md`
+- `docs/robocop_stop_conditions.md`
 - `docs/report_quality_01.md`
 - `docs/report_visual_design_01d.md`
 - `docs/report_content_quality_01e.md`
 - `docs/TraceAI_Control_Roadmap_GitHub.md`
+
+## Control note
+
+This checkpoint intentionally records only orchestration and documentation status after PR #108, PR #109, and PR #110.
+
+It does not promote the application, does not close release readiness, and does not start product implementation work.
