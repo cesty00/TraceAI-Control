@@ -7,8 +7,11 @@ from src.core.build_info import BuildInfo, format_build_info_line
 from src.report.audit_checklist_docx import (
     AuditReportPolicy,
     DOCUMENT_REGISTER_CHECKBOX,
+    DOCUMENT_REGISTER_COLUMN_WIDTHS,
     QUICK_AUDITOR_GUIDE_ITEMS,
+    build_document_register_section,
     build_document_xml,
+    build_title_block,
     generate_audit_checklist_docx_report,
 )
 from tests.test_audit_traceability_report import make_case
@@ -221,3 +224,30 @@ def test_audit_checklist_docx_downstream_section_mentions_physical_delivery_docu
 
     assert "Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare" in xml
     assert "documentele WMS indicate" in xml
+
+
+def test_audit_checklist_docx_title_block_uses_compact_spacing_after_polish() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    build_info = BuildInfo(
+        app_name="TraceAI Control",
+        app_version="1.0.0",
+        build_commit="abcdef1234567890",
+        build_date="build-date",
+        build_channel="local",
+        generated_at="generated-at",
+    )
+
+    xml = "".join(build_title_block(report, build_info))
+
+    assert 'w:spacing w:after="40"' in xml
+    assert 'w:spacing w:after="100"' in xml
+
+
+def test_audit_checklist_docx_document_register_uses_printable_checklist_column_widths() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+
+    xml = "".join(build_document_register_section(report, AuditReportPolicy()))
+
+    for width in DOCUMENT_REGISTER_COLUMN_WIDTHS[:3]:
+        assert f'w:tcW w:w="{width}" w:type="dxa"' in xml
+    assert DOCUMENT_REGISTER_CHECKBOX in xml
