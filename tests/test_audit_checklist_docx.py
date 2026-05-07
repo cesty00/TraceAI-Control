@@ -102,7 +102,7 @@ def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
         "Tip document",
         "Număr document",
         "Dată document",
-        "Stoc la moment",
+        "Stoc lot sursă",
         "Livrări terți",
     ]:
         assert upstream_header in xml
@@ -251,3 +251,41 @@ def test_audit_checklist_docx_document_register_uses_printable_checklist_column_
     for width in DOCUMENT_REGISTER_COLUMN_WIDTHS[:3]:
         assert f'w:tcW w:w="{width}" w:type="dxa"' in xml
     assert DOCUMENT_REGISTER_CHECKBOX in xml
+
+
+def test_audit_checklist_docx_pp03_01a_surfaces_b_fields_more_clearly() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    for expected_text in [
+        "Cod produs finit",
+        "Lot produs finit",
+        "Denumire produs finit",
+        "Dată producție principală",
+        "Cantitate produsă PRD",
+        "Stoc produs finit / DSD",
+        "Repere rapide produs finit",
+        "Tip material",
+        "Cod intern",
+        "Lot sursă",
+        "Materie primă / ambalaj",
+        "Cantitate consumată",
+        "Stoc lot sursă",
+        "Cod intern consum",
+    ]:
+        assert expected_text in xml
+
+
+def test_audit_checklist_docx_pp03_01a_does_not_add_banned_pp03_fields() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    for banned_text in [
+        "Țară",
+        "Country",
+        "Țara de origine",
+        "Country of origin",
+        "Cantitate recepționată",
+        "Received quantity",
+    ]:
+        assert banned_text not in xml

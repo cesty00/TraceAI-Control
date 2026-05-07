@@ -206,6 +206,12 @@ def table(headers: list[str], rows: list[list[object]]) -> str:
     return compact_audit_table(headers, rows)
 
 
+def primary_production_order(report: AuditChecklistReport) -> ChecklistProductionConsumption | None:
+    for row in report.production_consumption:
+        return row
+    return None
+
+
 def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
     """Build the audit checklist DOCX header with case metadata.
 
@@ -217,7 +223,7 @@ def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildIn
     code = _header_footer_text(report.exercise.code)
     lot = _header_footer_text(report.exercise.lot)
     product_name = _header_footer_text(report.exercise.product_name)
-    return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:p>
     <w:pPr><w:spacing w:after="0"/></w:pPr>
@@ -229,7 +235,7 @@ def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildIn
     <w:r><w:rPr><w:sz w:val="13"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>{product_name}</w:t></w:r>
   </w:p>
 </w:hdr>
-'''
+"""
 
 
 def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
@@ -239,7 +245,7 @@ def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildIn
     commit = _header_footer_text(build_info.short_commit)
     channel = _header_footer_text(build_info.build_channel)
     generated_at = _header_footer_text(build_info.generated_at)
-    return f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:p>
     <w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr>
@@ -247,7 +253,7 @@ def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildIn
     <w:fldSimple w:instr="PAGE"><w:r><w:rPr><w:sz w:val="13"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr><w:t>1</w:t></w:r></w:fldSimple>
   </w:p>
 </w:ftr>
-'''
+"""
 
 
 def _header_footer_text(value: object) -> str:
@@ -325,6 +331,7 @@ def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> li
 
 
 def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
+    main_order = primary_production_order(report)
     return [
         paragraph("Card verdict auditor", style="Heading1"),
         literal_paragraph(
@@ -335,9 +342,12 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
             ["Indicator audit", "Status / valoare"],
             [
                 ["Verdict audit", report.conclusion_status],
-                ["Cod produs", report.exercise.code],
-                ["Lot", report.exercise.lot],
-                ["Denumire produs", policy.name(report.exercise.product_name)],
+                ["Cod produs finit", report.exercise.code],
+                ["Lot produs finit", report.exercise.lot],
+                ["Denumire produs finit", policy.name(report.exercise.product_name)],
+                ["Dată producție principală", main_order.production_date if main_order else MISSING],
+                ["Cantitate produsă PRD", report.balance.prd_produced],
+                ["Stoc produs finit / DSD", policy.stock(report.balance.stock_at_moment)],
                 ["Bilanț PRD vs WMS", f"{report.balance.status} — {policy.short(report.balance.observation, 90)}"],
                 ["Aval / livrări", f"{len(report.downstream)} livrări identificate" if report.downstream else MISSING],
                 ["Amonte / loturi sursă", f"{len(report.upstream)} linii amonte identificate" if report.upstream else MISSING],
@@ -373,13 +383,17 @@ def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPo
 def build_exercise_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     exercise = report.exercise
     balance = report.balance
+    main_order = primary_production_order(report)
     return [
         paragraph("01_EXERCITIU — Fișa principală a exercițiului", style="Heading1"),
-        paragraph("Fișa principală fixează produsul și lotul analizat. Această secțiune este punctul de plecare al verificării și trebuie citită împreună cu Tabelul I pentru amonte și Tabelul II pentru aval."),
-        table(["Indicator", "Valoare"], [["Cod produs", exercise.code], ["Lot produs", exercise.lot], ["Denumire produs", exercise.product_name], ["Status verificare", exercise.result]]),
+        paragraph("Fișa principală fixează produsul finit și lotul analizat. Această secțiune este punctul de plecare al verificării și trebuie citită împreună cu Tabelul I pentru amonte și Tabelul II pentru aval."),
+        table(["Indicator", "Valoare"], [["Cod produs finit", exercise.code], ["Lot produs finit", exercise.lot], ["Denumire produs finit", exercise.product_name], ["Status verificare", exercise.result]]),
+        paragraph("Repere rapide produs finit", style="Heading2"),
+        paragraph("Reperele rapide regrupează denumirea produsului, data de producție, cantitatea produsă și stocul produsului finit, pentru o citire rapidă înainte de tabelele operaționale."),
+        table(["Indicator", "Valoare"], [["Denumire produs finit", exercise.product_name], ["Dată producție principală", main_order.production_date if main_order else MISSING], ["Cantitate produsă PRD", balance.prd_produced], ["Stoc produs finit / DSD", policy.stock(balance.stock_at_moment)]]),
         paragraph("Bilanț produs finit", style="Heading2"),
         paragraph("Bilanțul compară cantitatea produsă în PRD cu intrările și ieșirile lotului în WMS. Scopul este să confirme că lotul produs poate fi urmărit până la livrările către clienți sau până la stocul rămas."),
-        table(["Indicator", "Cantitate / status", "Observație"], [["Total produs PRD", balance.prd_produced, "Sursă PRD"], ["WMS PRODUCTION-OUT", balance.wms_production_out, "Intrare produs finit WMS"], ["Total livrat WMS", balance.wms_delivered, "Valoare semnată WMS"], ["Stoc la moment", balance.stock_at_moment, "Dacă există în stoc"], ["Status bilanț", balance.status, policy.short(balance.observation, 90)]]),
+        table(["Indicator", "Cantitate / status", "Observație"], [["Cantitate produsă PRD", balance.prd_produced, "Sursă PRD"], ["Intrare WMS produs finit", balance.wms_production_out, "Intrare produs finit WMS"], ["Cantitate livrată WMS", balance.wms_delivered, "Valoare semnată WMS"], ["Stoc produs finit / DSD", policy.stock(balance.stock_at_moment), "Dacă există în stoc"], ["Status bilanț", balance.status, policy.short(balance.observation, 90)]]),
     ]
 
 
@@ -390,6 +404,7 @@ def build_downstream_section(report: AuditChecklistReport, policy: AuditReportPo
     return [
         paragraph("03_TABEL_II_AVAL — Livrări produs finit", style="Heading1"),
         paragraph("Tabelul II prezintă traseul lotului de produs finit către clienți. Pentru fiecare livrare sunt afișate clientul, adresa sau depozitul identificat, data livrării, cantitatea livrată și documentul WMS care susține ieșirea din gestiune."),
+        paragraph("În această secțiune, clientul, data livrării și cantitatea livrată sunt grupate explicit pentru citirea rapidă a avalului produsului finit."),
         paragraph("Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare și cu documentele WMS indicate."),
         table(["Client", "Adresă", "Dată livrare", "Cantitate livrată", "Tip document", "Număr document", "Comandă WMS", "Observații"], rows),
     ]
@@ -399,7 +414,7 @@ def build_upstream_section(report: AuditChecklistReport, policy: AuditReportPoli
     rows = [[line.material_type, line.code, line.lot, policy.name(line.name), line.consumed_quantity, line.receipt_date, policy.name(line.supplier), line.document_type, line.document_number, line.document_date, policy.stock(line.stock_at_moment), line.third_party_delivery_status, policy.upstream_observation(line.observation)] for line in report.upstream]
     if not rows:
         rows = [[MISSING] * 13]
-    return [paragraph("02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare", style="Heading1"), paragraph("Tabelul I urmărește loturile care au intrat în produsul finit: materii prime, ambalaje și materiale auxiliare, inclusiv gazul atunci când este folosit. Pentru fiecare lot sunt afișate consumul, furnizorul, documentul de recepție, stocul disponibil și observațiile relevante pentru audit."), table(["Tip", "Cod", "Lot", "Denumire", "Consum", "Dată recepție", "Furnizor", "Tip document", "Număr document", "Dată document", "Stoc la moment", "Livrări terți", "Observații"], rows), *build_third_party_section(report, policy)]
+    return [paragraph("02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare", style="Heading1"), paragraph("Tabelul I urmărește loturile care au intrat în produsul finit: materii prime, ambalaje și materiale auxiliare, inclusiv gazul atunci când este folosit. Pentru fiecare lot sunt afișate clar materia primă sau ambalajul, cantitatea consumată și stocul lotului sursă, împreună cu contextul documentar deja prezent în model."), table(["Tip material", "Cod intern", "Lot sursă", "Materie primă / ambalaj", "Cantitate consumată", "Dată recepție", "Furnizor", "Tip document", "Număr document", "Dată document", "Stoc lot sursă", "Livrări terți", "Observații"], rows), *build_third_party_section(report, policy)]
 
 
 def build_third_party_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -407,11 +422,11 @@ def build_third_party_section(report: AuditChecklistReport, policy: AuditReportP
     if not raw_lines:
         return []
     rows = [[line.code, line.lot, policy.name(line.name), line.consumed_quantity, line.third_party_delivery_status, policy.third_party_note(line)] for line in raw_lines]
-    return [paragraph("Verificare specială — materii prime livrate către terți", style="Heading2"), paragraph("Această verificare evidențiază dacă loturile de materie primă folosite în produsul auditat au avut și livrări directe către terți. Informația este importantă pentru separarea consumului intern de alte ieșiri ale aceluiași lot sursă."), table(["Cod MP", "Lot MP", "Denumire", "Consum în lot", "Livrări MP către terți", "Detalii"], rows)]
+    return [paragraph("Verificare specială — materii prime livrate către terți", style="Heading2"), paragraph("Această verificare evidențiază dacă loturile de materie primă folosite în produsul auditat au avut și livrări directe către terți. Informația este importantă pentru separarea consumului intern de alte ieșiri ale aceluiași lot sursă."), table(["Cod MP", "Lot MP", "Materie primă", "Cantitate consumată", "Livrări MP către terți", "Detalii"], rows)]
 
 
 def build_production_consumption_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
-    return [paragraph("04_PRODUCTIE_CONSUM — Detaliere pe comenzi de producție", style="Heading1"), paragraph("Această secțiune leagă comenzile de producție de cantitatea de produs finit obținută și de materialele consumate. Ea ajută auditorul să verifice, pe fiecare comandă, din ce loturi s-a produs lotul finit analizat."), paragraph("Comenzi producție", style="Heading2"), paragraph("Tabelul de comenzi sintetizează producția pe fiecare comandă și asocierea cu intrarea WMS PRODUCTION-OUT și cu livrarea produsului finit, atunci când aceasta poate fi legată de cantitate și document."), table(["Comandă producție", "Dată producție", "Cantitate PRD", "WMS production-out", "Livrare PF asociată"], production_order_summary_rows(report.production_consumption, policy)), paragraph("Consumuri pe comenzi — tabel operațional", style="Heading2"), paragraph("Tabelul operațional detaliază consumurile aferente fiecărei comenzi: materii prime, ambalaje și materiale auxiliare. Cantitățile sunt cele preluate din PRD și sunt folosite pentru a demonstra legătura dintre loturile sursă și produsul finit."), table(["Comandă", "Tip", "Cod consum", "Lot consum", "Denumire consum", "Cantitate consum"], production_consumption_rows(report.production_consumption, policy))]
+    return [paragraph("04_PRODUCTIE_CONSUM — Detaliere pe comenzi de producție", style="Heading1"), paragraph("Această secțiune leagă comenzile de producție de cantitatea de produs finit obținută și de materialele consumate. Ea ajută auditorul să verifice, pe fiecare comandă, din ce loturi s-a produs lotul finit analizat."), paragraph("Comenzi producție", style="Heading2"), paragraph("Tabelul de comenzi sintetizează data de producție, cantitatea produsă și asocierea cu intrarea WMS PRODUCTION-OUT și cu livrarea produsului finit, atunci când aceasta poate fi legată de cantitate și document."), table(["Comandă producție", "Dată producție", "Cantitate produsă PRD", "WMS production-out", "Livrare PF asociată"], production_order_summary_rows(report.production_consumption, policy)), paragraph("Consumuri pe comenzi — tabel operațional", style="Heading2"), paragraph("Tabelul operațional detaliază materiile prime și ambalajele deja prezente în model, cu accent pe codul intern, lotul consumat și cantitatea consumată pentru lotul finit analizat."), table(["Comandă", "Tip material", "Cod intern consum", "Lot consum", "Materie primă / ambalaj", "Cantitate consumată"], production_consumption_rows(report.production_consumption, policy))]
 
 
 def production_order_summary_rows(rows: list[ChecklistProductionConsumption], policy: AuditReportPolicy) -> list[list[str]]:
