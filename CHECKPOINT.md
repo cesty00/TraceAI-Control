@@ -51,6 +51,7 @@ Merged changes now part of `main` and relevant to this sync:
 - PR #113 — `PREFLIGHT-UI-01A`: map operator-facing preflight source status.
 - PR #114 — docs: consolidate Robocop full project operating system.
 - PR #115 — docs: sync `CHECKPOINT.md` and `README.md` after `PREFLIGHT-UI-01A` merge.
+- PR #116 — docs: sync `CHECKPOINT.md` and `README.md` for `REAL-TEST-PILOT-01`.
 
 `PREFLIGHT-UI-01A` is treated in this sync as:
 
@@ -181,6 +182,10 @@ Intent:
 - classify outcome as `PASS`, `BLOCKED`, or `ISSUE FOUND`;
 - generate Diagnostic ZIP when the defined conditions require it.
 
+Formal pilot definition:
+
+- `docs/real_test_pilot_01.md`
+
 ## Active documents
 
 - `AGENTS.md`
@@ -196,6 +201,7 @@ Intent:
 - `docs/TraceAI_Control_Roadmap_GitHub.md`
 - `docs/robocop_preflight_roles_and_skills.md`
 - `docs/robocop_full_project_operating_system.md`
+- `docs/real_test_pilot_01.md`
 
 ## Control note
 

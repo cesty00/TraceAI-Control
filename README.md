@@ -20,13 +20,19 @@ următorul pas oficial: REAL-TEST-PILOT-01
 ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 ultimul PR merge-uit de produs pe main: #113
-ultimul PR documentar / procedural merge-uit pe main: #115
-ultimele PR-uri relevante deja pe main: #113, #114, #115
+ultimul PR documentar / procedural merge-uit pe main: #116
+ultimele PR-uri relevante deja pe main: #113, #114, #115, #116
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
 Acest sync documentar marchează clar `PREFLIGHT-UI-01A` ca merged / completed, dar nu promovează `PREFLIGHT-UI-01` la `DONE`.
+
+Documentul oficial pentru următorul pas este:
+
+```text
+docs/real_test_pilot_01.md
+```
 
 ## Robocop operating role
 
@@ -39,6 +45,7 @@ AGENTS.md
 docs/robocop_operating_manual.md
 docs/robocop_preflight_roles_and_skills.md
 docs/robocop_full_project_operating_system.md
+docs/real_test_pilot_01.md
 ```
 
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
