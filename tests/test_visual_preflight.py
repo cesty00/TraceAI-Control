@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from src.core.preflight_report import PreflightReport, PreflightSubjectStatus
+from src.core.preflight_report import PreflightReport, PreflightSourceStatus, PreflightSubjectStatus
 from src.ui.visual import VisualPreflightResult, submit_preflight_form_values, submit_preflight_form_values_async
 
 
@@ -10,6 +10,43 @@ def test_submit_preflight_form_values_rejects_missing_fields() -> None:
     assert result.success is False
     assert result.report is None
     assert result.error == "Câmpuri obligatorii lipsă: source_directory"
+
+
+def test_submit_preflight_form_values_uses_core_operator_guidance(monkeypatch) -> None:
+    report = PreflightReport(
+        schema_version="preflight-report.v1",
+        source_directory="/tmp/sources",
+        build_info={},
+        sources=[
+            PreflightSourceStatus(
+                source_key="wms",
+                expected_name="trasabilitate_wms.csv",
+                display_name="WMS trasabilitate",
+                status="WARNING",
+                found=True,
+                operator_status="invalid",
+                path="/tmp/trasabilitate_wms.csv",
+                file_type="csv",
+            )
+        ],
+        subject=PreflightSubjectStatus(
+            code="DS0001",
+            lot="L001",
+            status="OK",
+            total_records=2,
+            records_by_source={"production": 1, "wms": 1},
+        ),
+        status="WARNING",
+        operator_guidance="Există observații la surse. Poți continua cu atenție.",
+    )
+
+    monkeypatch.setattr("src.ui.visual.build_preflight_report", lambda *_args: report)
+
+    result = submit_preflight_form_values("/tmp/sources", "DS0001", "L001")
+
+    assert result.success is True
+    assert result.report is report
+    assert result.message == "Există observații la surse. Poți continua cu atenție."
 
 
 def test_submit_preflight_form_values_async_uses_request_handler() -> None:
@@ -26,6 +63,7 @@ def test_submit_preflight_form_values_async_uses_request_handler() -> None:
             records_by_source={"production": 1, "wms": 1},
         ),
         status="OK",
+        operator_guidance="Sursele sunt pregătite. Poți continua cu generarea raportului.",
     )
 
     def handler(source_directory: str, code: str, lot: str) -> VisualPreflightResult:

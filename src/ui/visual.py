@@ -165,7 +165,7 @@ def submit_preflight_form_values(source_directory: str, code: str, lot: str) -> 
     return VisualPreflightResult(
         success=True,
         report=report,
-        message=f"Verificare surse finalizată: {report.status}.",
+        message=report.operator_guidance,
         error=None,
     )
 

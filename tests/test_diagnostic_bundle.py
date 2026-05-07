@@ -35,6 +35,8 @@ def test_build_diagnostic_bundle_writes_support_zip(tmp_path: Path) -> None:
     assert manifest["code"] == "DS0001"
     assert manifest["lot"] == "L001"
     assert preflight["schema_version"] == "preflight-report.v1"
+    assert preflight["operator_guidance"] not in {"", None}
+    assert preflight["sources"][0]["operator_status"] == "găsit"
 
 
 def test_default_diagnostic_zip_path_sanitizes_code_and_lot(tmp_path: Path) -> None:

@@ -24,6 +24,14 @@ STATUS_OK = "OK"
 STATUS_WARNING = "WARNING"
 STATUS_BLOCKER = "BLOCKER"
 
+OPERATOR_STATUS_FOUND = "găsit"
+OPERATOR_STATUS_MISSING = "lipsă"
+OPERATOR_STATUS_INVALID = "invalid"
+
+OPERATOR_GUIDANCE_READY = "Sursele sunt pregătite. Poți continua cu generarea raportului."
+OPERATOR_GUIDANCE_WARNING = "Există observații la surse. Poți continua cu atenție."
+OPERATOR_GUIDANCE_BLOCKER = "Există blocaje la surse. Oprește-te înainte de generare."
+
 PRIMARY_SUBJECT_SOURCES = {"production", "wms"}
 OPTIONAL_SUBJECT_SOURCES = {"stock", "nomenclator"}
 
@@ -37,6 +45,7 @@ class PreflightSourceStatus:
     display_name: str
     status: str
     found: bool
+    operator_status: str
     path: str | None
     file_type: str | None
     row_count: int | None = None
@@ -67,6 +76,7 @@ class PreflightReport:
     sources: list[PreflightSourceStatus]
     subject: PreflightSubjectStatus
     status: str
+    operator_guidance: str
     warnings: list[str] = field(default_factory=list)
     blockers: list[str] = field(default_factory=list)
 
@@ -114,6 +124,7 @@ def build_preflight_report(
         sources=sources,
         subject=subject,
         status=status,
+        operator_guidance=operator_guidance_for_report(status),
         warnings=deduplicate(warnings),
         blockers=deduplicate(blockers),
     )
@@ -173,6 +184,7 @@ def source_status_from_inventory(source: SourceInventory) -> PreflightSourceStat
         display_name=display_name,
         status=status,
         found=source.found,
+        operator_status=operator_status_for_source(found=source.found, status=status),
         path=source.path,
         file_type=source.file_type,
         row_count=row_count,
@@ -193,6 +205,22 @@ def subject_status_from_selection(selection: RecordSelectionResult) -> Preflight
         records_by_source=dict(sorted(counts.items())),
         warnings=selection.warnings,
     )
+
+
+def operator_status_for_source(found: bool, status: str) -> str:
+    if not found:
+        return OPERATOR_STATUS_MISSING
+    if status == STATUS_WARNING:
+        return OPERATOR_STATUS_INVALID
+    return OPERATOR_STATUS_FOUND
+
+
+def operator_guidance_for_report(status: str) -> str:
+    if status == STATUS_BLOCKER:
+        return OPERATOR_GUIDANCE_BLOCKER
+    if status == STATUS_WARNING:
+        return OPERATOR_GUIDANCE_WARNING
+    return OPERATOR_GUIDANCE_READY
 
 
 def source_key_for_expected_name(expected_name: str) -> str:
@@ -235,6 +263,7 @@ def format_preflight_report(report: PreflightReport) -> str:
 
     lines = [
         f"Preflight status: {report.status}",
+        f"Ghid operator: {report.operator_guidance}",
         f"Folder surse: {report.source_directory}",
         f"Produs/Lot: {report.subject.code} / {report.subject.lot}",
         f"Rânduri găsite pentru cod+lot: {report.subject.total_records}",
@@ -242,7 +271,7 @@ def format_preflight_report(report: PreflightReport) -> str:
         "Surse:",
     ]
     for source in report.sources:
-        detail = f"{source.display_name}: {source.status}"
+        detail = f"{source.display_name}: {source.status} | operator={source.operator_status}"
         if source.found:
             detail += f" | {source.file_type or ''} | rânduri={source.row_count if source.row_count is not None else 'n/a'}"
             if source.sheet_count:

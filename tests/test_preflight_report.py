@@ -2,10 +2,18 @@ from pathlib import Path
 
 from src.core.build_info import BuildInfo
 from src.core.preflight_report import (
+    OPERATOR_GUIDANCE_BLOCKER,
+    OPERATOR_GUIDANCE_WARNING,
+    OPERATOR_STATUS_FOUND,
+    OPERATOR_STATUS_INVALID,
+    OPERATOR_STATUS_MISSING,
     STATUS_BLOCKER,
     STATUS_OK,
+    STATUS_WARNING,
     build_preflight_report,
     format_preflight_report,
+    operator_guidance_for_report,
+    operator_status_for_source,
     preflight_report_to_dict,
 )
 
@@ -29,10 +37,12 @@ def test_build_preflight_report_ok_for_minimal_sources(tmp_path: Path) -> None:
     assert report.subject.total_records == 4
     assert report.subject.records_by_source == {"nomenclator": 1, "production": 1, "stock": 1, "wms": 1}
     assert all(source.status == STATUS_OK for source in report.sources)
+    assert all(source.operator_status == OPERATOR_STATUS_FOUND for source in report.sources)
     assert data["schema_version"] == "preflight-report.v1"
     assert data["build_info"]["build_commit"] == "abcdef1234567890"
-    assert "WMS trasabilitate: OK" in text
-    assert "Raport producție PRD: OK" in text
+    assert data["operator_guidance"] not in {"", None}
+    assert "WMS trasabilitate: OK | operator=găsit" in text
+    assert "Raport producție PRD: OK | operator=găsit" in text
     assert "Cod+lot pe surse:" in text
 
 
@@ -41,7 +51,8 @@ def test_build_preflight_report_warns_when_subject_is_absent_from_stock(tmp_path
 
     report = build_preflight_report(tmp_path, "DS0001", "L001")
 
-    assert report.status == "WARNING"
+    assert report.status == STATUS_WARNING
+    assert report.operator_guidance == OPERATOR_GUIDANCE_WARNING
     assert report.subject.records_by_source == {"nomenclator": 1, "production": 1, "wms": 1}
     assert any("poate fi normal dacă nu există stoc fizic" in warning for warning in report.warnings)
     assert not report.blockers
@@ -53,6 +64,12 @@ def test_build_preflight_report_blocks_when_required_sources_missing(tmp_path: P
     report = build_preflight_report(tmp_path, "DS0001", "L001")
 
     assert report.status == STATUS_BLOCKER
+    assert report.operator_guidance == OPERATOR_GUIDANCE_BLOCKER
+    source_statuses = {source.expected_name: source.operator_status for source in report.sources}
+    assert source_statuses["trasabilitate_wms.csv"] == OPERATOR_STATUS_FOUND
+    assert source_statuses["rapoarte productie.csv"] == OPERATOR_STATUS_MISSING
+    assert source_statuses["nomenclator.xlsx"] == OPERATOR_STATUS_MISSING
+    assert source_statuses["stoc la moment original.xlsx"] == OPERATOR_STATUS_MISSING
     assert any("Raport producție PRD" in blocker for blocker in report.blockers)
     assert any("Nomenclator" in blocker for blocker in report.blockers)
     assert any("Stoc la moment" in blocker for blocker in report.blockers)
@@ -65,8 +82,21 @@ def test_build_preflight_report_blocks_when_code_lot_not_found(tmp_path: Path) -
     report = build_preflight_report(tmp_path, "DS404", "LOT404")
 
     assert report.status == STATUS_BLOCKER
+    assert report.operator_guidance == OPERATOR_GUIDANCE_BLOCKER
     assert report.subject.total_records == 0
     assert "Codul și lotul nu au fost găsite în sursele normalizate." in report.blockers
+
+
+def test_operator_status_for_source_returns_invalid_when_problem_exists() -> None:
+    assert operator_status_for_source(found=True, status=STATUS_WARNING) == OPERATOR_STATUS_INVALID
+
+
+def test_operator_status_for_source_returns_missing_when_source_absent() -> None:
+    assert operator_status_for_source(found=False, status=STATUS_BLOCKER) == OPERATOR_STATUS_MISSING
+
+
+def test_operator_guidance_for_report_returns_blocker_message() -> None:
+    assert operator_guidance_for_report(STATUS_BLOCKER) == OPERATOR_GUIDANCE_BLOCKER
 
 
 def write_minimal_sources(folder: Path, stock_code: str = "DS0001", stock_lot: str = "L001") -> None:
