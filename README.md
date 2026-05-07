@@ -5,20 +5,26 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ## Status curent
 
 ```text
-stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality
-etapă curentă produs pe main: ERRORS-01_PR2_4_DONE
-ultimul stage produs închis pe main: ERRORS-01_PR2_4_DONE
+stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality / Preflight
+etapă produs validată oficial pe main: ERRORS-01_PR2_4_DONE
+ultimul stage produs închis oficial pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
-micro-stage documentar curent: RELEASE-READINESS-SYNC-01
+etapă produs activă pe main: PREFLIGHT-UI-01
+slice deja merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
+status oficial de etapă pentru PREFLIGHT-UI-01 în acest sync: deschis, fără DONE claim
+micro-stage documentar curent: PREFLIGHT-UI-01_POST_MERGE_SYNC
 claim release / production-ready: NU
-următorul pas produs recomandat: PREFLIGHT-UI-01
+următoarea decizie de proiect după acest sync: PREFLIGHT-UI-01B sau REAL-TEST-PILOT-01
 ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
-ultimul PR merge-uit de produs pe main: #93
-ultimele PR-uri de orchestrare / procedural / CI-control: #108, #109, #110
+ultimul PR merge-uit de produs pe main: #113
+ultimul PR documentar / procedural merge-uit pe main: #114
+ultimele PR-uri relevante deja pe main: #111, #112, #113, #114
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
+
+Acest sync documentar nu promovează un nou `DONE`. El doar așază starea oficială după merge-ul slice-ului `PREFLIGHT-UI-01A` și după consolidarea documentară a modelului Robocop.
 
 ## Robocop operating role
 
@@ -29,15 +35,39 @@ Regulile operaționale persistente sunt definite în:
 ```text
 AGENTS.md
 docs/robocop_operating_manual.md
+docs/robocop_preflight_roles_and_skills.md
+docs/robocop_full_project_operating_system.md
 ```
 
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
 
-Actualizările recente de orchestrare au adăugat reguli pentru autonomie controlată, roluri operaționale și fallback manual pentru diagnostic. Aceste schimbări sunt documentare / operaționale și nu promovează produsul la o etapă nouă.
+Actualizările recente de orchestrare și operare au adăugat reguli pentru autonomie controlată, roluri preflight/pilot, fallback manual pentru diagnostic și limite explicite pentru mutații. Aceste schimbări documentare nu promovează singure produsul la o etapă nouă validată.
+
+## PREFLIGHT-UI status
+
+`PREFLIGHT-UI-01A` este deja merge-uit pe `main` prin PR #113.
+
+Acest slice adaugă:
+
+```text
+operator-facing source status mapping
+operator-facing overall guidance pentru continue / continue with attention / stop before generation
+```
+
+și păstrează limitele arhitecturale:
+
+```text
+fără business logic în UI
+fără schimbare de DTO audit
+fără schimbare de contract audit_checklist_ui.json
+fără schimbare de renderer DOCX
+```
+
+Acest README sync nu afirmă validare oficială nouă pentru `PREFLIGHT-UI-01A` și nu marchează `PREFLIGHT-UI-01` ca `DONE`.
 
 ## Diagnostics orchestration
 
-TraceAI Diagnostics are acum o cale controlată de dispatch pentru orchestrare manuală / agentică.
+TraceAI Diagnostics are o cale controlată de dispatch pentru orchestrare manuală / agentică.
 
 Status:
 
@@ -119,13 +149,14 @@ Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, te
 
 UI-ul vizual este Tkinter și orchestrează fluxul validat fără business logic.
 
-Funcții validate:
+Funcții validate sau prezente pe `main`:
 
 ```text
 Verifică surse
 Previzualizează audit checklist
 Generează Diagnostic ZIP
 Generează raport DOCX
+status operator-facing pentru preflight surse
 ```
 
 Mesajele UI pot returna acum:
