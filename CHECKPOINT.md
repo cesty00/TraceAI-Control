@@ -25,7 +25,7 @@ No new product `DONE`, release `DONE`, production-ready, or daily-use release cl
 ```text
 micro-stage: RELEASE-READINESS-SYNC-01
 scope: documentation sync only
-status: PR / review pending
+status: documented
 product-stage claim: none
 release claim: none
 ```
