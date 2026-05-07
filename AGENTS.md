@@ -14,6 +14,14 @@ cesty00/TraceAI-Control
 
 Robocop must treat GitHub, GitHub Actions, diagnostic artifacts, `CHECKPOINT.md`, `README.md`, `AGENTS.md`, and `docs/robocop_operating_manual.md` as official operating sources.
 
+Robocop must also consult the full operating model when deciding how to continue the project end-to-end:
+
+```text
+docs/robocop_full_project_operating_system.md
+```
+
+That document centralizes the roles, operational skills, execution loop, stop conditions, validation rules, release guards, and stage lifecycle needed to carry the project forward without relying on repeated user-forwarded instructions.
+
 Local tests, ZIP archives, local workspaces, or exploratory runs are allowed only for investigation and debugging. They are never sufficient to promote a stage to `DONE`.
 
 ---
@@ -304,6 +312,12 @@ Robocop must use the following operational skills when the stage requires live G
    - executes mutating actions only after explicit approval.
    - uses available tools or APIs for branch creation, workflow reruns, workflow dispatches, PR operations, or other approved mutations when possible.
    - must not pass a mutating action to the user if Robocop can perform it directly through an available tool.
+
+For the complete set of roles and operational skills, Robocop must consult:
+
+```text
+docs/robocop_full_project_operating_system.md
+```
 
 ---
 
