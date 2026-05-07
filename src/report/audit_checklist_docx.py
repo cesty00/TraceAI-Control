@@ -48,6 +48,7 @@ from src.rules.run_traceability_case import run_traceability_case
 
 MISSING = "FARA DATE IDENTIFICATE"
 DOCUMENT_REGISTER_CHECKBOX = "☐"
+DOCUMENT_REGISTER_COLUMN_WIDTHS = [420, 900, 1550, 1800, 900, 900, 1200, 1900, 850]
 QUICK_AUDITOR_GUIDE_ITEMS = [
     "Verifică întâi Rezumatul de conformare checklist.",
     "Confirmă bilanțul PRD vs WMS în 01_EXERCITIU.",
@@ -304,16 +305,32 @@ def build_document_xml(
 def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> list[str]:
     return [
         paragraph("TEST DE TRASABILITATE PENTRU AUDIT", style="Title"),
-        paragraph(f"{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}", bold=True, align="center"),
-        paragraph("Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.", align="center"),
-        literal_paragraph(f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}", align="center"),
+        literal_paragraph(
+            f"{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}",
+            bold=True,
+            align="center",
+            spacing_after=40,
+        ),
+        literal_paragraph(
+            "Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.",
+            align="center",
+            spacing_after=40,
+        ),
+        literal_paragraph(
+            f"Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}",
+            align="center",
+            spacing_after=100,
+        ),
     ]
 
 
 def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     return [
         paragraph("Card verdict auditor", style="Heading1"),
-        paragraph("Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice."),
+        literal_paragraph(
+            "Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice.",
+            spacing_after=50,
+        ),
         table(
             ["Indicator audit", "Status / valoare"],
             [
@@ -333,7 +350,10 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
 def build_quick_auditor_guide_section() -> list[str]:
     return [
         paragraph("Ghid rapid pentru auditor", style="Heading1"),
-        paragraph("Ghidul rapid indică ordinea recomandată de citire: verdict, bilanț, aval, amonte, consumuri și registrul documentelor fizice."),
+        literal_paragraph(
+            "Ghidul rapid indică ordinea recomandată de citire: verdict, bilanț, aval, amonte, consumuri și registrul documentelor fizice.",
+            spacing_after=50,
+        ),
         *bullets(QUICK_AUDITOR_GUIDE_ITEMS),
     ]
 
@@ -342,7 +362,10 @@ def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPo
     rows = [[item.requirement, item.status, policy.short(item.evidence, 95), policy.short(item.observation, 95)] for item in report.conformity]
     return [
         paragraph("Rezumat de conformare checklist", style="Heading1"),
-        paragraph("Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual."),
+        literal_paragraph(
+            "Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual.",
+            spacing_after=50,
+        ),
         table(["Cerință", "Status în test", "Dovezi", "Observații"], rows),
     ]
 
@@ -423,7 +446,18 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
     rows = [[DOCUMENT_REGISTER_CHECKBOX, line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed), line.status] for line in selected]
     if not rows:
         rows = [[MISSING] * 9]
-    parts = [paragraph("Registru documente fizice de pregătit pentru auditor", style="Heading2"), paragraph("Registrul indică documentele care trebuie pregătite în dosarul de audit. Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită pentru documentele fizice."), table(["Bifat", "Zona", "Tip document", "Referință", "Cod", "Lot", "Comandă", "Motiv", "Status"], rows)]
+    parts = [
+        paragraph("Registru documente fizice de pregătit pentru auditor", style="Heading2"),
+        literal_paragraph(
+            "Registrul indică documentele care trebuie pregătite în dosarul de audit. Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită pentru documentele fizice.",
+            spacing_after=50,
+        ),
+        literal_table(
+            ["Bifat", "Zona", "Tip document", "Referință", "Cod", "Lot", "Comandă", "Motiv", "Status"],
+            rows,
+            column_widths=DOCUMENT_REGISTER_COLUMN_WIDTHS,
+        ),
+    ]
     note = policy.overflow_note(len(report.document_register), len(selected), "documente")
     if note:
         parts.append(paragraph(note))
@@ -451,32 +485,50 @@ def build_build_info_section(build_info: BuildInfo) -> list[str]:
     return [paragraph("Informații build raport", style="Heading1"), paragraph("Această secțiune identifică versiunea aplicației folosită la generarea raportului, pentru corelare cu diagnosticele GitHub și build-urile instalate local."), literal_table(["Câmp", "Valoare"], build_info_table_rows(build_info))]
 
 
-def literal_paragraph(text: object, style: str | None = None, bold: bool = False, align: str | None = None) -> str:
+def literal_paragraph(
+    text: object,
+    style: str | None = None,
+    bold: bool = False,
+    align: str | None = None,
+    spacing_before: int | None = None,
+    spacing_after: int | None = None,
+) -> str:
     style_xml = f'<w:pStyle w:val="{style}"/>' if style else ""
     align_xml = f'<w:jc w:val="{align}"/>' if align else ""
+    spacing_attributes: list[str] = []
+    if spacing_before is not None:
+        spacing_attributes.append(f'w:before="{spacing_before}"')
+    if spacing_after is not None:
+        spacing_attributes.append(f'w:after="{spacing_after}"')
+    spacing_xml = f'<w:spacing {" ".join(spacing_attributes)}/>' if spacing_attributes else ""
     bold_xml = "<w:b/>" if bold else ""
-    return f"<w:p><w:pPr>{style_xml}{align_xml}</w:pPr><w:r><w:rPr>{bold_xml}</w:rPr><w:t>{html.escape(str(text), quote=False)}</w:t></w:r></w:p>"
+    return f"<w:p><w:pPr>{style_xml}{align_xml}{spacing_xml}</w:pPr><w:r><w:rPr>{bold_xml}</w:rPr><w:t>{html.escape(str(text), quote=False)}</w:t></w:r></w:p>"
 
 
-def literal_table(headers: list[str], rows: list[list[object]]) -> str:
-    xml_rows = [literal_table_row(headers, is_header=True)]
-    xml_rows.extend(literal_table_row(row) for row in rows)
+def literal_table(headers: list[str], rows: list[list[object]], column_widths: Sequence[int] | None = None) -> str:
+    xml_rows = [literal_table_row(headers, is_header=True, column_widths=column_widths)]
+    xml_rows.extend(literal_table_row(row, column_widths=column_widths) for row in rows)
     borders = "<w:tblBorders><w:top w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:left w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:bottom w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:right w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideH w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/><w:insideV w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"808080\"/></w:tblBorders>"
     table_properties = apply_table_layout_properties('<w:tblStyle w:val="TraceAITable"/>')
     return f"<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{''.join(xml_rows)}</w:tbl>"
 
 
-def literal_table_row(values: Iterable[object], is_header: bool = False) -> str:
-    return f"<w:tr>{table_row_properties_xml(is_header)}{''.join(literal_table_cell(value, is_header=is_header) for value in values)}</w:tr>"
+def literal_table_row(values: Iterable[object], is_header: bool = False, column_widths: Sequence[int] | None = None) -> str:
+    cells = []
+    for index, value in enumerate(values):
+        width = column_widths[index] if column_widths and index < len(column_widths) else None
+        cells.append(literal_table_cell(value, is_header=is_header, width=width))
+    return f"<w:tr>{table_row_properties_xml(is_header)}{''.join(cells)}</w:tr>"
 
 
-def literal_table_cell(value: object, is_header: bool = False) -> str:
+def literal_table_cell(value: object, is_header: bool = False, width: int | None = None) -> str:
     shading_xml = '<w:shd w:fill="EDEDED"/>' if is_header else ""
     bold_xml = "<w:b/>" if is_header else ""
     size = "15" if is_header else "14"
     text = str(value).strip() if value is not None else MISSING
+    width_xml = f'<w:tcW w:w="{width}" w:type="dxa"/>' if width is not None else ""
     cell_properties = apply_cell_layout_properties(
-        f'{shading_xml}<w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tcMar>'
+        f'{width_xml}{shading_xml}<w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tcMar>'
     )
     return f"<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing w:after=\"0\"/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz w:val=\"{size}\"/><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\"/></w:rPr><w:t>{html.escape(text or MISSING, quote=False)}</w:t></w:r></w:p></w:tc>"
 
