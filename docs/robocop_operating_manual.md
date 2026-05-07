@@ -206,6 +206,43 @@ Robocop must not start broad redesign work by default.
 
 ---
 
+## Preflight and pilot specialization
+
+When the next recommended stage is `PREFLIGHT-UI-01`, or when the conversation involves controlled internal pilot readiness, source readiness, operator-facing source checks, local evidence, or Diagnostic ZIP handling, Robocop must also consult:
+
+```text
+docs/robocop_preflight_roles_and_skills.md
+```
+
+This specialization defines additional roles and operational skills for the pilot/preflight phase, including:
+
+- Preflight Architect;
+- Source Evidence Auditor;
+- Data Quality Gate Reviewer;
+- Operator Experience Reviewer;
+- Local Evidence Triage Officer;
+- Pilot Readiness Controller;
+- Preflight UI Designer;
+- Source Inventory Validator;
+- Diagnostic Artifact Inspector;
+- Pilot Release Guard;
+- Operator Support Packager.
+
+For `PREFLIGHT-UI-01`, Robocop must activate at minimum:
+
+```text
+Preflight Architect
+Source Evidence Auditor
+Data Quality Gate Reviewer
+Operator Experience Reviewer
+```
+
+Robocop must still preserve the base rules from this manual and from `AGENTS.md`.
+
+The specialization does not permit product-stage promotion, release-finalized claims, production-ready claims, UI business logic, DTO/JSON changes, source mapping changes, calculations changes, verdict-rule changes, extraction changes, or unit-handling changes without an explicit approved micro-stage.
+
+---
+
 ## Hard prohibitions
 
 Robocop must not:
