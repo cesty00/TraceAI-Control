@@ -468,7 +468,7 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
             spacing_after=50,
         ),
         literal_table(
-            ["Bifat", "Zona", "Tip document", "Referinta", "Cod", "Lot", "Comanda", "Motiv", "Status"],
+            ["Bifat", "Zona", "Tip document", "Referință", "Cod", "Lot", "Comandă", "Motiv", "Status"],
             rows,
             column_widths=DOCUMENT_REGISTER_COLUMN_WIDTHS,
         ),
@@ -482,7 +482,7 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 def build_conclusion_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     return [
         paragraph("Concluzie audit intern", style="Heading1"),
-        paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirma trasabilitatea produsului finit in aval si in amonte pe baza surselor WMS si PRD disponibile."),
+        paragraph(f"Pentru produsul {report.exercise.code} / lot {report.exercise.lot}, raportul audit confirmă trasabilitatea produsului finit în aval și în amonte pe baza surselor WMS și PRD disponibile."),
         paragraph("Concluzia sintetizează rezultatul verificării pe baza datelor WMS și PRD disponibile. Ea nu înlocuiește verificarea documentelor fizice, ci indică ce a fost identificat și ce trebuie atașat dosarului de audit."),
         paragraph(f"Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}"),
         *bullets(compact_conclusion_observations(report, policy)),
@@ -493,7 +493,7 @@ def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditR
     raw_materials = [line for line in report.upstream if line.material_type == "Materie primă"]
     packaging = [line for line in report.upstream if line.material_type == "Ambalaj"]
     gases = [line for line in report.upstream if "gaz" in line.material_type.casefold()]
-    return [f"S-au identificat {len(raw_materials)} materii prime, {len(packaging)} ambalaje si {len(gases)} linii auxiliare/gaz in amonte.", "Receptiile WMS disponibile si stocurile la moment sunt afisate in Tabelul I si in fluxurile de loturi.", "Raportul poate fi folosit ca baza pentru pregatirea dosarului de audit, impreuna cu documentele fizice mentionate in registru."]
+    return [f"S-au identificat {len(raw_materials)} materii prime, {len(packaging)} ambalaje și {len(gases)} linii auxiliare/gaz în amonte.", "Recepțiile WMS disponibile și stocurile la moment sunt afișate în Tabelul I și în fluxurile de loturi.", "Raportul poate fi folosit ca bază pentru pregătirea dosarului de audit, împreună cu documentele fizice menționate în registru."]
 
 
 def build_build_info_section(build_info: BuildInfo) -> list[str]:
