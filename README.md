@@ -12,26 +12,29 @@ ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
 slice completat și merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
 status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
-micro-stage documentar curent: PREFLIGHT-UI-01A_STATUS_SYNC
+micro-stage documentar curent: PREFLIGHT-UI-01A_AND_REAL-TEST-PILOT-01_STATUS_SYNC
 claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
-următorul pas oficial: REAL-TEST-PILOT-01
+ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS
+următorul pas de proiect: decizie între PREFLIGHT-UI-01B / FULL-DIAGNOSTICS-MAIN-01 / REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
 ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 ultimul PR merge-uit de produs pe main: #113
-ultimul PR documentar / procedural merge-uit pe main: #116
-ultimele PR-uri relevante deja pe main: #113, #114, #115, #116
+ultimul PR documentar / procedural merge-uit pe main: #119
+ultimele PR-uri relevante deja pe main: #117, #118, #119
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar marchează clar `PREFLIGHT-UI-01A` ca merged / completed, dar nu promovează `PREFLIGHT-UI-01` la `DONE`.
+Acest sync documentar marchează clar `PREFLIGHT-UI-01A` ca merged / completed și consemnează rezultatul documentat al `REAL-TEST-PILOT-01`, dar nu promovează `PREFLIGHT-UI-01` la `DONE`.
 
-Documentul oficial pentru următorul pas este:
+Documentele oficiale relevante pentru pilot sunt:
 
 ```text
 docs/real_test_pilot_01.md
+docs/real_test_pilot_01_operator_checklist.md
+docs/real_test_pilot_01_execution_record.md
 ```
 
 ## Robocop operating role
@@ -46,6 +49,8 @@ docs/robocop_operating_manual.md
 docs/robocop_preflight_roles_and_skills.md
 docs/robocop_full_project_operating_system.md
 docs/real_test_pilot_01.md
+docs/real_test_pilot_01_operator_checklist.md
+docs/real_test_pilot_01_execution_record.md
 ```
 
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
@@ -78,6 +83,33 @@ fără schimbare de renderer DOCX
 ```
 
 Acest README sync nu afirmă validare oficială nouă pentru `PREFLIGHT-UI-01A` și nu marchează `PREFLIGHT-UI-01` ca `DONE`.
+
+## REAL-TEST-PILOT-01 status
+
+`REAL-TEST-PILOT-01` este acum documentat prin definiție, checklist scurt și execution record dedicat.
+
+Rezultatul documentat pentru pilot este:
+
+```text
+case: DS099903883 / 105.26
+commit: bc6d3d79b17f3b5e5c379e43f6ed3109f622031a
+build channel: github-actions-installer
+sources found: 4/4
+preflight: WARNING
+blockers: none
+Data Quality: ERROR explicit
+result: PASS_WITH_OBSERVATIONS
+artifacts retained: yes
+```
+
+Acest rezultat nu declară:
+
+```text
+production-ready
+daily-use internal release
+release finalized
+etapă produs DONE
+```
 
 ## Diagnostics orchestration
 
