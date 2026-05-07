@@ -29,10 +29,10 @@ merge commit for ERRORS-01_PR2_4: 31293753d54ad3c23e33f1f335263af86be4877b
 
 No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
 
-## PREFLIGHT-UI-01A status sync
+## PREFLIGHT-UI-01A and REAL-TEST-PILOT-01 status sync
 
 ```text
-micro-stage: PREFLIGHT-UI-01A_STATUS_SYNC
+micro-stage: PREFLIGHT-UI-01A_AND_REAL-TEST-PILOT-01_STATUS_SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -41,19 +41,21 @@ release claim: none
 
 Purpose:
 
-- mark `PREFLIGHT-UI-01A` clearly as merged and completed on `main`;
+- keep `PREFLIGHT-UI-01A` marked as merged and completed on `main`;
 - keep `PREFLIGHT-UI-01` open as the active product stage without a stage-level `DONE` claim;
-- synchronize `CHECKPOINT.md` and `README.md` with the post-merge state;
-- record the next project step explicitly as `REAL-TEST-PILOT-01`.
+- record that a dedicated execution record now exists for `REAL-TEST-PILOT-01`;
+- synchronize `CHECKPOINT.md` and `README.md` with the latest documented pilot state.
 
 Merged changes now part of `main` and relevant to this sync:
 
 - PR #113 — `PREFLIGHT-UI-01A`: map operator-facing preflight source status.
 - PR #114 — docs: consolidate Robocop full project operating system.
-- PR #115 — docs: sync `CHECKPOINT.md` and `README.md` after `PREFLIGHT-UI-01A` merge.
 - PR #116 — docs: sync `CHECKPOINT.md` and `README.md` for `REAL-TEST-PILOT-01`.
+- PR #117 — docs: define `REAL-TEST-PILOT-01` controlled real-case pilot.
+- PR #118 — docs: add short operator checklist for `REAL-TEST-PILOT-01`.
+- PR #119 — docs: add execution record for `REAL-TEST-PILOT-01`.
 
-`PREFLIGHT-UI-01A` is treated in this sync as:
+`PREFLIGHT-UI-01A` remains treated in official docs as:
 
 ```text
 merged
@@ -62,7 +64,16 @@ present on main
 not sufficient alone for PREFLIGHT-UI-01_DONE
 ```
 
-This checkpoint sync does not record new GitHub diagnostics evidence for `PREFLIGHT-UI-01A`, so no stage-level `DONE` promotion is made here.
+`REAL-TEST-PILOT-01` is now documented with:
+
+```text
+controlled real-case pilot defined
+short operator checklist present
+dedicated execution record present
+recorded result: PASS_WITH_OBSERVATIONS
+```
+
+This checkpoint sync still does not promote any product stage to `DONE`.
 
 ## Official project boundaries after sync
 
@@ -112,8 +123,34 @@ Current recorded state for that stage:
 
 ```text
 completed merged slice on main: PREFLIGHT-UI-01A
+dedicated real-case pilot documented: REAL-TEST-PILOT-01
 official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: none
 stage-level DONE claim: none
+```
+
+## REAL-TEST-PILOT-01 recorded state
+
+The dedicated execution record documents the following controlled result:
+
+```text
+case: DS099903883 / 105.26
+commit: bc6d3d79b17f3b5e5c379e43f6ed3109f622031a
+build channel: github-actions-installer
+sources found: 4/4
+preflight: WARNING
+blockers: none
+Data Quality: ERROR explicit
+result: PASS_WITH_OBSERVATIONS
+artifacts retained: yes
+```
+
+This recorded pilot result does not imply:
+
+```text
+production-ready
+daily-use internal release
+release finalized
+product-stage DONE
 ```
 
 ## Validation policy remains unchanged
@@ -168,23 +205,21 @@ The active product stage remains:
 PREFLIGHT-UI-01
 ```
 
-The next project step is now explicitly recorded as:
+The next project decision after this sync should be one of:
 
 ```text
-REAL-TEST-PILOT-01
+PREFLIGHT-UI-01B
+or
+FULL-DIAGNOSTICS-MAIN-01
+or
+REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
 ```
 
-Intent:
+Decision guidance:
 
-- run one controlled real-case pilot;
-- keep official-source usage explicit;
-- record operator steps and retained artifacts;
-- classify outcome as `PASS`, `BLOCKED`, or `ISSUE FOUND`;
-- generate Diagnostic ZIP when the defined conditions require it.
-
-Formal pilot definition:
-
-- `docs/real_test_pilot_01.md`
+- choose `PREFLIGHT-UI-01B` if the next goal is another small implementation slice inside preflight;
+- choose `FULL-DIAGNOSTICS-MAIN-01` if the next goal is stronger official diagnostics evidence on current `main`;
+- choose `REAL-CASE-VALIDATION-04_MATRIX_EXECUTION` if the next goal is to broaden the real-case validation set beyond this single pilot.
 
 ## Active documents
 
@@ -202,9 +237,11 @@ Formal pilot definition:
 - `docs/robocop_preflight_roles_and_skills.md`
 - `docs/robocop_full_project_operating_system.md`
 - `docs/real_test_pilot_01.md`
+- `docs/real_test_pilot_01_operator_checklist.md`
+- `docs/real_test_pilot_01_execution_record.md`
 
 ## Control note
 
-This checkpoint sync records `PREFLIGHT-UI-01A` as merged and completed on `main`, while keeping `PREFLIGHT-UI-01` open and pointing the project to `REAL-TEST-PILOT-01` next.
+This checkpoint sync records the documented existence and result of `REAL-TEST-PILOT-01` while preserving the same release guardrails.
 
 It does not promote the application, does not close release readiness, and does not claim `PREFLIGHT-UI-01` as `DONE`.
