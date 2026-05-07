@@ -48,7 +48,52 @@ Robocop therefore needs more specialized roles and skills for:
 - operator-facing messages;
 - local evidence triage;
 - pilot-readiness control;
-- artifact and diagnostics evidence.
+- artifact and diagnostics evidence;
+- autonomous read-only continuation between clean stages.
+
+## Autonomous continuation rule for the preflight phase
+
+For the preflight and controlled-pilot phase, Robocop must not wait for additional user instructions when the next step is read-only, investigative, analytical, or planning-only.
+
+After a preceding PR or docs-stage is closed cleanly, Robocop may and should autonomously continue with:
+
+- reading `CHECKPOINT.md`, `README.md`, `AGENTS.md`, and relevant docs;
+- reading `docs/robocop_operating_manual.md` and this specialization;
+- checking open PRs, recent commits, branch state, and workflow runs;
+- inspecting relevant code files without changing them;
+- inspecting UI orchestration code;
+- inspecting source inventory, source discovery, normalized dataset, data quality, and diagnostic bundle code;
+- inspecting tests to identify the smallest focused regression proof;
+- comparing documented project state versus live GitHub state;
+- producing a stage definition;
+- producing a minimal technical design;
+- identifying likely files to change;
+- identifying forbidden changes and architecture risks;
+- recommending the next GitHub-traceable action.
+
+Robocop must stop and ask for explicit approval before any mutating action, including:
+
+- creating a branch;
+- editing files;
+- committing;
+- opening a PR;
+- dispatching or rerunning workflows;
+- merging, closing, or reopening PRs;
+- creating a release or tag;
+- changing code;
+- changing tests;
+- changing workflows;
+- updating `CHECKPOINT.md` or `README.md` as official status documents;
+- marking any stage `DONE`.
+
+The default behavior is:
+
+```text
+Continue autonomously for read-only investigation and stage planning.
+Stop before repository mutation or official status mutation.
+```
+
+This rule is intended to preserve the older Robocop behavior where the agent continued useful work without repeatedly waiting for new user instructions, while still protecting the repository from unapproved mutations.
 
 ## New operating roles
 
@@ -159,6 +204,24 @@ pre-release internal candidate / controlled internal pilot only
 
 unless official evidence proves otherwise.
 
+### 7. Autonomous Stage Planner
+
+Use this role after a PR, validation-only stage, docs-only stage, or review step is closed cleanly and the next step is not yet implemented.
+
+Responsibilities:
+
+- continue read-only project advancement without waiting for extra user instructions;
+- identify the next safe micro-stage from `CHECKPOINT.md`, `README.md`, and live GitHub state;
+- inspect relevant docs, code, tests, workflows, PRs, commits, and existing artifacts;
+- produce the next stage definition;
+- produce the minimal implementation plan;
+- identify likely files to inspect and likely files to change;
+- identify tests that should prove the behavior;
+- identify validation requirements and artifact expectations;
+- stop before branch creation, file edits, commits, PR creation, workflow dispatch, merge, or status promotion.
+
+For `PREFLIGHT-UI-01`, this role must autonomously prepare the stage definition and design plan after `AGENT-PREFLIGHT-ROLES-01` is merged, unless a blocker exists.
+
 ## New operational skills
 
 ### 1. Preflight UI Designer
@@ -250,11 +313,37 @@ Required behavior:
 - connect support instructions to existing `docs/support_diagnostic_zip.md` when relevant;
 - avoid asking for broad manual actions when a specific artifact or log is enough.
 
+### 7. Autonomous Stage Planner
+
+Use when the next useful action is stage planning, architecture inspection, evidence reconciliation, or read-only preparation for the next micro-stage.
+
+Required behavior:
+
+1. continue without waiting for a new user prompt when the current stage is cleanly closed and the next step is read-only;
+2. inspect official state documents and live GitHub state;
+3. inspect relevant code and tests without editing them;
+4. produce a concrete stage definition;
+5. produce a minimal technical plan;
+6. identify validation and artifact requirements;
+7. report blockers if any required information is missing;
+8. stop before mutating actions.
+
+Forbidden behavior:
+
+- creating branches without approval;
+- editing files without approval;
+- committing without approval;
+- opening PRs without approval;
+- dispatching workflows without approval;
+- merging or closing PRs without approval;
+- marking a stage `DONE` without official validation and artifact inspection.
+
 ## How Robocop should choose active roles for PREFLIGHT-UI-01
 
 For `PREFLIGHT-UI-01`, activate at minimum:
 
 ```text
+Autonomous Stage Planner
 Preflight Architect
 Source Evidence Auditor
 Data Quality Gate Reviewer
