@@ -1,9 +1,4 @@
-"""Initial source data quality gate for TraceAI Control.
-
-The gate builds on Core inventory and NormalizedDataSet outputs. It reports
-source completeness, row counts, required column presence and invalid quantity
-values without blocking report generation.
-"""
+"""Initial source data quality gate for TraceAI Control."""
 
 from __future__ import annotations
 
@@ -18,7 +13,7 @@ from src.core.normalized_dataset import (
     is_quantity_column,
 )
 from src.core.source_discovery import find_official_source_path
-from src.core.source_inventory import OFFICIAL_SOURCES, InventoryReport, SourceInventory, build_inventory_report
+from src.core.source_inventory import InventoryReport, SourceInventory, build_inventory_report
 from src.quality.models import (
     DataQualityIssue,
     DataQualityReport,
@@ -27,7 +22,6 @@ from src.quality.models import (
     DataQualityStatus,
 )
 
-
 SOURCE_KEYS: dict[str, str] = {
     "trasabilitate_wms.csv": "wms",
     "rapoarte productie.csv": "production",
@@ -35,14 +29,12 @@ SOURCE_KEYS: dict[str, str] = {
     "stoc la moment original.xlsx": "stock",
 }
 
-
 REQUIRED_COLUMN_CHECKS: dict[str, tuple[str, ...]] = {
     "wms": ("code", "lot", "quantity"),
     "production": ("code", "lot", "quantity"),
     "stock": ("code", "lot", "quantity"),
     "nomenclator": ("code",),
 }
-
 
 CHECK_LABELS: dict[str, str] = {
     "code": "cod articol/produs",
@@ -52,8 +44,6 @@ CHECK_LABELS: dict[str, str] = {
 
 
 def run_data_quality_gate(source_directory: str | Path, dataset: NormalizedDataSet | None = None, inventory: InventoryReport | None = None) -> DataQualityReport:
-    """Generate a first-pass data quality report for official sources."""
-
     root = Path(source_directory).expanduser().resolve()
     inventory_report = inventory or build_inventory_report(root)
     issues: list[DataQualityIssue] = []
@@ -113,8 +103,12 @@ def issues_from_inventory_source(source: SourceInventory) -> list[DataQualityIss
 
 def issues_from_dataset(dataset: NormalizedDataSet) -> list[DataQualityIssue]:
     issues: list[DataQualityIssue] = []
+    tables_by_source: dict[str, list[NormalizedTable]] = {}
     for table in dataset.tables:
-        issues.extend(required_column_issues(table))
+        tables_by_source.setdefault(table.source_key, []).append(table)
+
+    for table in dataset.tables:
+        issues.extend(required_column_issues(table, tables_by_source))
         issues.extend(row_quality_issues(table))
         for problem in table.problems:
             issues.append(
@@ -138,7 +132,10 @@ def issues_from_dataset(dataset: NormalizedDataSet) -> list[DataQualityIssue]:
     return issues
 
 
-def required_column_issues(table: NormalizedTable) -> list[DataQualityIssue]:
+def required_column_issues(
+    table: NormalizedTable,
+    tables_by_source: dict[str, list[NormalizedTable]] | None = None,
+) -> list[DataQualityIssue]:
     checks = REQUIRED_COLUMN_CHECKS.get(table.source_key, ())
     missing: list[str] = []
     for check in checks:
@@ -148,9 +145,11 @@ def required_column_issues(table: NormalizedTable) -> list[DataQualityIssue]:
             missing.append(check)
         if check == "quantity" and not any(is_quantity_column(column.normalized_name) for column in table.columns):
             missing.append(check)
+
+    source_tables = tables_by_source or {table.source_key: [table]}
     return [
         DataQualityIssue(
-            severity=DataQualitySeverity.ERROR,
+            severity=missing_check_severity(table, check, source_tables),
             source_key=table.source_key,
             source_name=table.source_name,
             sheet_name=table.sheet_name,
@@ -159,6 +158,21 @@ def required_column_issues(table: NormalizedTable) -> list[DataQualityIssue]:
         )
         for check in missing
     ]
+
+
+def missing_check_severity(
+    table: NormalizedTable,
+    check: str,
+    tables_by_source: dict[str, list[NormalizedTable]],
+) -> DataQualitySeverity:
+    if table.source_key == "nomenclator" and check == "code":
+        sibling_tables = tables_by_source.get(table.source_key, [])
+        if any(
+            sibling is not table and any(is_code_column(column.normalized_name) for column in sibling.columns)
+            for sibling in sibling_tables
+        ):
+            return DataQualitySeverity.WARNING
+    return DataQualitySeverity.ERROR
 
 
 def row_quality_issues(table: NormalizedTable) -> list[DataQualityIssue]:
