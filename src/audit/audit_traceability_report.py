@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal, InvalidOperation
+import re
 from typing import Any, Iterable
 
 from src.rules.traceability_case import TraceabilityCase, TraceabilityReportTable, TraceabilityTableRow
@@ -431,11 +432,73 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
     )
     set_structured_receipt_fields(
         line,
-        received_quantity=value(row, "Cantitate recepționată consum"),
-        receipt_date=value(row, "Data recepție consum"),
-        supplier=value(row, "Furnizor recepție consum"),
+        received_quantity=structured_receipt_received_quantity(
+            value(row, "Cantitate recepționată consum"),
+            receipt_summary,
+        ),
+        receipt_date=structured_receipt_date(
+            value(row, "Data recepție consum"),
+            receipt_summary,
+        ),
+        supplier=structured_receipt_supplier(
+            value(row, "Furnizor recepție consum"),
+            receipt_summary,
+        ),
     )
     return line
+
+
+def structured_receipt_received_quantity(explicit_value: str, receipt_summary: str) -> str:
+    if explicit_value and explicit_value != MISSING:
+        return explicit_value
+    return receipt_total_quantity_from_summary(receipt_summary)
+
+
+def receipt_total_quantity_from_summary(receipt_summary: str) -> str:
+    if not receipt_summary or receipt_summary == MISSING:
+        return MISSING
+    prefix = receipt_summary.split(";", 1)[0].strip()
+    if not prefix.lower().startswith("total "):
+        return MISSING
+    quantity = prefix[len("total "):].strip()
+    return quantity or MISSING
+
+
+def structured_receipt_date(explicit_value: str, receipt_summary: str) -> str:
+    if explicit_value and explicit_value != MISSING:
+        return explicit_value
+    return receipt_date_from_summary(receipt_summary)
+
+
+def structured_receipt_supplier(explicit_value: str, receipt_summary: str) -> str:
+    if explicit_value and explicit_value != MISSING:
+        return explicit_value
+    return receipt_supplier_from_summary(receipt_summary)
+
+
+def receipt_first_example_from_summary(receipt_summary: str) -> str:
+    if not receipt_summary or receipt_summary == MISSING:
+        return ""
+    first_example = receipt_summary.split(";", 1)[1].strip() if ";" in receipt_summary else receipt_summary.strip()
+    return first_example.split(";", 1)[0].strip()
+
+
+def receipt_date_from_summary(receipt_summary: str) -> str:
+    first_example = receipt_first_example_from_summary(receipt_summary)
+    match = re.search(r"\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b|\b\d{4}-\d{1,2}-\d{1,2}\b", first_example)
+    return match.group(0) if match else MISSING
+
+
+def receipt_supplier_from_summary(receipt_summary: str) -> str:
+    first_example = receipt_first_example_from_summary(receipt_summary)
+    if not first_example:
+        return MISSING
+    document = first_example.rsplit(": ", 1)[0].strip() if ": " in first_example else first_example
+    detected_date = receipt_date_from_summary(receipt_summary)
+    if detected_date != MISSING:
+        document = document.replace(detected_date, "").strip(" /")
+    parts = [part.strip() for part in document.split("/") if part.strip()]
+    return parts[1] if len(parts) >= 2 else MISSING
 
 
 def set_structured_receipt_fields(
