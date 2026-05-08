@@ -73,6 +73,7 @@ class ChecklistUpstreamLine:
     lot: str
     name: str
     consumed_quantity: str
+    received_quantity: str
     receipt_date: str
     supplier: str
     document_type: str
@@ -194,8 +195,41 @@ def map_downstream_delivery(delivery: FinishedProductDelivery) -> ChecklistDowns
 
 
 def map_upstream_line(line: UpstreamMaterialLine) -> ChecklistUpstreamLine:
-    receipt = parse_receipt_summary(line.document_summary)
-    return ChecklistUpstreamLine(display_category(line.category), line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), receipt["receipt_date"], receipt["supplier"], receipt["document_type"], receipt["document_number"], receipt["document_date"], line.stock_at_moment, display_third_party_status(line.third_party_delivery_status), "; ".join(line.observations) if line.observations else "OK")
+    structured_receipt_exists = any(
+        value != MISSING
+        for value in [line.receipt_document_number, line.receipt_supplier, line.receipt_date, line.receipt_quantity]
+    )
+    if structured_receipt_exists:
+        receipt_date = line.receipt_date
+        supplier = line.receipt_supplier
+        document_type = "WMS recepție" if line.receipt_document_number != MISSING or line.receipt_quantity != MISSING else MISSING
+        document_number = line.receipt_document_number
+        document_date = line.receipt_date
+        received_quantity = line.receipt_quantity
+    else:
+        receipt = parse_receipt_summary(line.document_summary)
+        receipt_date = receipt["receipt_date"]
+        supplier = receipt["supplier"]
+        document_type = receipt["document_type"]
+        document_number = receipt["document_number"]
+        document_date = receipt["document_date"]
+        received_quantity = MISSING
+    return ChecklistUpstreamLine(
+        display_category(line.category),
+        line.code,
+        line.lot,
+        line.name,
+        join_quantity(line.quantity_consumed, line.um),
+        received_quantity,
+        receipt_date,
+        supplier,
+        document_type,
+        document_number,
+        document_date,
+        line.stock_at_moment,
+        display_third_party_status(line.third_party_delivery_status),
+        "; ".join(line.observations) if line.observations else "OK",
+    )
 
 
 def build_production_consumption(report: AuditTraceabilityReport) -> list[ChecklistProductionConsumption]:
