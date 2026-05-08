@@ -12,22 +12,24 @@ ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
 slice completat și merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
 status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
-micro-stage documentar curent: PP03-DOCX-ENRICHMENT-01A-STATUS-SYNC
+micro-stage documentar curent: PP03-DOCX-ENRICHMENT-01B-STATUS-SYNC
 claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
 ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS
 următorul pas de proiect: decizie între PREFLIGHT-UI-01B / FULL-DIAGNOSTICS-MAIN-01 / REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
-ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
-ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
-ultimul PR merge-uit de produs pe main: #123
-ultimul PR documentar / procedural merge-uit pe main: #122
-ultimele PR-uri relevante deja pe main: #121, #122, #123
+ultimul diagnostic produs oficial inspectat direct: run #257, full diagnostics 172 passed
+ultimul head validat oficial pentru acest sync limitat: d1adc08ed88844cca750b7e5fa761f61e00c5767
+ultimul PR merge-uit de produs pe main: #125
+ultimul PR documentar / procedural merge-uit pe main: #124
+ultimele PR-uri relevante deja pe main: #123, #124, #125
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar consemnează că `PP03-DOCX-ENRICHMENT-01A` a fost integrat tehnic pe `main` prin PR #123, dar nu afirmă validare oficială verde post-merge pentru acel PR și nu promovează nicio etapă la `DONE`.
+Acest sync documentar consemnează că `PP03-DOCX-ENRICHMENT-01B` a fost integrat tehnic pe `main` prin PR #125, merge-uit în commitul `d1adc08ed88844cca750b7e5fa761f61e00c5767` și validat post-merge prin TraceAI Diagnostics #257 pe cazul implicit `DS099903883 / 105.26`, cu `172 passed`, `reference_comparison.md = PASS`, artefacte DOCX/JSON generate și `real_audit_checklist_report.docx` care conține `Cantitate recepționată`.
+
+Limitare obligatorie pentru acest sync: aceasta este validare oficială de integrare pe `main`, nu validare PP03 dedicată separată. Acest sync nu promovează nicio etapă la `DONE` și nu face claim de release, production-ready sau daily-use.
 
 Documentul oficial relevant pentru această linie de lucru este:
 
@@ -85,20 +87,30 @@ Acest README sync nu afirmă validare oficială nouă pentru `PREFLIGHT-UI-01A` 
 
 ## PP03 DOCX status
 
-`PP03-DOCX-ENRICHMENT-01A` este acum integrat tehnic pe `main` prin PR #123.
+`PP03-DOCX-ENRICHMENT-01B` este acum integrat tehnic pe `main` prin PR #125.
 
-Acest merge consemnează doar:
+Acest sync consemnează limitat:
 
 ```text
-clarificare de prezentare în DOCX pentru câmpuri PP03 clasificate strict B și deja prezente în modelul curent
-regrupare / relabeling / wording / placement în checklist-ul DOCX existent
-fără folosirea PP-03 ca sursă de input
-fără schimbare de DTO sau JSON
-fără schimbare de calcule sau verdict rules
-fără schimbare de extraction logic, source mappings sau unit handling
+integrare tehnică pe main prin PR #125
+merge commit: d1adc08ed88844cca750b7e5fa761f61e00c5767
+main diagnostics #257 = success
+validation case: DS099903883 / 105.26
+pytest: 172 passed
+reference_comparison.md = PASS
+real_audit_checklist_report.docx și real_audit_checklist_ui.json generate
+real_audit_checklist_report.docx conține Cantitate recepționată
 ```
 
-Acest README sync nu afirmă validare oficială verde post-merge pentru PR #123 și nu pornește `PP03-DOCX-ENRICHMENT-01B`.
+Acest README sync nu afirmă:
+
+```text
+release
+production-ready
+daily-use
+dedicated separate PP03 scenario validation
+product DONE extins
+```
 
 ## REAL-TEST-PILOT-01 status
 
@@ -207,7 +219,7 @@ Liniile `REPORT-QUALITY-01E-1`, `REPORT-QUALITY-01E-2` și `REPORT-QUALITY-01E-3
 
 Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, textul aprobat din introducerea `Ghid rapid pentru auditor` și textul aprobat din `Rezumat de conformare checklist`.
 
-PR #123 adaugă pe `main` o clarificare de prezentare pentru `PP03-DOCX-ENRICHMENT-01A`, limitată la câmpuri deja existente în modelul curent și fără schimbare de logică sau de contracte.
+PR #123 adaugă pe `main` o clarificare de prezentare pentru `PP03-DOCX-ENRICHMENT-01A`, iar PR #125 adaugă sync-ul documentat aici pentru `PP03-DOCX-ENRICHMENT-01B`, limitat la dovada oficială de integrare pe `main` și fără claim de validare PP03 dedicată separată.
 
 ## UI
 
@@ -277,11 +289,12 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics-Smoke din run #220
-ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
-smoke pytest: 164 passed in 0.94s
-artifactul smoke conține pytest-output.txt și diagnostic-summary.md
-reference_comparison.md nu se aplică pe acest smoke-only path
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #257
+ultimul head validat oficial pentru acest sync limitat: d1adc08ed88844cca750b7e5fa761f61e00c5767
+pytest: 172 passed in 2.43s
+reference_comparison.md = PASS
+artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
+aceasta este validare oficială generică pe main, nu validare PP03 dedicată separată
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
