@@ -12,7 +12,7 @@ ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
 slice completat și merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
 status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
-micro-stage documentar curent: PREFLIGHT-UI-01A_AND_REAL-TEST-PILOT-01_STATUS_SYNC
+micro-stage documentar curent: PP03-DOCX-ENRICHMENT-01A-STATUS-SYNC
 claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
@@ -20,21 +20,19 @@ ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATI
 următorul pas de proiect: decizie între PREFLIGHT-UI-01B / FULL-DIAGNOSTICS-MAIN-01 / REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
 ultimul diagnostic produs oficial inspectat direct: run #220, smoke pytest 164 passed
 ultimul head validat oficial pentru ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
-ultimul PR merge-uit de produs pe main: #113
-ultimul PR documentar / procedural merge-uit pe main: #119
-ultimele PR-uri relevante deja pe main: #117, #118, #119
+ultimul PR merge-uit de produs pe main: #123
+ultimul PR documentar / procedural merge-uit pe main: #122
+ultimele PR-uri relevante deja pe main: #121, #122, #123
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar marchează clar `PREFLIGHT-UI-01A` ca merged / completed și consemnează rezultatul documentat al `REAL-TEST-PILOT-01`, dar nu promovează `PREFLIGHT-UI-01` la `DONE`.
+Acest sync documentar consemnează că `PP03-DOCX-ENRICHMENT-01A` a fost integrat tehnic pe `main` prin PR #123, dar nu afirmă validare oficială verde post-merge pentru acel PR și nu promovează nicio etapă la `DONE`.
 
-Documentele oficiale relevante pentru pilot sunt:
+Documentul oficial relevant pentru această linie de lucru este:
 
 ```text
-docs/real_test_pilot_01.md
-docs/real_test_pilot_01_operator_checklist.md
-docs/real_test_pilot_01_execution_record.md
+docs/pp03_data_gap_analysis_01.md
 ```
 
 ## Robocop operating role
@@ -51,6 +49,7 @@ docs/robocop_full_project_operating_system.md
 docs/real_test_pilot_01.md
 docs/real_test_pilot_01_operator_checklist.md
 docs/real_test_pilot_01_execution_record.md
+docs/pp03_data_gap_analysis_01.md
 ```
 
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
@@ -83,6 +82,23 @@ fără schimbare de renderer DOCX
 ```
 
 Acest README sync nu afirmă validare oficială nouă pentru `PREFLIGHT-UI-01A` și nu marchează `PREFLIGHT-UI-01` ca `DONE`.
+
+## PP03 DOCX status
+
+`PP03-DOCX-ENRICHMENT-01A` este acum integrat tehnic pe `main` prin PR #123.
+
+Acest merge consemnează doar:
+
+```text
+clarificare de prezentare în DOCX pentru câmpuri PP03 clasificate strict B și deja prezente în modelul curent
+regrupare / relabeling / wording / placement în checklist-ul DOCX existent
+fără folosirea PP-03 ca sursă de input
+fără schimbare de DTO sau JSON
+fără schimbare de calcule sau verdict rules
+fără schimbare de extraction logic, source mappings sau unit handling
+```
+
+Acest README sync nu afirmă validare oficială verde post-merge pentru PR #123 și nu pornește `PP03-DOCX-ENRICHMENT-01B`.
 
 ## REAL-TEST-PILOT-01 status
 
@@ -166,7 +182,7 @@ Cazurile cu date selectate dar clasificare ambiguă rămân blocate în engine p
 Sursele oficiale prezente dar ilizibile/corupte sunt blocate prin `DataQualityBlockingError` înainte de fallback generic.
 Validarea oficială pentru DONE este doar GitHub Actions / TraceAI Diagnostics cu artifact inspectat.
 Smoke-only validation nu înlocuiește full diagnostics când full diagnostics sunt necesare.
-PP-03 este în afara fluxului curent Report Quality.
+PP-03 rămâne output reference, nu input source.
 ```
 
 ## Raport DOCX audit
@@ -190,6 +206,8 @@ marcare explicită a cazurilor incomplete pentru audit strict
 Liniile `REPORT-QUALITY-01E-1`, `REPORT-QUALITY-01E-2` și `REPORT-QUALITY-01E-3` sunt validate oficial prin TraceAI Diagnostics.
 
 Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, textul aprobat din introducerea `Ghid rapid pentru auditor` și textul aprobat din `Rezumat de conformare checklist`.
+
+PR #123 adaugă pe `main` o clarificare de prezentare pentru `PP03-DOCX-ENRICHMENT-01A`, limitată la câmpuri deja existente în modelul curent și fără schimbare de logică sau de contracte.
 
 ## UI
 
