@@ -259,6 +259,9 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
         status = merge_third_party_status(line.third_party_delivery_status for line in group)
         details = merge_third_party_details(status, [line.third_party_delivery_details for line in group])
         receipt_summary = merge_text_summaries(line.receipt_summary for line in group)
+        structured_received_quantity = merge_text_summaries(receipt_received_quantity(line) for line in group)
+        structured_receipt_date = merge_text_summaries(receipt_date_value(line) for line in group)
+        structured_supplier = merge_text_summaries(receipt_supplier_value(line) for line in group)
         stock_summary = merge_text_summaries(line.stock_at_moment for line in group)
         observations = dedupe([observation for line in group for observation in line.observations])
         if status == THIRD_PARTY_NO and category == "raw_material":
@@ -269,24 +272,29 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
             observations.append("Lotul sursă nu apare în stocul la moment sau stocul nu a fost mapat încă.")
         if status == THIRD_PARTY_NOT_APPLICABLE and category != "raw_material" and not observations:
             observations.append("Verificarea livrărilor către terți nu se aplică pentru această categorie.")
-        aggregated.append(
-            UpstreamMaterialLine(
-                category=category,
-                code=code,
-                lot=lot,
-                name=name,
-                quantity_consumed=quantity,
-                um=normalized_um,
-                receipt_summary=receipt_summary,
-                supplier_summary=receipt_summary,
-                document_summary=receipt_summary,
-                third_party_delivery_status=status,
-                third_party_delivery_details=details,
-                stock_at_moment=stock_summary,
-                stock_um="",
-                observations=dedupe(observations),
-            )
+        aggregated_line = UpstreamMaterialLine(
+            category=category,
+            code=code,
+            lot=lot,
+            name=name,
+            quantity_consumed=quantity,
+            um=normalized_um,
+            receipt_summary=receipt_summary,
+            supplier_summary=receipt_summary,
+            document_summary=receipt_summary,
+            third_party_delivery_status=status,
+            third_party_delivery_details=details,
+            stock_at_moment=stock_summary,
+            stock_um="",
+            observations=dedupe(observations),
         )
+        set_structured_receipt_fields(
+            aggregated_line,
+            received_quantity=structured_received_quantity,
+            receipt_date=structured_receipt_date,
+            supplier=structured_supplier,
+        )
+        aggregated.append(aggregated_line)
     return aggregated
 
 
@@ -405,7 +413,7 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
         observations.append("Nu au fost identificate recepții WMS pentru acest lot consumat.")
     if stock_summary == MISSING:
         observations.append("Lotul consumat nu apare în stocul la moment sau stocul nu este disponibil.")
-    return UpstreamMaterialLine(
+    line = UpstreamMaterialLine(
         category=category,
         code=value(row, "Cod consum"),
         lot=value(row, "Lot consum"),
@@ -421,6 +429,37 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
         stock_um="",
         observations=observations,
     )
+    set_structured_receipt_fields(
+        line,
+        received_quantity=value(row, "Cantitate recepționată consum"),
+        receipt_date=value(row, "Data recepție consum"),
+        supplier=value(row, "Furnizor recepție consum"),
+    )
+    return line
+
+
+def set_structured_receipt_fields(
+    line: UpstreamMaterialLine,
+    *,
+    received_quantity: str = MISSING,
+    receipt_date: str = MISSING,
+    supplier: str = MISSING,
+) -> None:
+    object.__setattr__(line, "_receipt_received_quantity", received_quantity or MISSING)
+    object.__setattr__(line, "_receipt_date_structured", receipt_date or MISSING)
+    object.__setattr__(line, "_receipt_supplier_structured", supplier or MISSING)
+
+
+def receipt_received_quantity(line: UpstreamMaterialLine) -> str:
+    return getattr(line, "_receipt_received_quantity", MISSING)
+
+
+def receipt_date_value(line: UpstreamMaterialLine) -> str:
+    return getattr(line, "_receipt_date_structured", MISSING)
+
+
+def receipt_supplier_value(line: UpstreamMaterialLine) -> str:
+    return getattr(line, "_receipt_supplier_structured", MISSING)
 
 
 def build_finished_product_balance(traceability_case: TraceabilityCase, downstream: list[FinishedProductDelivery], production_orders: list[ProductionOrderTrace]) -> FinishedProductBalance:

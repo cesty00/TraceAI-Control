@@ -23,6 +23,7 @@ from src.audit.audit_checklist_report import (
     ChecklistProductionConsumption,
     ChecklistUpstreamLine,
     build_audit_checklist_report,
+    checklist_received_quantity,
 )
 from src.audit.audit_traceability_report import build_audit_traceability_report
 from src.core.build_info import BuildInfo, build_info_table_rows, get_build_info
@@ -411,10 +412,10 @@ def build_downstream_section(report: AuditChecklistReport, policy: AuditReportPo
 
 
 def build_upstream_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
-    rows = [[line.material_type, line.code, line.lot, policy.name(line.name), line.consumed_quantity, line.receipt_date, policy.name(line.supplier), line.document_type, line.document_number, line.document_date, policy.stock(line.stock_at_moment), line.third_party_delivery_status, policy.upstream_observation(line.observation)] for line in report.upstream]
+    rows = [[line.material_type, line.code, line.lot, policy.name(line.name), line.consumed_quantity, checklist_received_quantity(line), line.receipt_date, policy.name(line.supplier), line.document_type, line.document_number, line.document_date, policy.stock(line.stock_at_moment), line.third_party_delivery_status, policy.upstream_observation(line.observation)] for line in report.upstream]
     if not rows:
-        rows = [[MISSING] * 13]
-    return [paragraph("02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare", style="Heading1"), paragraph("Tabelul I urmărește loturile care au intrat în produsul finit: materii prime, ambalaje și materiale auxiliare, inclusiv gazul atunci când este folosit. Pentru fiecare lot sunt afișate clar materia primă sau ambalajul, cantitatea consumată și stocul lotului sursă, împreună cu contextul documentar deja prezent în model."), table(["Tip material", "Cod intern", "Lot sursă", "Materie primă / ambalaj", "Cantitate consumată", "Dată recepție", "Furnizor", "Tip document", "Număr document", "Dată document", "Stoc lot sursă", "Livrări terți", "Observații"], rows), *build_third_party_section(report, policy)]
+        rows = [[MISSING] * 14]
+    return [paragraph("02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare", style="Heading1"), paragraph("Tabelul I urmărește loturile care au intrat în produsul finit: materii prime, ambalaje și materiale auxiliare, inclusiv gazul atunci când este folosit. Pentru fiecare lot sunt afișate clar materia primă sau ambalajul, cantitatea consumată, cantitatea recepționată și stocul lotului sursă, împreună cu contextul documentar deja prezent în model."), table(["Tip material", "Cod intern", "Lot sursă", "Materie primă / ambalaj", "Cantitate consumată", "Cantitate recepționată", "Dată recepție", "Furnizor", "Tip document", "Număr document", "Dată document", "Stoc lot sursă", "Livrări terți", "Observații"], rows), *build_third_party_section(report, policy)]
 
 
 def build_third_party_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
