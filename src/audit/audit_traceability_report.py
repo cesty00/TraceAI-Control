@@ -89,6 +89,11 @@ class UpstreamMaterialLine:
     receipt_summary: str
     supplier_summary: str
     document_summary: str
+    receipt_document_number: str
+    receipt_supplier: str
+    receipt_date: str
+    receipt_quantity: str
+    receipt_count: str
     third_party_delivery_status: str
     third_party_delivery_details: str
     stock_at_moment: str
@@ -278,8 +283,13 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
                 quantity_consumed=quantity,
                 um=normalized_um,
                 receipt_summary=receipt_summary,
-                supplier_summary=receipt_summary,
+                supplier_summary=merge_single_structured_value(line.receipt_supplier for line in group),
                 document_summary=receipt_summary,
+                receipt_document_number=merge_single_structured_value(line.receipt_document_number for line in group),
+                receipt_supplier=merge_single_structured_value(line.receipt_supplier for line in group),
+                receipt_date=merge_single_structured_value(line.receipt_date for line in group),
+                receipt_quantity=merge_single_structured_value(line.receipt_quantity for line in group),
+                receipt_count=merge_single_structured_value(line.receipt_count for line in group),
                 third_party_delivery_status=status,
                 third_party_delivery_details=details,
                 stock_at_moment=stock_summary,
@@ -288,6 +298,13 @@ def aggregate_upstream_from_orders(production_orders: list[ProductionOrderTrace]
             )
         )
     return aggregated
+
+
+def merge_single_structured_value(values: Iterable[str]) -> str:
+    meaningful = dedupe([value_text.strip() for value_text in values if value_text and value_text.strip() and value_text.strip() != MISSING])
+    if len(meaningful) == 1:
+        return meaningful[0]
+    return MISSING
 
 
 def upstream_from_table(table: TraceabilityReportTable, category: str, include_third_party: bool) -> list[UpstreamMaterialLine]:
@@ -309,6 +326,11 @@ def upstream_from_table(table: TraceabilityReportTable, category: str, include_t
                 receipt_summary=MISSING,
                 supplier_summary=MISSING,
                 document_summary=MISSING,
+                receipt_document_number=MISSING,
+                receipt_supplier=MISSING,
+                receipt_date=MISSING,
+                receipt_quantity=MISSING,
+                receipt_count=MISSING,
                 third_party_delivery_status=third_party_status,
                 third_party_delivery_details=third_party_details,
                 stock_at_moment=MISSING,
@@ -413,8 +435,13 @@ def upstream_line_from_order_row(row: TraceabilityTableRow) -> UpstreamMaterialL
         quantity_consumed=value(row, "Cantitate consum"),
         um=value(row, "UM consum"),
         receipt_summary=receipt_summary,
-        supplier_summary=receipt_summary,
+        supplier_summary=value(row, "Furnizor recepție WMS consum"),
         document_summary=receipt_summary,
+        receipt_document_number=value(row, "Document recepție WMS consum"),
+        receipt_supplier=value(row, "Furnizor recepție WMS consum"),
+        receipt_date=value(row, "Data recepție WMS consum"),
+        receipt_quantity=value(row, "Cantitate recepționată WMS consum"),
+        receipt_count=value(row, "Număr recepții WMS consum"),
         third_party_delivery_status=third_party_status,
         third_party_delivery_details=third_party_details,
         stock_at_moment=stock_summary,
