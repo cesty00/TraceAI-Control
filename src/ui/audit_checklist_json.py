@@ -1,12 +1,4 @@
-"""JSON contract for the TraceAI audit checklist interface.
-
-The UI should consume this module instead of rebuilding traceability logic from
-raw TraceabilityCase tables. This keeps one source of truth:
-
-source files -> TraceabilityCase -> AuditTraceabilityReport -> AuditChecklistReport
-
-The same AuditChecklistReport feeds both the DOCX renderer and the UI JSON.
-"""
+"""JSON contract for the TraceAI audit checklist interface."""
 
 from __future__ import annotations
 
@@ -31,12 +23,11 @@ DEFAULT_DATA_QUALITY_SUMMARY = {
     "error_count": 0,
     "warning_count": 0,
     "issue_count": 0,
+    "issues": [],
 }
 
 
 def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lot: str) -> dict[str, Any]:
-    """Build the JSON payload consumed by the UI for one traceability case."""
-
     traceability_case = run_traceability_case(str(source_directory), code, lot)
     audit_report = build_audit_traceability_report(traceability_case)
     checklist_report = build_audit_checklist_report(audit_report)
@@ -45,13 +36,6 @@ def build_audit_checklist_ui_payload(source_directory: str | Path, code: str, lo
 
 
 def audit_checklist_ui_payload_from_report(report: AuditChecklistReport, data_quality: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Convert AuditChecklistReport into a UI-friendly stable payload.
-
-    The raw report dictionary is preserved under ``report`` so the UI can access
-    every field. The ``sections`` list gives the frontend a deterministic display
-    order and human-readable labels without duplicating business rules.
-    """
-
     report_dict = audit_checklist_report_to_dict(report)
     report_dict["data_quality"] = normalize_data_quality_summary(data_quality)
     return {
@@ -69,19 +53,35 @@ def audit_checklist_ui_payload_from_report(report: AuditChecklistReport, data_qu
 
 
 def normalize_data_quality_summary(data_quality: dict[str, Any] | None) -> dict[str, Any]:
-    """Return a stable Data Quality summary for UI display."""
-
     source = data_quality if isinstance(data_quality, dict) else {}
     summary = dict(DEFAULT_DATA_QUALITY_SUMMARY)
-    for key in summary:
+    for key in ("status", "source_count", "sources_found", "error_count", "warning_count", "issue_count"):
         if key in source:
             summary[key] = source[key]
+    summary["issues"] = normalize_data_quality_issues(source.get("issues"))
     return summary
 
 
-def build_ui_sections(report_dict: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return the display order expected by the application interface."""
+def normalize_data_quality_issues(issues: Any) -> list[dict[str, Any]]:
+    if not isinstance(issues, list):
+        return []
+    normalized: list[dict[str, Any]] = []
+    for issue in issues:
+        if not isinstance(issue, dict):
+            continue
+        normalized.append(
+            {
+                "severity": issue.get("severity"),
+                "source_name": issue.get("source_name"),
+                "sheet_name": issue.get("sheet_name"),
+                "column_name": issue.get("column_name"),
+                "message": issue.get("message"),
+            }
+        )
+    return normalized
 
+
+def build_ui_sections(report_dict: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         {
             "key": "conformity",
