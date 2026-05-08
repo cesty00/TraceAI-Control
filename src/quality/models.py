@@ -8,16 +8,12 @@ from typing import Any
 
 
 class DataQualityStatus(str, Enum):
-    """Top-level data quality status."""
-
     OK = "OK"
     WARNING = "WARNING"
     ERROR = "ERROR"
 
 
 class DataQualitySeverity(str, Enum):
-    """Severity for one data quality issue."""
-
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
@@ -25,8 +21,6 @@ class DataQualitySeverity(str, Enum):
 
 @dataclass(frozen=True)
 class DataQualityIssue:
-    """One explicit data quality issue with source context."""
-
     severity: DataQualitySeverity
     source_key: str
     source_name: str
@@ -39,8 +33,6 @@ class DataQualityIssue:
 
 @dataclass(frozen=True)
 class DataQualitySourceSummary:
-    """Compact source-level quality summary."""
-
     source_key: str
     source_name: str
     found: bool
@@ -52,8 +44,6 @@ class DataQualitySourceSummary:
 
 @dataclass(frozen=True)
 class DataQualityReport:
-    """Top-level data quality report."""
-
     status: DataQualityStatus
     source_count: int
     sources_found: int
@@ -68,9 +58,20 @@ class DataQualityReport:
     def warning_count(self) -> int:
         return sum(1 for issue in self.issues if issue.severity == DataQualitySeverity.WARNING)
 
-    def compact_summary(self) -> dict[str, Any]:
-        """Return a stable compact summary suitable for TraceabilityCase.sections."""
+    @property
+    def issue_summaries(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "severity": issue.severity.value,
+                "source_name": issue.source_name,
+                "sheet_name": issue.sheet_name,
+                "column_name": issue.column_name,
+                "message": issue.message,
+            }
+            for issue in self.issues
+        ]
 
+    def compact_summary(self) -> dict[str, Any]:
         return {
             "status": self.status.value,
             "source_count": self.source_count,
@@ -78,12 +79,11 @@ class DataQualityReport:
             "error_count": self.error_count,
             "warning_count": self.warning_count,
             "issue_count": len(self.issues),
+            "issues": self.issue_summaries,
         }
 
 
 def data_quality_report_to_dict(report: DataQualityReport) -> dict[str, Any]:
-    """Convert a data quality report to a JSON-safe dictionary."""
-
     payload = asdict(report)
     payload["status"] = report.status.value
     for issue in payload["issues"]:
