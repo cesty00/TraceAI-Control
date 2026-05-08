@@ -86,6 +86,7 @@ def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
     finished_delivery_by_order = assign_finished_deliveries(production_by_order, wms_rows, product_code, product_lot)
     raw_third_party = build_raw_material_third_party_delivery_index(wms_rows, component_rows)
     component_receipts = build_component_receipt_index(wms_rows, component_rows)
+    structured_component_receipts = build_component_structured_receipt_index(wms_rows, component_rows)
     component_stock = build_component_stock_index(stock_rows, component_rows)
 
     rows: list[ReportRowPayload] = []
@@ -119,6 +120,7 @@ def build_order_traceability_rows(result: Any) -> list[ReportRowPayload]:
                     component,
                     delivery_summary,
                     component_receipts.get(component_key, MISSING),
+                    structured_component_receipts.get(component_key),
                     component_stock.get(component_key, MISSING),
                     component["record"],
                 )
@@ -134,9 +136,11 @@ def build_payload(
     component: dict[str, Any] | None,
     third_party_summary: str,
     receipt_summary: str,
+    structured_receipt: dict[str, str] | None,
     stock_summary: str,
     record: SourceRow,
 ) -> ReportRowPayload:
+    receipt_fields = structured_receipt or empty_structured_receipt_fields()
     values = {
         "Comandă producție": order,
         "Produs finit": production["name"],
@@ -153,6 +157,9 @@ def build_payload(
         "UM consum": component["unit"] if component else MISSING,
         "Livrări consum către terți": third_party_summary or "NU",
         "Recepții WMS consum": receipt_summary or MISSING,
+        "Cantitate recepționată consum": receipt_fields["received_quantity"],
+        "Data recepție consum": receipt_fields["receipt_date"],
+        "Furnizor recepție consum": receipt_fields["supplier"],
         "Stoc consum la moment": stock_summary or MISSING,
     }
     return ReportRowPayload(values, record.source_key, record.source_name, record.sheet_name, record.row_number)
@@ -401,6 +408,52 @@ def build_component_receipt_index(wms_rows: list[SourceRow], component_rows: dic
         suffix = "" if len(receipts) <= 3 else f"; +{len(receipts) - 3} alte recepții"
         result[key] = f"total {totals_text}; " + "; ".join(examples) + suffix
     return result
+
+
+def build_component_structured_receipt_index(wms_rows: list[SourceRow], component_rows: dict[str, list[dict[str, Any]]]) -> dict[tuple[str, str], dict[str, str]]:
+    keys = component_keys(component_rows)
+    receipt_dates: dict[tuple[str, str], set[str]] = defaultdict(set)
+    suppliers: dict[tuple[str, str], set[str]] = defaultdict(set)
+    quantity_totals: dict[tuple[str, str], dict[str, Decimal]] = {key: defaultdict(lambda: Decimal("0")) for key in keys}
+    for row in wms_rows:
+        values = merged_values(row)
+        key = (value_by_alias(values, "cod_articol", "Cod articol"), value_by_alias(values, "lot", "Lot"))
+        if key not in quantity_totals:
+            continue
+        if value_by_alias(values, "tip_operatiune", "Tip operatiune").casefold() != "receptie":
+            continue
+        quantity = parse_decimal(value_by_alias(values, "cantitate", "Cantitate"))
+        unit = value_by_alias(values, "um", "UM")
+        if quantity is not None and unit:
+            quantity_totals[key][unit] += quantity
+        supplier = value_by_alias(values, "partener", "Partener")
+        if supplier:
+            suppliers[key].add(supplier)
+        receipt_date = first_non_empty(value_by_alias(values, *DATE_ALIASES), MISSING)
+        if receipt_date != MISSING:
+            receipt_dates[key].add(receipt_date)
+
+    result: dict[tuple[str, str], dict[str, str]] = {}
+    for key in keys:
+        if not quantity_totals[key] and not suppliers[key] and not receipt_dates[key]:
+            continue
+        received_quantity = "; ".join(
+            f"{format_decimal(quantity)} {unit}" for unit, quantity in sorted(quantity_totals[key].items())
+        ) or MISSING
+        result[key] = {
+            "received_quantity": received_quantity,
+            "receipt_date": "; ".join(sorted(receipt_dates[key])) or MISSING,
+            "supplier": "; ".join(sorted(suppliers[key])) or MISSING,
+        }
+    return result
+
+
+def empty_structured_receipt_fields() -> dict[str, str]:
+    return {
+        "received_quantity": MISSING,
+        "receipt_date": MISSING,
+        "supplier": MISSING,
+    }
 
 
 def format_receipt_example(document_in: str, document_order: str, supplier: str, quantity: Decimal, unit: str, receipt_date: str = MISSING) -> str:

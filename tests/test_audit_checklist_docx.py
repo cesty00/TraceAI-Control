@@ -97,6 +97,7 @@ def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
     xml = build_document_xml(report)
 
     for upstream_header in [
+        "Cantitate recepționată",
         "Dată recepție",
         "Furnizor",
         "Tip document",
@@ -147,6 +148,7 @@ def test_audit_checklist_docx_renders_split_receipt_fields_when_available() -> N
     xml = build_document_xml(report)
 
     assert "WMS recepție" in xml
+    assert "5000 Kilogram" in xml
     assert "300005747" in xml
     assert "Fish Invest LTD" in xml
     assert "125 Kilogram; loc. Depozit Principal" in xml
@@ -285,7 +287,6 @@ def test_audit_checklist_docx_pp03_01a_does_not_add_banned_pp03_fields() -> None
         "Country",
         "Țara de origine",
         "Country of origin",
-        "Cantitate recepționată",
         "Received quantity",
     ]:
         assert banned_text not in xml

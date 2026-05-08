@@ -21,6 +21,9 @@ from src.audit.audit_traceability_report import (
     AuditTraceabilityReport,
     FinishedProductDelivery,
     UpstreamMaterialLine,
+    receipt_date_value,
+    receipt_received_quantity,
+    receipt_supplier_value,
 )
 
 
@@ -195,7 +198,27 @@ def map_downstream_delivery(delivery: FinishedProductDelivery) -> ChecklistDowns
 
 def map_upstream_line(line: UpstreamMaterialLine) -> ChecklistUpstreamLine:
     receipt = parse_receipt_summary(line.document_summary)
-    return ChecklistUpstreamLine(display_category(line.category), line.code, line.lot, line.name, join_quantity(line.quantity_consumed, line.um), receipt["receipt_date"], receipt["supplier"], receipt["document_type"], receipt["document_number"], receipt["document_date"], line.stock_at_moment, display_third_party_status(line.third_party_delivery_status), "; ".join(line.observations) if line.observations else "OK")
+    checklist_line = ChecklistUpstreamLine(
+        display_category(line.category),
+        line.code,
+        line.lot,
+        line.name,
+        join_quantity(line.quantity_consumed, line.um),
+        receipt_date_value(line) if receipt_date_value(line) != MISSING else receipt["receipt_date"],
+        receipt_supplier_value(line) if receipt_supplier_value(line) != MISSING else receipt["supplier"],
+        receipt["document_type"],
+        receipt["document_number"],
+        receipt["document_date"],
+        line.stock_at_moment,
+        display_third_party_status(line.third_party_delivery_status),
+        "; ".join(line.observations) if line.observations else "OK",
+    )
+    object.__setattr__(checklist_line, "_receipt_received_quantity", receipt_received_quantity(line))
+    return checklist_line
+
+
+def checklist_received_quantity(line: ChecklistUpstreamLine) -> str:
+    return getattr(line, "_receipt_received_quantity", MISSING)
 
 
 def build_production_consumption(report: AuditTraceabilityReport) -> list[ChecklistProductionConsumption]:

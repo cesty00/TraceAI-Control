@@ -272,6 +272,9 @@ def test_build_audit_traceability_report_maps_core_audit_sections() -> None:
     assert report.production_orders[0].associated_delivery == "WME110972 / 38569 / LIDL ROMAN / -168 BUCATA"
     assert report.production_orders[0].raw_materials[0].third_party_delivery_status == THIRD_PARTY_NO
     assert report.production_orders[0].raw_materials[0].receipt_summary == "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-09: 5000 Kilogram"
+    assert getattr(report.production_orders[0].raw_materials[0], "_receipt_received_quantity") == "5000 Kilogram"
+    assert getattr(report.production_orders[0].raw_materials[0], "_receipt_date_structured") == "2026-04-09"
+    assert getattr(report.production_orders[0].raw_materials[0], "_receipt_supplier_structured") == "Fish Invest LTD"
     assert report.production_orders[0].packaging[0].code == "10002"
     assert report.production_orders[0].auxiliaries_gas[0].code == "60001"
     assert report.conclusion.status == STATUS_PASS

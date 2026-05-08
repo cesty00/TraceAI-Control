@@ -69,6 +69,7 @@ def test_audit_checklist_report_maps_upstream_columns_required_by_checklist() ->
     assert raw_material.third_party_delivery_status == "NU"
     assert raw_material.receipt_date == "2026-04-09"
     assert raw_material.supplier == "Fish Invest LTD"
+    assert getattr(raw_material, "_receipt_received_quantity") == "5000 Kilogram"
     assert raw_material.document_type == "WMS recepție"
     assert raw_material.document_number == "300005747"
     assert raw_material.document_date == "2026-04-09"
@@ -92,6 +93,7 @@ def test_audit_checklist_report_splits_wms_receipt_summary_when_available() -> N
     assert raw_material.document_number == "300005747"
     assert raw_material.supplier == "Fish Invest LTD"
     assert raw_material.receipt_date == "2026-04-10"
+    assert getattr(raw_material, "_receipt_received_quantity") == "5000 Kilogram"
     assert raw_material.document_date == "2026-04-10"
     assert raw_material.stock_at_moment == "125 Kilogram; locații: Depozit Principal"
 
