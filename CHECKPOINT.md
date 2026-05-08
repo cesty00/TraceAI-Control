@@ -27,21 +27,35 @@ validated head for ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 merge commit for ERRORS-01_PR2_4: 31293753d54ad3c23e33f1f335263af86be4877b
 ```
 
+Latest official main integration validation inspected directly in this checkpoint:
+
+```text
+TraceAI Diagnostics
+workflow run: #257
+commit on main: d1adc08ed88844cca750b7e5fa761f61e00c5767
+validation case: DS099903883 / 105.26
+pytest: 172 passed in 2.43s
+reference_comparison.md: PASS
+DOCX/JSON artifacts generated: yes
+scope of this evidence: official post-merge integration validation on main
+not claimed here: dedicated PP03 scenario validation
+```
+
 Latest merged product-facing PR now on `main`:
 
 ```text
-PR #123 — PP03-DOCX-ENRICHMENT-01A
-merge commit: 13c58866ea8d4e978fbc599b89ebee5f0a465e40
+PR #125 — PP03-DOCX-ENRICHMENT-01B
+merge commit: d1adc08ed88844cca750b7e5fa761f61e00c5767
 status in this checkpoint: technically integrated on main
-official post-merge green validation confirmed in this checkpoint: no
+official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
 
 No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
 
-## PP03-DOCX-ENRICHMENT-01A status sync
+## PP03-DOCX-ENRICHMENT-01B status sync
 
 ```text
-micro-stage: PP03-DOCX-ENRICHMENT-01A-STATUS-SYNC
+micro-stage: PP03-DOCX-ENRICHMENT-01B-STATUS-SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -50,8 +64,9 @@ release claim: none
 
 Purpose:
 
-- record that `PP03-DOCX-ENRICHMENT-01A` was merged into `main` via PR #123;
-- record that the integrated change is presentation-only in the current DOCX surface;
+- record that `PP03-DOCX-ENRICHMENT-01B` was merged into `main` via PR #125;
+- record that the integrated change adds structured WMS receipt fields in the current PP03 DOCX checklist surface;
+- record that official post-merge integration validation on `main` was confirmed through TraceAI Diagnostics #257;
 - preserve the existing validated baselines without promoting a new product stage to `DONE`;
 - synchronize `CHECKPOINT.md` and `README.md` with the post-merge repository state.
 
@@ -59,19 +74,24 @@ Merged changes now part of `main` and relevant to this sync:
 
 - PR #122 — docs: add `PP03-DATA-GAP-ANALYSIS-01`.
 - PR #123 — implement `PP03-DOCX-ENRICHMENT-01A` as a presentation-only DOCX refinement.
+- PR #125 — implement `PP03-DOCX-ENRICHMENT-01B` for structured WMS receipt fields in the DOCX path.
 
-`PP03-DOCX-ENRICHMENT-01A` is treated in this sync as:
+`PP03-DOCX-ENRICHMENT-01B` is treated in this sync as:
 
 ```text
 merged
 technically integrated on main
-presentation-only
-limited to current DOCX wording / grouping / relabeling / placement
+officially validated post-merge on main with limited-scope evidence
+limited to structured WMS receipt field propagation in the existing DOCX/audit path
 not a product-stage DONE claim
 not a release claim
 ```
 
-This checkpoint sync does not confirm an official green post-merge diagnostics result for PR #123.
+Mandatory limitation recorded in this checkpoint:
+
+```text
+This is official integration validation on main, not a dedicated separate PP03 validation scenario.
+```
 
 ## Official project boundaries after sync
 
@@ -127,18 +147,23 @@ Current recorded state for that stage:
 ```text
 completed merged slice on main: PREFLIGHT-UI-01A
 dedicated real-case pilot documented: REAL-TEST-PILOT-01
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: none
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for PP03-DOCX-ENRICHMENT-01B
 stage-level DONE claim: none
 ```
 
 ## PP03 recorded state on main
 
-The merged `PP03-DOCX-ENRICHMENT-01A` PR records a narrow presentation-only change in the current DOCX checklist surface.
+The merged `PP03-DOCX-ENRICHMENT-01B` PR records a narrow structured WMS receipt-field change in the current DOCX checklist surface.
 
 Integrated scope on `main`:
 
 ```text
-clearer display for B-class PP03 reference fields already present in the current TraceAI model
+Cantitate recepționată
+Data recepție
+Furnizor
+fields propagated from structured WMS receipt mapping where available
+receipt_summary retained for compatibility
+fallback compatibility kept narrow and not treated as stage-scope expansion
 no PP-03 input source added
 no source-of-truth change
 no DTO or JSON contract change
@@ -147,10 +172,21 @@ no extraction logic change
 no unit-handling change
 ```
 
+Official main validation evidence recorded in this sync:
+
+```text
+TraceAI Diagnostics #257 = success
+validation case: DS099903883 / 105.26
+pytest: 172 passed
+reference_comparison.md = PASS
+DOCX/JSON generated
+real_audit_checklist_report.docx contains Cantitate recepționată
+```
+
 This recorded PP03 state does not imply:
 
 ```text
-official green post-merge diagnostics
+dedicated separate PP03 validation scenario
 product-stage DONE
 production-ready
 daily-use internal release
@@ -194,8 +230,7 @@ until the missing release-readiness evidence is available and explicitly recorde
 
 The following remain relevant before any stronger release claim:
 
-- full diagnostics artifact on the latest `main` where applicable;
-- `reference_comparison.md = PASS` on the relevant full diagnostics path;
+- broader dedicated PP03 validation beyond the generic main integration case;
 - measured UI timing evidence;
 - artifact retention expectations for real Diagnostic ZIPs;
 - broader real-case validation matrix beyond the single local case;
@@ -214,16 +249,16 @@ The next project decision after this sync should be one of:
 ```text
 PREFLIGHT-UI-01B
 or
-FULL-DIAGNOSTICS-MAIN-01
-or
 REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
+or
+PP03-DEDICATED-VALIDATION decision handled separately
 ```
 
 Decision guidance:
 
 - choose `PREFLIGHT-UI-01B` if the next goal is another small implementation slice inside preflight;
-- choose `FULL-DIAGNOSTICS-MAIN-01` if the next goal is stronger official diagnostics evidence on current `main`;
-- choose `REAL-CASE-VALIDATION-04_MATRIX_EXECUTION` if the next goal is to broaden the real-case validation set beyond this single pilot.
+- choose `REAL-CASE-VALIDATION-04_MATRIX_EXECUTION` if the next goal is to broaden the real-case validation set beyond this single pilot;
+- choose a separate PP03 validation decision only if project control requires evidence beyond the limited-scope main integration validation already recorded here.
 
 ## Active documents
 
@@ -247,6 +282,6 @@ Decision guidance:
 
 ## Control note
 
-This checkpoint sync records the technical integration of `PP03-DOCX-ENRICHMENT-01A` on `main` while preserving the same release guardrails.
+This checkpoint sync records the technical integration of `PP03-DOCX-ENRICHMENT-01B` on `main` together with limited-scope official integration validation on `main`.
 
-It does not promote the application, does not close release readiness, and does not claim official green post-merge validation for PR #123.
+It does not promote the application, does not close release readiness, and does not claim dedicated separate PP03 validation beyond the generic main diagnostics evidence recorded here.
