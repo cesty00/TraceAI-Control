@@ -1,6 +1,6 @@
 # CHECKPOINT — TraceAI Control
 
-Data checkpoint: 2026-05-07
+Data checkpoint: 2026-05-08
 
 ## Current status
 
@@ -27,12 +27,21 @@ validated head for ERRORS-01_PR2_4: d9fef1be26fb1b3f3ace527d4bc521891f58ccd6
 merge commit for ERRORS-01_PR2_4: 31293753d54ad3c23e33f1f335263af86be4877b
 ```
 
-No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
-
-## PREFLIGHT-UI-01A and REAL-TEST-PILOT-01 status sync
+Latest merged product-facing PR now on `main`:
 
 ```text
-micro-stage: PREFLIGHT-UI-01A_AND_REAL-TEST-PILOT-01_STATUS_SYNC
+PR #123 — PP03-DOCX-ENRICHMENT-01A
+merge commit: 13c58866ea8d4e978fbc599b89ebee5f0a465e40
+status in this checkpoint: technically integrated on main
+official post-merge green validation confirmed in this checkpoint: no
+```
+
+No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
+
+## PP03-DOCX-ENRICHMENT-01A status sync
+
+```text
+micro-stage: PP03-DOCX-ENRICHMENT-01A-STATUS-SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -41,39 +50,28 @@ release claim: none
 
 Purpose:
 
-- keep `PREFLIGHT-UI-01A` marked as merged and completed on `main`;
-- keep `PREFLIGHT-UI-01` open as the active product stage without a stage-level `DONE` claim;
-- record that a dedicated execution record now exists for `REAL-TEST-PILOT-01`;
-- synchronize `CHECKPOINT.md` and `README.md` with the latest documented pilot state.
+- record that `PP03-DOCX-ENRICHMENT-01A` was merged into `main` via PR #123;
+- record that the integrated change is presentation-only in the current DOCX surface;
+- preserve the existing validated baselines without promoting a new product stage to `DONE`;
+- synchronize `CHECKPOINT.md` and `README.md` with the post-merge repository state.
 
 Merged changes now part of `main` and relevant to this sync:
 
-- PR #113 — `PREFLIGHT-UI-01A`: map operator-facing preflight source status.
-- PR #114 — docs: consolidate Robocop full project operating system.
-- PR #116 — docs: sync `CHECKPOINT.md` and `README.md` for `REAL-TEST-PILOT-01`.
-- PR #117 — docs: define `REAL-TEST-PILOT-01` controlled real-case pilot.
-- PR #118 — docs: add short operator checklist for `REAL-TEST-PILOT-01`.
-- PR #119 — docs: add execution record for `REAL-TEST-PILOT-01`.
+- PR #122 — docs: add `PP03-DATA-GAP-ANALYSIS-01`.
+- PR #123 — implement `PP03-DOCX-ENRICHMENT-01A` as a presentation-only DOCX refinement.
 
-`PREFLIGHT-UI-01A` remains treated in official docs as:
+`PP03-DOCX-ENRICHMENT-01A` is treated in this sync as:
 
 ```text
 merged
-completed
-present on main
-not sufficient alone for PREFLIGHT-UI-01_DONE
+technically integrated on main
+presentation-only
+limited to current DOCX wording / grouping / relabeling / placement
+not a product-stage DONE claim
+not a release claim
 ```
 
-`REAL-TEST-PILOT-01` is now documented with:
-
-```text
-controlled real-case pilot defined
-short operator checklist present
-dedicated execution record present
-recorded result: PASS_WITH_OBSERVATIONS
-```
-
-This checkpoint sync still does not promote any product stage to `DONE`.
+This checkpoint sync does not confirm an official green post-merge diagnostics result for PR #123.
 
 ## Official project boundaries after sync
 
@@ -93,6 +91,11 @@ Forbidden in this micro-stage:
 - data/source parsing changes;
 - DTO or JSON contract changes;
 - workflow changes;
+- source mappings changes;
+- extraction logic changes;
+- calculation changes;
+- unit-handling changes;
+- any use of PP-03 as an application input source;
 - any production-ready claim;
 - any daily-use release claim;
 - any release-finalized claim.
@@ -128,29 +131,30 @@ official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 
 stage-level DONE claim: none
 ```
 
-## REAL-TEST-PILOT-01 recorded state
+## PP03 recorded state on main
 
-The dedicated execution record documents the following controlled result:
+The merged `PP03-DOCX-ENRICHMENT-01A` PR records a narrow presentation-only change in the current DOCX checklist surface.
+
+Integrated scope on `main`:
 
 ```text
-case: DS099903883 / 105.26
-commit: bc6d3d79b17f3b5e5c379e43f6ed3109f622031a
-build channel: github-actions-installer
-sources found: 4/4
-preflight: WARNING
-blockers: none
-Data Quality: ERROR explicit
-result: PASS_WITH_OBSERVATIONS
-artifacts retained: yes
+clearer display for B-class PP03 reference fields already present in the current TraceAI model
+no PP-03 input source added
+no source-of-truth change
+no DTO or JSON contract change
+no verdict-rule change
+no extraction logic change
+no unit-handling change
 ```
 
-This recorded pilot result does not imply:
+This recorded PP03 state does not imply:
 
 ```text
+official green post-merge diagnostics
+product-stage DONE
 production-ready
 daily-use internal release
 release finalized
-product-stage DONE
 ```
 
 ## Validation policy remains unchanged
@@ -239,9 +243,10 @@ Decision guidance:
 - `docs/real_test_pilot_01.md`
 - `docs/real_test_pilot_01_operator_checklist.md`
 - `docs/real_test_pilot_01_execution_record.md`
+- `docs/pp03_data_gap_analysis_01.md`
 
 ## Control note
 
-This checkpoint sync records the documented existence and result of `REAL-TEST-PILOT-01` while preserving the same release guardrails.
+This checkpoint sync records the technical integration of `PP03-DOCX-ENRICHMENT-01A` on `main` while preserving the same release guardrails.
 
-It does not promote the application, does not close release readiness, and does not claim `PREFLIGHT-UI-01` as `DONE`.
+It does not promote the application, does not close release readiness, and does not claim official green post-merge validation for PR #123.
