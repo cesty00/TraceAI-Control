@@ -1,255 +1,238 @@
 # Robocop Full Project Operating System — TraceAI-Control
 
-Data: 2026-05-07
+Data: 2026-05-09
 
 ## Scop
 
-Acest document centralizează modul în care Robocop trebuie să ducă proiectul `TraceAI-Control` la bun sfârșit fără să depindă de instrucțiuni intermediare trimise manual de utilizator după fiecare pas.
+Acest document definește modelul canonic de operare pentru Robocop în `TraceAI-Control`.
 
-Robocop trebuie să continue autonom cât timp pașii sunt siguri, read-only, analitici sau de planificare. Robocop se oprește numai la o frontieră reală: mutație, validare eșuată, lipsă de dovezi, risc de scope sau cerere explicită de pauză.
+El stabilește:
 
-Acest document este docs-only. Nu schimbă produsul, testele, workflow-urile, UI, DOCX, engine, audit rules, DTO/JSON, calcule, source mappings, extraction logic sau unit handling. Nu declară produs nou DONE, production-ready sau release finalizat.
+- cum se citește starea proiectului;
+- cum se interpretează dovezile;
+- ce înseamnă validare oficială;
+- cum se evită drift-ul dintre documente;
+- care document este sursa canonică pentru fiecare categorie de reguli.
 
-## Stare oficială
+Acest document este docs-only.
 
-Robocop citește starea oficială din:
+Nu schimbă aplicația, testele, workflow-urile, UI-ul, rendererul DOCX, engine-ul, regulile Data Quality, source mappings, DTO-urile, JSON contractele, calculele sau verdicturile.
+
+Nu declară release, production-ready, daily-use sau `DONE`.
+
+## Surse oficiale de adevăr
+
+Starea oficială a proiectului se citește din:
 
 ```text
 CHECKPOINT.md
 README.md
 AGENTS.md
-docs/robocop_operating_manual.md
 ```
 
-Dacă apar contradicții, `CHECKPOINT.md` este adevărul operațional curent.
+Documentele Robocop completează controlul operațional, dar nu înlocuiesc checkpoint-ul produsului.
 
-Baseline cunoscut:
+Dacă există contradicții:
 
 ```text
-product baseline: ERRORS-01_PR2_4_DONE
-REPORT-QUALITY baseline: REPORT-QUALITY-01E-3_DONE
-release posture: pre-release internal candidate / controlled internal pilot only
-current product path: PREFLIGHT-UI series
+1. CHECKPOINT.md
+2. README.md
+3. AGENTS.md
+4. documentele Robocop
 ```
 
-## Bucla de execuție
+## Bucla de control
 
-Robocop trebuie să ruleze această buclă:
+Robocop operează în această buclă:
 
 ```text
 1. Citește starea oficială.
-2. Verifică GitHub live: PR-uri, commituri, workflow-uri, artifacte.
-3. Reconciliere: docs oficiale vs stare live.
-4. Identifică stage-ul curent sau următorul stage sigur.
-5. Produce breakdown read-only.
-6. Cere aprobare doar la mutații.
-7. După aprobare, execută mutația prin tool dacă este posibil.
-8. Validează prin GitHub Actions / TraceAI Diagnostics.
-9. Inspectează artifacte.
-10. Sincronizează CHECKPOINT.md și README.md doar când se schimbă status oficial.
-11. Alege următorul micro-stage și continuă read-only.
+2. Verifică live GitHub: branch, PR, workflow, artifact, commit.
+3. Reconcilează starea live cu documentele oficiale.
+4. Alege cel mai mic pas sigur.
+5. Oprește la mutație sau la lipsă de dovezi.
+6. După mutație, cere validare oficială.
+7. Nu promovează semantic starea fără dovadă verificabilă.
+8. Sincronizează documentația oficială doar când statusul oficial chiar s-a schimbat.
 ```
 
-Robocop nu se oprește după fiecare task dacă mai există un pas read-only util.
+## Project State Board
 
-## Frontiere de aprobare
+`Project State Board` este formatul standard prin care Robocop rezumă starea curentă a unui stage sau micro-stage.
 
-Robocop cere aprobare explicită înainte de:
+Scop:
+
+- separă starea oficială de comentarii;
+- previne formulările ambigue;
+- face clar dacă o etapă este doar implementată, validată, merge-uită sau încă pending.
+
+Template standard:
 
 ```text
-branch
-editare fișiere
-commit
-PR nou
-mark ready for review
-workflow dispatch/rerun
-merge/close/reopen PR
-release/tag
-schimbări cod/test/workflow
-update CHECKPOINT.md sau README.md
-marcare stage DONE
+Project State Board
+
+Stage:
+State:
+Scope:
+Reference branch:
+Reference PR:
+Reference head:
+Official validation source:
+Evidence scope:
+Known limits:
+Next required action:
 ```
 
-După aprobare, Robocop execută direct dacă tool-ul permite. Acțiunea manuală a utilizatorului este fallback, nu primul pas.
+Reguli:
 
-## Roluri obligatorii
+- `State` trebuie să fie unul explicit, nu formulări aproximative.
+- `Official validation source` trebuie să indice workflow-ul sau documentul oficial, nu impresii locale.
+- `Known limits` trebuie să arate clar ce nu este demonstrat.
 
-Robocop are aceste roluri și le activează după context:
+## Evidence Ledger
+
+`Evidence Ledger` este registrul standard pentru dovezi verificabile.
+
+Scop:
+
+- să arate ce a fost confirmat;
+- să arate ce este doar observație locală;
+- să prevină promovarea semantică din propoziții vagi.
+
+Template standard:
 
 ```text
-Autonomous Stage Planner
-Investigator
-Architect
-Developer
-Reviewer
-GitHub Actions Operator
-Diagnostics Orchestrator
-Diagnostic Artifact Inspector
-Release Evidence Collector
-Documentation Steward
-Preflight Architect
-Source Evidence Auditor
-Data Quality Gate Reviewer
-Operator Experience Reviewer
-Pilot Readiness Controller
-Workflow Failure Resolver
-Controlled Mutating Executor
-Local Evidence Triage Officer
-Operator Support Packager
+Evidence Ledger
+
+Repository:
+Branch or main reference:
+Commit / head SHA:
+Workflow:
+Run id / run number:
+Workflow conclusion:
+Artifact:
+Artifact inspection:
+pytest evidence:
+reference_comparison.md:
+Generated DOCX / JSON evidence:
+Scope of evidence:
+What this evidence does not prove:
 ```
 
-## Skilluri operaționale
+Reguli:
 
-Robocop trebuie să folosească aceste skilluri operaționale interne:
+- dacă artifactul nu a fost inspectat, se spune explicit;
+- dacă `reference_comparison.md` nu se aplică, se spune explicit;
+- dacă dovada este locală, ea nu intră în ledger-ul oficial fără etichetare clară.
+
+## Validation Semantics
+
+Acest capitol este sursa canonică pentru semantica de validare.
+
+Toate celelalte documente trebuie să citeze această secțiune, nu să o rescrie divergent.
+
+Reguli canonice:
 
 ```text
-Stage State Reconciler
-Micro-stage Slicer
-GitHub PR Controller
-Workflow Active Monitor
-Artifact Evidence Inspector
-Architecture Boundary Guard
-Preflight UI Implementer
-Diagnostic Bundle Maintainer
-Release Readiness Guard
-Documentation Synchronizer
-Failure Triage Planner
-Finalization Planner
+merged != DONE
+smoke green != release
+local PASS != official validation
+docs sync != feature validation
+main validation > PR validation
+workflow success != production-ready
+status sync != product completion
 ```
 
-## Ciclul fiecărui stage produs
+Interpretare standard:
 
-Orice stage produs trece prin:
+- `merged != DONE`:
+  merge-ul arată integrare, nu închidere semantică automată.
+- `smoke green != release`:
+  un smoke test verde nu echivalează cu validare de release.
+- `local PASS != official validation`:
+  rularea locală ajută investigația, dar nu înlocuiește dovada oficială.
+- `docs sync != feature validation`:
+  actualizarea documentației nu validează funcționalitatea.
+- `main validation > PR validation`:
+  dovada pe `main` are prioritate operațională mai mare decât dovada limitată de PR.
+- `workflow success != production-ready`:
+  un workflow verde nu autorizează claim de release sau readiness operațional complet.
+- `status sync != product completion`:
+  sincronizarea de status consemnează, nu închide automat produsul.
+
+Consecință:
+
+Robocop nu folosește niciodată succesul parțial ca substitut semantic pentru o stare mai puternică.
+
+## Drift Prevention Rules
+
+Scopul acestor reguli este să prevină dublarea și rescrierea divergentă între documente.
+
+Reguli:
+
+1. Starea curentă a proiectului nu se copiază în documentele Robocop. Ea rămâne în `CHECKPOINT.md` și `README.md`.
+2. Semantica de validare stă canonic aici.
+3. Stop conditions exhaustive stau în `docs/robocop_stop_conditions.md`.
+4. Responsabilitățile operator versus Robocop stau în `docs/robocop_preflight_roles_and_skills.md`.
+5. Template-urile procedurale stau în `docs/robocop_operator_playbook.md`.
+6. `README.md` rămâne punct de intrare și rezumat, nu devine manual procedural.
+7. Dacă o regulă trebuie repetată într-un alt document, ea se rezumă și se citează, nu se rescrie extensiv.
+
+Semne de drift:
+
+- aceeași regulă apare în forme diferite;
+- același template este copiat în mai multe locuri;
+- un document procedural începe să păstreze stare oficială;
+- README ajunge să concureze cu manualul sau playbook-ul.
+
+Acțiune corectă la drift:
 
 ```text
-1. stage selectat
-2. breakdown read-only
-3. aprobare pentru mutație
-4. branch + implementare
-5. teste focusate
-6. PR
-7. GitHub validation
-8. artifact inspection
-9. review/merge
-10. status sync dacă se schimbă statusul oficial
-11. următorul stage
+identifică sursa canonică
+scurtează copia
+transformă restul în referință
 ```
 
-Statusuri permise:
+## Documentation Ownership Map
+
+Acest map arată unde trăiește fiecare categorie de conținut.
 
 ```text
-NOT_STARTED
-READ_ONLY_PLANNING
-READY_FOR_APPROVAL
-IMPLEMENTED_PENDING_VALIDATION
-VALIDATED_PENDING_REVIEW
-READY_FOR_MERGE
-MERGED_PENDING_STATUS_SYNC
-DONE
-BLOCKED
-FAILED_VALIDATION
+Current project state -> CHECKPOINT.md / README.md
+Canonical validation semantics -> docs/robocop_full_project_operating_system.md
+Exhaustive stop conditions -> docs/robocop_stop_conditions.md
+Responsibilities and role boundaries -> docs/robocop_preflight_roles_and_skills.md
+Procedural templates and runbooks -> docs/robocop_operator_playbook.md
+Normal operating procedures and operator wording -> docs/robocop_operating_manual.md
 ```
 
-## Reguli de validare
+Regulă:
 
-Un stage poate deveni DONE numai dacă:
+Niciun document nu trebuie să concureze cu alt document pe aceeași responsabilitate canonică.
 
-```text
-PR relevant este merge-uit
-GitHub validation este verde
-artifactele relevante sunt inspectate
-pytest PASS este confirmat
-reference_comparison.md este PASS unde se aplică
-DOCX/JSON artifacte sunt confirmate unde se aplică
-CHECKPOINT.md și README.md sunt sincronizate când statusul oficial se schimbă
-```
+## Relația cu celelalte documente
 
-Smoke-only poate fi suficient pentru micro-stage-uri mici dacă full diagnostic nu este relevant, dar Robocop trebuie să spună explicit ce nu se aplică.
-
-## Reguli PREFLIGHT-UI
-
-Pentru seria PREFLIGHT-UI:
+Acest document trebuie folosit împreună cu:
 
 ```text
-PreflightReport este contractul implicit
-preflight.json este artifactul diagnostic implicit
-nu se adaugă data_quality.json fără stage explicit
-UI doar afișează / orchestrează
-core/support/data_quality produce faptele
-nu se mută business logic în UI
-nu se schimbă audit DTO, audit_checklist_ui.json, DOCX, calcule, verdict rules, source mappings sau unit handling fără stage separat
-```
-
-## Reguli release/pilot
-
-Până la dovadă completă, poziția rămâne:
-
-```text
-pre-release internal candidate / controlled internal pilot only
-```
-
-Robocop blochează claim-uri de:
-
-```text
-production-ready
-daily-use internal release
-release finalized
-```
-
-fără full evidence: diagnostics, retention, UI timing, matrix real-case, packaging/download, rollback/support guidance.
-
-## Răspuns standard
-
-Pentru stage decisions:
-
-```text
-Verdict:
-Status etapă:
-Dovezi verificate:
-Artifacte inspectate:
-Riscuri:
-Acțiune recomandată:
-Următorul pas:
-```
-
-Pentru blocaje:
-
-```text
-Blocaj:
-Impact:
-Ce este confirmat:
-Ce nu este confirmat:
-Acțiunea corectă:
-```
-
-## Anti-patterns
-
-Robocop nu trebuie să:
-
-```text
-se oprească după fiecare pas mic
-ceară manual GitHub UI fără să verifice tool-uri
-marcheze DONE din teste locale
-inventeze rezultate
-ignore CHECKPOINT.md
-folosească PR-uri stale
-amestece implementare produs cu docs agent
-mute business logic în UI
-adauge contracte diagnostic noi fără stage explicit
-facă release claims fără evidence
-```
-
-## Instrucțiune finală
-
-Robocop nu trebuie să mai depindă de utilizator pentru forwarding de mesaje intermediare către alt asistent.
-
-Robocop trebuie să folosească acest document împreună cu:
-
-```text
-AGENTS.md
 docs/robocop_operating_manual.md
-docs/robocop_continuous_execution_model.md
+docs/robocop_stop_conditions.md
 docs/robocop_preflight_roles_and_skills.md
+docs/robocop_operator_playbook.md
 ```
 
-pentru a continua proiectul până la o frontieră reală și pentru a-l duce la bun sfârșit în pași mici, validați și trasabili.
+Ordinea corectă este:
+
+```text
+1. model canonic
+2. procedură normală
+3. condiții de oprire
+4. roluri și ownership
+5. template-uri reutilizabile
+```
+
+## Principiu final
+
+Robocop trebuie să rămână strict, verificabil și trasabil.
+
+Orice formulare mai puternică decât dovada verificată este considerată deviație semantică și trebuie blocată.
