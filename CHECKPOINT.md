@@ -13,7 +13,7 @@ Current active product stage on current `main`:
 ```text
 PREFLIGHT-UI-01
 status: active on main
-completed merged slice on main: PREFLIGHT-UI-01A via PR #113
+completed merged slice on main: PREFLIGHT-UI-01B via PR #129
 remaining stage-level DONE claim: none
 ```
 
@@ -31,32 +31,33 @@ Latest official main integration validation inspected directly in this checkpoin
 
 ```text
 TraceAI Diagnostics
-workflow run: 25574554193
-commit on main: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
+workflow run: 25593679232
+commit on main: 37b12def62ab70789cf03ba501ccf573bc495e39
 validation case: DS099903883 / 105.26
-pytest: 173 passed in 1.91s
+pytest: 179 passed in 1.94s
 reference_comparison.md: PASS
 artifact TraceAI-Diagnostics: generated
+real_audit_checklist_report.docx: generated
 real_audit_checklist_ui.json: generated
-scope of this evidence: official post-merge integration validation on main for DATA-QUALITY-SEVERITY-TRIAGE-02
+scope of this evidence: official post-merge integration validation on main for PREFLIGHT-UI-01B
 not claimed here: release / production-ready / daily-use / extended product DONE
 ```
 
 Latest merged product-facing PR now on `main`:
 
 ```text
-PR #127 — DATA-QUALITY-SEVERITY-TRIAGE-02
-merge commit: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
+PR #129 — PREFLIGHT-UI-01B
+merge commit: 37b12def62ab70789cf03ba501ccf573bc495e39
 status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
 
 No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
 
-## DATA-QUALITY-SEVERITY-TRIAGE-02 status sync
+## PREFLIGHT-UI-01B status sync
 
 ```text
-micro-stage: DATA-QUALITY-SEVERITY-TRIAGE-02-STATUS-SYNC
+micro-stage: PREFLIGHT-UI-01B-STATUS-SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -65,24 +66,27 @@ release claim: none
 
 Purpose:
 
-- record that `DATA-QUALITY-SEVERITY-TRIAGE-02` was merged into `main` via PR #127;
-- record that official post-merge integration validation on `main` was confirmed through TraceAI Diagnostics run `25574554193`;
-- record that `real_audit_checklist_ui.json` confirms the textual Data Quality issue list in `report.data_quality.issues`;
-- record that `Sheet2` from `nomenclator.xlsx` appears as `WARNING`, not `ERROR`, when a valid primary sheet exists in the same workbook;
-- preserve the existing validated baselines without promoting a new product stage to `DONE`;
-- synchronize `CHECKPOINT.md` and `README.md` with the post-merge repository state.
+- record that `PREFLIGHT-UI-01B` was merged into `main` via PR #129;
+- record that official post-merge integration validation on `main` was confirmed through TraceAI Diagnostics run `25593679232`;
+- record that `Tests and diagnostic report = success` for the official run on `main`;
+- record that `pytest` finished green with `179 passed in 1.94s`;
+- record that `reference_comparison.md = PASS`;
+- record that artifact `TraceAI-Diagnostics` was generated and inspected;
+- record that `real_audit_checklist_report.docx` and `real_audit_checklist_ui.json` were generated;
+- record that DOCX generation in the UI is gated by the latest relevant preflight for `source_directory + code + lot`;
+- synchronize `CHECKPOINT.md` and `README.md` with the validated post-merge repository state.
 
 Merged changes now part of `main` and relevant to this sync:
 
-- PR #127 — implement `DATA-QUALITY-SEVERITY-TRIAGE-02` for auxiliary nomenclator-sheet severity refinement and additive textual issue-list evidence in the audit checklist UI JSON path.
+- PR #129 — implement `PREFLIGHT-UI-01B` for DOCX-generation gating based on the current relevant preflight result bound to `source_directory`, `code`, and `lot`.
 
-`DATA-QUALITY-SEVERITY-TRIAGE-02` is treated in this sync as:
+`PREFLIGHT-UI-01B` is treated in this sync as:
 
 ```text
 merged
 technically integrated on main
 officially validated post-merge on main with limited-scope evidence
-limited to Data Quality severity refinement for auxiliary nomenclator sheets and additive textual issue-list evidence in the audit checklist UI JSON path
+limited to UI-side gating of DOCX generation by the latest relevant preflight for source_directory + code + lot
 not a product-stage DONE claim
 not a release claim
 ```
@@ -119,7 +123,8 @@ Forbidden in this micro-stage:
 - any daily-use release claim;
 - any release-finalized claim;
 - any automatic closure of `PREFLIGHT-UI-01`;
-- any PP03 01B rewrite or stage-scope reinterpretation.
+- any stage-level `DONE` claim for `PREFLIGHT-UI-01`;
+- any extended product DONE claim.
 
 ## Product baseline and active stage
 
@@ -146,27 +151,25 @@ PREFLIGHT-UI-01
 Current recorded state for that stage:
 
 ```text
-completed merged slice on main: PREFLIGHT-UI-01A
+completed merged slice on main: PREFLIGHT-UI-01B
 dedicated real-case pilot documented: REAL-TEST-PILOT-01
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for DATA-QUALITY-SEVERITY-TRIAGE-02
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for PREFLIGHT-UI-01B
 stage-level DONE claim: none
 ```
 
-## Data Quality recorded state on main
+## PREFLIGHT-UI recorded state on main
 
-The merged PR #127 records a narrow Data Quality severity refinement and additive issue-list evidence in the current audit checklist UI JSON surface.
+The merged PR #129 records a narrow UI orchestration change for DOCX-generation gating against the latest relevant preflight.
 
 Integrated scope on `main`:
 
 ```text
-auxiliary nomenclator sheet without a usable code column is downgraded to WARNING when a sibling nomenclator sheet already provides a usable code column
-nomenclator workbook with no usable code sheet remains ERROR
-real_audit_checklist_ui.json confirms textual Data Quality issues under report.data_quality.issues
-Sheet2 from nomenclator.xlsx appears as WARNING, not ERROR, in the validated post-merge run when the primary valid sheet exists
-report.data_quality.status = WARNING
-error_count = 0
-warning_count = 8
-issue_count = 8
+DOCX generation is blocked when no current preflight exists for the current source_directory / code / lot values
+DOCX generation is blocked when the current preflight contains blockers
+DOCX generation requires explicit confirmation when the current preflight status is WARNING
+DOCX generation continues when the current preflight status is OK
+changing source_directory / code / lot invalidates the cached preflight used by the DOCX gate
+Diagnostic ZIP remains outside this gate
 no release claim
 no production-ready claim
 no daily-use claim
@@ -175,17 +178,17 @@ no daily-use claim
 Official main validation evidence recorded in this sync:
 
 ```text
-TraceAI Diagnostics run 25574554193 = success
+TraceAI Diagnostics run 25593679232 = success
 validation case: DS099903883 / 105.26
-pytest: 173 passed in 1.91s
+Tests and diagnostic report = success
+pytest: 179 passed in 1.94s
 reference_comparison.md = PASS
 artifact TraceAI-Diagnostics generated
-real_audit_checklist_report.docx and real_audit_checklist_ui.json generated
-real_audit_checklist_ui.json confirms the textual Data Quality issue list in report.data_quality.issues
-Sheet2 / nomenclator.xlsx is WARNING, not ERROR, when the primary valid sheet exists
+real_audit_checklist_report.docx generated
+real_audit_checklist_ui.json generated
 ```
 
-This recorded Data Quality state does not imply:
+This recorded PREFLIGHT-UI state does not imply:
 
 ```text
 product-stage DONE
@@ -247,21 +250,7 @@ The active product stage remains:
 PREFLIGHT-UI-01
 ```
 
-The next project decision after this sync should be one of:
-
-```text
-PREFLIGHT-UI-01B
-or
-REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
-or
-PP03-DEDICATED-VALIDATION decision handled separately
-```
-
-Decision guidance:
-
-- choose `PREFLIGHT-UI-01B` if the next goal is another small implementation slice inside preflight;
-- choose `REAL-CASE-VALIDATION-04_MATRIX_EXECUTION` if the next goal is to broaden the real-case validation set beyond this single pilot;
-- choose a separate PP03 validation decision only if project control requires evidence beyond the limited-scope main integration validation already recorded here.
+The next project decision after this sync should be handled separately as a new approved micro-stage.
 
 ## Active documents
 
@@ -285,6 +274,6 @@ Decision guidance:
 
 ## Control note
 
-This checkpoint sync records the technical integration of `DATA-QUALITY-SEVERITY-TRIAGE-02` on `main` together with limited-scope official integration validation on `main`.
+This checkpoint sync records the technical integration of `PREFLIGHT-UI-01B` on `main` together with limited-scope official integration validation on `main`.
 
-It does not promote the application, does not close release readiness, does not close `PREFLIGHT-UI-01`, does not rewrite PP03 01B scope, and does not claim release, production-ready, daily-use, or final legal/commercial validation.
+It does not promote the application, does not close release readiness, does not close `PREFLIGHT-UI-01`, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, or final legal/commercial validation.
