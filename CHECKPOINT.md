@@ -47,24 +47,28 @@ Latest official main integration validation inspected directly in this checkpoin
 
 ```text
 TraceAI Diagnostics
-workflow run: #302 / 25608540779
-commit on main: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+workflow run: #307 / 25610639092
+commit on main: 3244c7b188f4c2015bdd83223637d9bf40a15e05
 Tests and diagnostic report: success
-pytest: 203 passed in 4.86s
+pytest: 206 passed in 2.02s
 reference_comparison.md: PASS
-artifact TraceAI-Diagnostics / 6897757137: generated and inspected
+artifact TraceAI-Diagnostics / 6898339805: generated and inspected
 real_audit_checklist_report.docx: generated
 real_audit_checklist_ui.json: generated
-document register in DOCX: grouped by Documente required / Documente recommended
-scope of this evidence: official post-merge integration validation on main for DOCX-DATA-ENRICHMENT-01C docs sync boundary
-not claimed here: DONE / release / production-ready / daily-use / hardening complete / DTO or JSON change / UI behavior change / Data Quality logic change / verdict-rules change
+local/operator DOCX Data Quality summary wiring fix: validated
+DOCX summary: WARNING / 4/4 / 0 / 8 / 8
+DOCX summary NOT_AVAILABLE when data_quality exists: absent
+UI JSON data_quality: WARNING / 4 / 4 / 0 / 8 / 8
+Documente required before Documente recommended: preserved
+scope of this evidence: official post-merge integration validation on main for DOCX-DATA-ENRICHMENT-01B wiring-fix docs sync boundary
+not claimed here: DONE / release / production-ready / daily-use / hardening complete / Data Quality logic change / DTO or JSON change / UI behavior change / verdict-rules change / warning-taxonomy change / 01C document-register change
 ```
 
 Latest merged product-facing PR now on `main`:
 
 ```text
-PR #140 — DOCX-DATA-ENRICHMENT-01C
-merge commit: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+PR #142 — DOCX-DATA-ENRICHMENT-01B local/operator DQ summary wiring fix
+merge commit: 3244c7b188f4c2015bdd83223637d9bf40a15e05
 status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
@@ -99,6 +103,75 @@ official post-merge green validation confirmed in this checkpoint: yes, limited-
 ```
 
 No product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, hardening-complete claim, or extended product `DONE` is made by this checkpoint refresh.
+
+## DOCX-DATA-ENRICHMENT-01B-WIRING-FIX status sync
+
+```text
+micro-stage: DOCX-DATA-ENRICHMENT-01B-WIRING-FIX-STATUS-SYNC
+scope: documentation sync only
+status: documented
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #142 was merged into `main`;
+- record merge commit `3244c7b188f4c2015bdd83223637d9bf40a15e05`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `#307 / 25610639092`;
+- record that `Tests and diagnostic report = success` for the official run on `main`;
+- record that `pytest` finished green with `206 passed in 2.02s`;
+- record that `reference_comparison.md = PASS`;
+- record that artifact `TraceAI-Diagnostics / 6898339805` was generated and inspected;
+- record that `real_audit_checklist_report.docx` and `real_audit_checklist_ui.json` were generated;
+- record that the local/operator DOCX Data Quality summary wiring fix was validated on official artifacts;
+- record that the DOCX summary shows `WARNING / 4/4 / 0 / 8 / 8`;
+- record that the DOCX no longer shows `NOT_AVAILABLE` when `data_quality` exists;
+- record that the UI JSON `data_quality` remains `WARNING / 4 / 4 / 0 / 8 / 8`;
+- record that `Documente required` remains before `Documente recommended`;
+- keep explicit that this sync does not claim `DONE`, release, production-ready, daily-use, hardening complete, Data Quality logic change, DTO/JSON change, UI behavior change, verdict-rules change, warning-taxonomy change, or 01C document-register change.
+
+Recorded evidence for this sync:
+
+```text
+PR #142: merged on main
+merge commit: 3244c7b188f4c2015bdd83223637d9bf40a15e05
+TraceAI Diagnostics: #307 / 25610639092
+Tests and diagnostic report: success
+pytest: 206 passed in 2.02s
+reference_comparison.md: PASS
+artifact TraceAI-Diagnostics / 6898339805: generated and inspected
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated
+local/operator DOCX Data Quality summary wiring fix: validated
+DOCX summary: WARNING / 4/4 / 0 / 8 / 8
+DOCX summary NOT_AVAILABLE when data_quality exists: absent
+UI JSON data_quality: WARNING / 4 / 4 / 0 / 8 / 8
+Documente required before Documente recommended: preserved
+scope: docs-only status sync for artifact-backed validation already merged on main
+Data Quality logic changes: none
+DTO/JSON changes: none
+UI behavior changes: none
+verdict-rules changes: none
+warning-taxonomy changes: none
+01C document-register changes: none
+```
+
+Boundary retained for this sync:
+
+```text
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu este DONE.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu este release.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu este production-ready.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu este daily-use.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu este hardening complet.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă Data Quality logic.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă DTO / JSON.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă UI behavior.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă verdict rules.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă warning taxonomy.
+DOCX-DATA-ENRICHMENT-01B-WIRING-FIX nu schimbă 01C document register grouping.
+```
 
 ## DOCX-DATA-ENRICHMENT-01C status sync
 
@@ -417,6 +490,7 @@ Forbidden in this micro-stage:
 - any `DONE` claim for `WARNING-TAXONOMY-01C`;
 - any `DONE` claim for `DOCX-DATA-ENRICHMENT-01B`;
 - any `DONE` claim for `DOCX-DATA-ENRICHMENT-01C`;
+- any `DONE` claim for `DOCX-DATA-ENRICHMENT-01B-WIRING-FIX`;
 - any extended product DONE claim;
 - any hardening-complete claim.
 
@@ -442,7 +516,7 @@ The currently recorded PREFLIGHT-UI stage state on `main` is:
 PREFLIGHT-UI-01: COMPLETED_WITH_OBSERVATIONS
 completed merged slice on main: PREFLIGHT-UI-01C
 dedicated real-case pilot / live operator click-through: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation for PREFLIGHT-UI-01C and DOCX-DATA-ENRICHMENT-01B / 01C
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation for PREFLIGHT-UI-01C and DOCX-DATA-ENRICHMENT-01B / 01C / 01B-WIRING-FIX
 stage-level DONE claim: none
 ```
 
@@ -463,7 +537,7 @@ changing source_directory / code / lot invalidates the cached preflight used by 
 Diagnostic ZIP remains outside this gate
 operator guidance for OK says the operator can continue normally toward preview / DOCX
 operator guidance for WARNING says the operator continues with attention, reviews observations, and may keep Diagnostic ZIP evidence
-operator guidance for BLOCKER says the operator stops, corrects sources or escalates, and Diagnostic ZIP is recommended for investigation
+operator guidance for BLOCKER says the operator stops, corrects sources or escaladează, and Diagnostic ZIP is recommended for investigation
 PREFLIGHT-UI-01C guidance is derived from the existing PreflightReport.status
 live operator click-through on DS099903883 / 105.26 confirmed WARNING guidance, WARNING dialog, DOCX generation, and Diagnostic ZIP generation
 no release claim
@@ -476,19 +550,24 @@ no hardening-complete claim
 Official main validation evidence recorded in this sync:
 
 ```text
-TraceAI Diagnostics run #302 / 25608540779 = success
+TraceAI Diagnostics run #307 / 25610639092 = success
 Tests and diagnostic report = success
-pytest: 203 passed in 4.86s
+pytest: 206 passed in 2.02s
 reference_comparison.md = PASS
-artifact TraceAI-Diagnostics / 6897757137 generated and inspected
+artifact TraceAI-Diagnostics / 6898339805 generated and inspected
 real_audit_checklist_report.docx generated
 real_audit_checklist_ui.json generated
-document register in DOCX grouped by Documente required / Documente recommended
-DOCX-only / presentation-only change
+local/operator DOCX Data Quality summary wiring fix validated
+DOCX summary shows WARNING / 4/4 / 0 / 8 / 8
+DOCX summary NOT_AVAILABLE when data_quality exists: absent
+UI JSON data_quality remains WARNING / 4 / 4 / 0 / 8 / 8
+Documente required remains before Documente recommended
+no Data Quality logic change
 no DTO/JSON change
 no UI behavior change
-no Data Quality logic change
 no verdict-rules change
+no warning-taxonomy change
+no 01C document-register change
 ```
 
 This recorded PREFLIGHT-UI state does not imply:
@@ -589,6 +668,6 @@ controlled integration / edge cases / hardening
 
 ## Control note
 
-This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`, records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form, and records `DOCX-DATA-ENRICHMENT-01B` plus `DOCX-DATA-ENRICHMENT-01C` as artifact-verified on `main` within docs-only sync boundaries.
+This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`, records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form, records `DOCX-DATA-ENRICHMENT-01B` plus `DOCX-DATA-ENRICHMENT-01C` as artifact-verified on `main` within docs-only sync boundaries, and records `DOCX-DATA-ENRICHMENT-01B-WIRING-FIX` as artifact-verified on `main` within a docs-only sync boundary.
 
-It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, fully integrated user-facing warning taxonomy, final legal/commercial validation, Data Quality logic change, DTO/JSON change, UI behavior change, or verdict-rules change.
+It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, fully integrated user-facing warning taxonomy, final legal/commercial validation, Data Quality logic change, DTO/JSON change, UI behavior change, verdict-rules change, warning-taxonomy change, or 01C document-register change.
