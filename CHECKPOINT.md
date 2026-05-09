@@ -47,28 +47,24 @@ Latest official main integration validation inspected directly in this checkpoin
 
 ```text
 TraceAI Diagnostics
-workflow run: #295 / 25605251025
-commit on main: d2f40727d90529c2d95112a63d0cd279a0295add
-validation case: DS099903883 / 105.26
+workflow run: #302 / 25608540779
+commit on main: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
 Tests and diagnostic report: success
-pytest: 202 passed in 2.33s
+pytest: 203 passed in 4.86s
 reference_comparison.md: PASS
-artifact TraceAI-Diagnostics / 6896843359: generated and inspected
+artifact TraceAI-Diagnostics / 6897757137: generated and inspected
 real_audit_checklist_report.docx: generated
 real_audit_checklist_ui.json: generated
-Data Quality summary in DOCX: present
-DOCX vs JSON data_quality: aligned
-report wording: conservative
-report verdict retained: PASS_WITH_OBSERVATIONS
-scope of this evidence: official post-merge integration validation on main for DOCX-DATA-ENRICHMENT-01B docs sync boundary
-not claimed here: DONE / release / production-ready / daily-use / hardening complete / Data Quality logic change / DTO or JSON change / UI behavior change / verdict-rules change
+document register in DOCX: grouped by Documente required / Documente recommended
+scope of this evidence: official post-merge integration validation on main for DOCX-DATA-ENRICHMENT-01C docs sync boundary
+not claimed here: DONE / release / production-ready / daily-use / hardening complete / DTO or JSON change / UI behavior change / Data Quality logic change / verdict-rules change
 ```
 
 Latest merged product-facing PR now on `main`:
 
 ```text
-PR #138 — DOCX-DATA-ENRICHMENT-01B
-merge commit: d2f40727d90529c2d95112a63d0cd279a0295add
+PR #140 — DOCX-DATA-ENRICHMENT-01C
+merge commit: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
 status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
@@ -103,6 +99,64 @@ official post-merge green validation confirmed in this checkpoint: yes, limited-
 ```
 
 No product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, hardening-complete claim, or extended product `DONE` is made by this checkpoint refresh.
+
+## DOCX-DATA-ENRICHMENT-01C status sync
+
+```text
+micro-stage: DOCX-DATA-ENRICHMENT-01C-STATUS-SYNC
+scope: documentation sync only
+status: documented
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that `DOCX-DATA-ENRICHMENT-01C` was merged into `main` via PR #140;
+- record merge commit `4fb109192ab129438f1ea018ba0f2bcac03a40e3`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `#302 / 25608540779`;
+- record that `Tests and diagnostic report = success` for the official run on `main`;
+- record that `pytest` finished green with `203 passed in 4.86s`;
+- record that `reference_comparison.md = PASS`;
+- record that artifact `TraceAI-Diagnostics / 6897757137` was generated and inspected;
+- record that `real_audit_checklist_report.docx` and `real_audit_checklist_ui.json` were generated;
+- record that the document register in DOCX is grouped into `Documente required` and `Documente recommended`;
+- record that this is a DOCX-only / presentation-only change;
+- keep explicit that this sync does not claim `DONE`, release, production-ready, daily-use, hardening complete, DTO/JSON change, UI behavior change, Data Quality logic change, or verdict-rules change.
+
+Recorded evidence for this sync:
+
+```text
+PR #140: merged on main
+merge commit: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+TraceAI Diagnostics: #302 / 25608540779
+Tests and diagnostic report: success
+pytest: 203 passed in 4.86s
+reference_comparison.md: PASS
+artifact TraceAI-Diagnostics / 6897757137: generated and inspected
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated
+document register in DOCX: grouped by Documente required / Documente recommended
+scope: DOCX-only / presentation-only docs sync for artifact-backed validation already merged on main
+DTO/JSON changes: none
+UI behavior changes: none
+Data Quality logic changes: none
+verdict-rules changes: none
+```
+
+Boundary retained for this sync:
+
+```text
+DOCX-DATA-ENRICHMENT-01C nu este DONE.
+DOCX-DATA-ENRICHMENT-01C nu este release.
+DOCX-DATA-ENRICHMENT-01C nu este production-ready.
+DOCX-DATA-ENRICHMENT-01C nu este daily-use.
+DOCX-DATA-ENRICHMENT-01C nu este hardening complet.
+DOCX-DATA-ENRICHMENT-01C nu schimbă DTO / JSON.
+DOCX-DATA-ENRICHMENT-01C nu schimbă UI behavior.
+DOCX-DATA-ENRICHMENT-01C nu schimbă Data Quality logic.
+DOCX-DATA-ENRICHMENT-01C nu schimbă verdict rules.
+```
 
 ## DOCX-DATA-ENRICHMENT-01B status sync
 
@@ -362,6 +416,7 @@ Forbidden in this micro-stage:
 - any `DONE` claim for `PREFLIGHT-UI-01`;
 - any `DONE` claim for `WARNING-TAXONOMY-01C`;
 - any `DONE` claim for `DOCX-DATA-ENRICHMENT-01B`;
+- any `DONE` claim for `DOCX-DATA-ENRICHMENT-01C`;
 - any extended product DONE claim;
 - any hardening-complete claim.
 
@@ -387,7 +442,7 @@ The currently recorded PREFLIGHT-UI stage state on `main` is:
 PREFLIGHT-UI-01: COMPLETED_WITH_OBSERVATIONS
 completed merged slice on main: PREFLIGHT-UI-01C
 dedicated real-case pilot / live operator click-through: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation for PREFLIGHT-UI-01C and DOCX-DATA-ENRICHMENT-01B
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation for PREFLIGHT-UI-01C and DOCX-DATA-ENRICHMENT-01B / 01C
 stage-level DONE claim: none
 ```
 
@@ -421,18 +476,19 @@ no hardening-complete claim
 Official main validation evidence recorded in this sync:
 
 ```text
-TraceAI Diagnostics run #295 / 25605251025 = success
-validation case: DS099903883 / 105.26
+TraceAI Diagnostics run #302 / 25608540779 = success
 Tests and diagnostic report = success
-pytest: 202 passed in 2.33s
+pytest: 203 passed in 4.86s
 reference_comparison.md = PASS
-artifact TraceAI-Diagnostics / 6896843359 generated and inspected
+artifact TraceAI-Diagnostics / 6897757137 generated and inspected
 real_audit_checklist_report.docx generated
 real_audit_checklist_ui.json generated
-Data Quality summary in DOCX present
-DOCX vs JSON data_quality aligned
-report wording conservative
-report verdict retained: PASS_WITH_OBSERVATIONS
+document register in DOCX grouped by Documente required / Documente recommended
+DOCX-only / presentation-only change
+no DTO/JSON change
+no UI behavior change
+no Data Quality logic change
+no verdict-rules change
 ```
 
 This recorded PREFLIGHT-UI state does not imply:
@@ -533,6 +589,6 @@ controlled integration / edge cases / hardening
 
 ## Control note
 
-This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`, records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form, and records `DOCX-DATA-ENRICHMENT-01B` as artifact-verified on `main` within a docs-only sync boundary.
+This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`, records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form, and records `DOCX-DATA-ENRICHMENT-01B` plus `DOCX-DATA-ENRICHMENT-01C` as artifact-verified on `main` within docs-only sync boundaries.
 
 It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, fully integrated user-facing warning taxonomy, final legal/commercial validation, Data Quality logic change, DTO/JSON change, UI behavior change, or verdict-rules change.
