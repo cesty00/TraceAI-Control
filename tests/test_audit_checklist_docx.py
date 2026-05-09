@@ -92,6 +92,67 @@ def test_audit_checklist_docx_document_register_is_printable_checklist() -> None
     assert "required" in xml
 
 
+def test_audit_checklist_docx_groups_document_register_by_required_and_recommended() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    policy = AuditReportPolicy()
+    selected = policy.select_document_register(report.document_register)
+    xml = "".join(build_document_register_section(report, policy))
+
+    expected_rows = [
+        [
+            DOCUMENT_REGISTER_CHECKBOX,
+            line.area,
+            line.document_type,
+            policy.register_reference(line.document_reference),
+            line.related_code,
+            line.related_lot,
+            policy.delivery(line.related_order),
+            policy.register_reason(line.why_needed),
+            line.status,
+        ]
+        for line in selected
+    ]
+    grouped_rows = [
+        [
+            DOCUMENT_REGISTER_CHECKBOX,
+            line.area,
+            line.document_type,
+            policy.register_reference(line.document_reference),
+            line.related_code,
+            line.related_lot,
+            policy.delivery(line.related_order),
+            policy.register_reason(line.why_needed),
+            line.status,
+        ]
+        for line in selected
+        if line.status == "required"
+    ] + [
+        [
+            DOCUMENT_REGISTER_CHECKBOX,
+            line.area,
+            line.document_type,
+            policy.register_reference(line.document_reference),
+            line.related_code,
+            line.related_lot,
+            policy.delivery(line.related_order),
+            policy.register_reason(line.why_needed),
+            line.status,
+        ]
+        for line in selected
+        if line.status == "recommended"
+    ]
+
+    assert "Documente required" in xml
+    assert "Documente recommended" in xml
+    assert xml.index("Documente required") < xml.index("Documente recommended")
+    assert len(grouped_rows) == len(expected_rows)
+    assert grouped_rows == expected_rows
+    assert xml.count(DOCUMENT_REGISTER_CHECKBOX) == len(selected)
+    assert [row[-1] for row in grouped_rows] == [line.status for line in selected]
+    assert report.conclusion_status == "PASS"
+    assert all(claim not in xml.casefold() for claim in ["done", "release", "production-ready", "daily-use"])
+
+
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
