@@ -21,8 +21,8 @@ următorul pas de proiect: decizie între PREFLIGHT-UI-01B / FULL-DIAGNOSTICS-MA
 ultimul diagnostic produs oficial inspectat direct: run 25574554193, full diagnostics 173 passed in 1.91s
 ultimul head validat oficial pentru acest sync limitat: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
 ultimul PR merge-uit de produs pe main: #127
-ultimul PR documentar / procedural merge-uit pe main: #124
-ultimele PR-uri relevante deja pe main: #123, #124, #125, #127
+ultimul sync documentar relevant pe main se confirmă din CHECKPOINT.md și din istoricul PR-urilor merge-uite
+PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
