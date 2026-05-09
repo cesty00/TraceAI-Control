@@ -1,6 +1,6 @@
 # CHECKPOINT — TraceAI Control
 
-Data checkpoint: 2026-05-08
+Data checkpoint: 2026-05-09
 
 ## Current status
 
@@ -31,31 +31,32 @@ Latest official main integration validation inspected directly in this checkpoin
 
 ```text
 TraceAI Diagnostics
-workflow run: #257
-commit on main: d1adc08ed88844cca750b7e5fa761f61e00c5767
+workflow run: 25574554193
+commit on main: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
 validation case: DS099903883 / 105.26
-pytest: 172 passed in 2.43s
+pytest: 173 passed in 1.91s
 reference_comparison.md: PASS
-DOCX/JSON artifacts generated: yes
-scope of this evidence: official post-merge integration validation on main
-not claimed here: dedicated PP03 scenario validation
+artifact TraceAI-Diagnostics: generated
+real_audit_checklist_ui.json: generated
+scope of this evidence: official post-merge integration validation on main for DATA-QUALITY-SEVERITY-TRIAGE-02
+not claimed here: release / production-ready / daily-use / extended product DONE
 ```
 
 Latest merged product-facing PR now on `main`:
 
 ```text
-PR #125 — PP03-DOCX-ENRICHMENT-01B
-merge commit: d1adc08ed88844cca750b7e5fa761f61e00c5767
+PR #127 — DATA-QUALITY-SEVERITY-TRIAGE-02
+merge commit: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
 status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
 
 No new product `DONE`, release `DONE`, production-ready, daily-use release, or release-finalized claim is made by this checkpoint refresh.
 
-## PP03-DOCX-ENRICHMENT-01B status sync
+## DATA-QUALITY-SEVERITY-TRIAGE-02 status sync
 
 ```text
-micro-stage: PP03-DOCX-ENRICHMENT-01B-STATUS-SYNC
+micro-stage: DATA-QUALITY-SEVERITY-TRIAGE-02-STATUS-SYNC
 scope: documentation sync only
 status: documented
 product-stage claim: none
@@ -64,25 +65,24 @@ release claim: none
 
 Purpose:
 
-- record that `PP03-DOCX-ENRICHMENT-01B` was merged into `main` via PR #125;
-- record that the integrated change adds structured WMS receipt fields in the current PP03 DOCX checklist surface;
-- record that official post-merge integration validation on `main` was confirmed through TraceAI Diagnostics #257;
+- record that `DATA-QUALITY-SEVERITY-TRIAGE-02` was merged into `main` via PR #127;
+- record that official post-merge integration validation on `main` was confirmed through TraceAI Diagnostics run `25574554193`;
+- record that `real_audit_checklist_ui.json` confirms the textual Data Quality issue list in `report.data_quality.issues`;
+- record that `Sheet2` from `nomenclator.xlsx` appears as `WARNING`, not `ERROR`, when a valid primary sheet exists in the same workbook;
 - preserve the existing validated baselines without promoting a new product stage to `DONE`;
 - synchronize `CHECKPOINT.md` and `README.md` with the post-merge repository state.
 
 Merged changes now part of `main` and relevant to this sync:
 
-- PR #122 — docs: add `PP03-DATA-GAP-ANALYSIS-01`.
-- PR #123 — implement `PP03-DOCX-ENRICHMENT-01A` as a presentation-only DOCX refinement.
-- PR #125 — implement `PP03-DOCX-ENRICHMENT-01B` for structured WMS receipt fields in the DOCX path.
+- PR #127 — implement `DATA-QUALITY-SEVERITY-TRIAGE-02` for auxiliary nomenclator-sheet severity refinement and additive textual issue-list evidence in the audit checklist UI JSON path.
 
-`PP03-DOCX-ENRICHMENT-01B` is treated in this sync as:
+`DATA-QUALITY-SEVERITY-TRIAGE-02` is treated in this sync as:
 
 ```text
 merged
 technically integrated on main
 officially validated post-merge on main with limited-scope evidence
-limited to structured WMS receipt field propagation in the existing DOCX/audit path
+limited to Data Quality severity refinement for auxiliary nomenclator sheets and additive textual issue-list evidence in the audit checklist UI JSON path
 not a product-stage DONE claim
 not a release claim
 ```
@@ -90,7 +90,7 @@ not a release claim
 Mandatory limitation recorded in this checkpoint:
 
 ```text
-This is official integration validation on main, not a dedicated separate PP03 validation scenario.
+This is official integration validation on main, not release validation, not production-ready validation, and not an extended product DONE claim.
 ```
 
 ## Official project boundaries after sync
@@ -115,10 +115,11 @@ Forbidden in this micro-stage:
 - extraction logic changes;
 - calculation changes;
 - unit-handling changes;
-- any use of PP-03 as an application input source;
 - any production-ready claim;
 - any daily-use release claim;
-- any release-finalized claim.
+- any release-finalized claim;
+- any automatic closure of `PREFLIGHT-UI-01`;
+- any PP03 01B rewrite or stage-scope reinterpretation.
 
 ## Product baseline and active stage
 
@@ -147,50 +148,52 @@ Current recorded state for that stage:
 ```text
 completed merged slice on main: PREFLIGHT-UI-01A
 dedicated real-case pilot documented: REAL-TEST-PILOT-01
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for PP03-DOCX-ENRICHMENT-01B
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for DATA-QUALITY-SEVERITY-TRIAGE-02
 stage-level DONE claim: none
 ```
 
-## PP03 recorded state on main
+## Data Quality recorded state on main
 
-The merged `PP03-DOCX-ENRICHMENT-01B` PR records a narrow structured WMS receipt-field change in the current DOCX checklist surface.
+The merged PR #127 records a narrow Data Quality severity refinement and additive issue-list evidence in the current audit checklist UI JSON surface.
 
 Integrated scope on `main`:
 
 ```text
-Cantitate recepționată
-Data recepție
-Furnizor
-fields propagated from structured WMS receipt mapping where available
-receipt_summary retained for compatibility
-fallback compatibility kept narrow and not treated as stage-scope expansion
-no PP-03 input source added
-no source-of-truth change
-no DTO or JSON contract change
-no verdict-rule change
-no extraction logic change
-no unit-handling change
+auxiliary nomenclator sheet without a usable code column is downgraded to WARNING when a sibling nomenclator sheet already provides a usable code column
+nomenclator workbook with no usable code sheet remains ERROR
+real_audit_checklist_ui.json confirms textual Data Quality issues under report.data_quality.issues
+Sheet2 from nomenclator.xlsx appears as WARNING, not ERROR, in the validated post-merge run when the primary valid sheet exists
+report.data_quality.status = WARNING
+error_count = 0
+warning_count = 8
+issue_count = 8
+no release claim
+no production-ready claim
+no daily-use claim
 ```
 
 Official main validation evidence recorded in this sync:
 
 ```text
-TraceAI Diagnostics #257 = success
+TraceAI Diagnostics run 25574554193 = success
 validation case: DS099903883 / 105.26
-pytest: 172 passed
+pytest: 173 passed in 1.91s
 reference_comparison.md = PASS
-DOCX/JSON generated
-real_audit_checklist_report.docx contains Cantitate recepționată
+artifact TraceAI-Diagnostics generated
+real_audit_checklist_report.docx and real_audit_checklist_ui.json generated
+real_audit_checklist_ui.json confirms the textual Data Quality issue list in report.data_quality.issues
+Sheet2 / nomenclator.xlsx is WARNING, not ERROR, when the primary valid sheet exists
 ```
 
-This recorded PP03 state does not imply:
+This recorded Data Quality state does not imply:
 
 ```text
-dedicated separate PP03 validation scenario
 product-stage DONE
+release
 production-ready
 daily-use internal release
-release finalized
+legal or commercial final validation
+closure of PREFLIGHT-UI-01
 ```
 
 ## Validation policy remains unchanged
@@ -282,6 +285,6 @@ Decision guidance:
 
 ## Control note
 
-This checkpoint sync records the technical integration of `PP03-DOCX-ENRICHMENT-01B` on `main` together with limited-scope official integration validation on `main`.
+This checkpoint sync records the technical integration of `DATA-QUALITY-SEVERITY-TRIAGE-02` on `main` together with limited-scope official integration validation on `main`.
 
-It does not promote the application, does not close release readiness, and does not claim dedicated separate PP03 validation beyond the generic main diagnostics evidence recorded here.
+It does not promote the application, does not close release readiness, does not close `PREFLIGHT-UI-01`, does not rewrite PP03 01B scope, and does not claim release, production-ready, daily-use, or final legal/commercial validation.

@@ -12,29 +12,32 @@ ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
 slice completat și merge-uit pe main: PREFLIGHT-UI-01A prin PR #113
 status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
-micro-stage documentar curent: PP03-DOCX-ENRICHMENT-01B-STATUS-SYNC
+micro-stage documentar curent: DATA-QUALITY-SEVERITY-TRIAGE-02-STATUS-SYNC
 claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
 ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS
 următorul pas de proiect: decizie între PREFLIGHT-UI-01B / FULL-DIAGNOSTICS-MAIN-01 / REAL-CASE-VALIDATION-04_MATRIX_EXECUTION
-ultimul diagnostic produs oficial inspectat direct: run #257, full diagnostics 172 passed
-ultimul head validat oficial pentru acest sync limitat: d1adc08ed88844cca750b7e5fa761f61e00c5767
-ultimul PR merge-uit de produs pe main: #125
-ultimul PR documentar / procedural merge-uit pe main: #124
-ultimele PR-uri relevante deja pe main: #123, #124, #125
+ultimul diagnostic produs oficial inspectat direct: run 25574554193, full diagnostics 173 passed in 1.91s
+ultimul head validat oficial pentru acest sync limitat: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
+ultimul PR merge-uit de produs pe main: #127
+ultimul sync documentar relevant pe main se confirmă din CHECKPOINT.md și din istoricul PR-urilor merge-uite
+PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar consemnează că `PP03-DOCX-ENRICHMENT-01B` a fost integrat tehnic pe `main` prin PR #125, merge-uit în commitul `d1adc08ed88844cca750b7e5fa761f61e00c5767` și validat post-merge prin TraceAI Diagnostics #257 pe cazul implicit `DS099903883 / 105.26`, cu `172 passed`, `reference_comparison.md = PASS`, artefacte DOCX/JSON generate și `real_audit_checklist_report.docx` care conține `Cantitate recepționată`.
+Acest sync documentar consemnează că PR #127 a fost integrat tehnic pe `main` în commitul `4651657bc8898bf1f2a06ee5a575c2b28da5a9e4` și validat post-merge prin TraceAI Diagnostics run `25574554193` pe cazul implicit `DS099903883 / 105.26`, cu `173 passed in 1.91s`, `reference_comparison.md = PASS`, artifact `TraceAI-Diagnostics` generat, `real_audit_checklist_ui.json` generat și confirmare explicită a listei textuale Data Quality issues în `report.data_quality.issues`.
 
-Limitare obligatorie pentru acest sync: aceasta este validare oficială de integrare pe `main`, nu validare PP03 dedicată separată. Acest sync nu promovează nicio etapă la `DONE` și nu face claim de release, production-ready sau daily-use.
+În aceeași validare oficială post-merge, `Sheet2` din `nomenclator.xlsx` apare ca `WARNING`, nu `ERROR`, atunci când sheet-ul principal valid există, iar sumarul confirmat în `real_audit_checklist_ui.json` este `report.data_quality.status = WARNING`, `error_count = 0`, `warning_count = 8`, `issue_count = 8`.
 
-Documentul oficial relevant pentru această linie de lucru este:
+Limitare obligatorie pentru acest sync: aceasta este validare oficială de integrare pe `main`, nu release, nu production-ready, nu daily-use, nu product DONE extins, nu validare legală/comercială finală și nu închide automat `PREFLIGHT-UI-01`.
+
+Starea oficială relevantă pentru acest sync se citește din:
 
 ```text
-docs/pp03_data_gap_analysis_01.md
+CHECKPOINT.md
+README.md
 ```
 
 ## Robocop operating role
@@ -85,11 +88,45 @@ fără schimbare de renderer DOCX
 
 Acest README sync nu afirmă validare oficială nouă pentru `PREFLIGHT-UI-01A` și nu marchează `PREFLIGHT-UI-01` ca `DONE`.
 
-## PP03 DOCX status
+## Data Quality severity status
 
-`PP03-DOCX-ENRICHMENT-01B` este acum integrat tehnic pe `main` prin PR #125.
+`DATA-QUALITY-SEVERITY-TRIAGE-02` este acum integrat tehnic pe `main` prin PR #127.
 
 Acest sync consemnează limitat:
+
+```text
+integrare tehnică pe main prin PR #127
+merge commit: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
+TraceAI Diagnostics run 25574554193 = success
+validation case: DS099903883 / 105.26
+pytest: 173 passed in 1.91s
+reference_comparison.md = PASS
+artifact TraceAI-Diagnostics generat
+real_audit_checklist_report.docx și real_audit_checklist_ui.json generate
+real_audit_checklist_ui.json confirmă lista textuală Data Quality issues în report.data_quality.issues
+Sheet2 / nomenclator.xlsx este WARNING, nu ERROR, când sheet-ul principal valid există
+report.data_quality.status = WARNING
+error_count = 0
+warning_count = 8
+issue_count = 8
+```
+
+Acest README sync nu afirmă:
+
+```text
+release
+production-ready
+daily-use
+product DONE extins
+închidere automată PREFLIGHT-UI-01
+validare legală/comercială finală
+```
+
+## PP03 DOCX status
+
+`PP03-DOCX-ENRICHMENT-01B` rămâne integrat tehnic pe `main` prin PR #125.
+
+Acest README păstrează limitat starea deja consemnată:
 
 ```text
 integrare tehnică pe main prin PR #125
@@ -102,7 +139,7 @@ real_audit_checklist_report.docx și real_audit_checklist_ui.json generate
 real_audit_checklist_report.docx conține Cantitate recepționată
 ```
 
-Acest README sync nu afirmă:
+Acest README sync nu reinterpretă PP03 01B și nu afirmă:
 
 ```text
 release
@@ -219,7 +256,7 @@ Liniile `REPORT-QUALITY-01E-1`, `REPORT-QUALITY-01E-2` și `REPORT-QUALITY-01E-3
 
 Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, textul aprobat din introducerea `Ghid rapid pentru auditor` și textul aprobat din `Rezumat de conformare checklist`.
 
-PR #123 adaugă pe `main` o clarificare de prezentare pentru `PP03-DOCX-ENRICHMENT-01A`, iar PR #125 adaugă sync-ul documentat aici pentru `PP03-DOCX-ENRICHMENT-01B`, limitat la dovada oficială de integrare pe `main` și fără claim de validare PP03 dedicată separată.
+PR #123 adaugă pe `main` o clarificare de prezentare pentru `PP03-DOCX-ENRICHMENT-01A`, iar PR #125 rămâne consemnat aici pentru `PP03-DOCX-ENRICHMENT-01B`, limitat la dovada oficială de integrare pe `main` și fără claim de validare PP03 dedicată separată.
 
 ## UI
 
@@ -289,12 +326,14 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #257
-ultimul head validat oficial pentru acest sync limitat: d1adc08ed88844cca750b7e5fa761f61e00c5767
-pytest: 172 passed in 2.43s
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run 25574554193
+ultimul head validat oficial pentru acest sync limitat: 4651657bc8898bf1f2a06ee5a575c2b28da5a9e4
+pytest: 173 passed in 1.91s
 reference_comparison.md = PASS
 artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
-aceasta este validare oficială generică pe main, nu validare PP03 dedicată separată
+real_audit_checklist_ui.json confirmă lista textuală Data Quality issues în report.data_quality.issues
+Sheet2 / nomenclator.xlsx este WARNING, nu ERROR, când sheet-ul principal valid există
+aceasta este validare oficială generică pe main, nu release, nu production-ready și nu extinde produsul la DONE
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
