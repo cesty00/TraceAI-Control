@@ -1,4 +1,5 @@
 from dataclasses import replace
+import zipfile
 
 from src.audit.audit_checklist_report import build_audit_checklist_report
 from src.audit.audit_traceability_report import build_audit_traceability_report
@@ -7,6 +8,7 @@ from src.report.audit_checklist_docx import (
     build_document_xml,
 )
 from src.ui.audit_checklist_json import audit_checklist_ui_payload_from_report
+from src.ui.orchestrator import generate_audit_checklist_docx_from_traceability_case
 from tests.test_audit_traceability_report import make_case
 
 
@@ -171,6 +173,51 @@ def test_audit_checklist_docx_ds099903883_10526_warning_non_regression() -> None
     assert 'Warning-uri' in xml
     assert 'Issues' in xml
     assert '8' in xml
+
+
+
+def test_audit_checklist_docx_local_operator_path_wires_warning_summary_into_docx(tmp_path) -> None:
+    data_quality = warning_data_quality(issue_count=8, warning_count=8)
+    traceability_case = make_case()
+    traceability_case = replace(
+        traceability_case,
+        subject=replace(traceability_case.subject, code='DS099903883', lot='105.26'),
+        sections={**traceability_case.sections, 'data_quality': data_quality},
+        observations=['Observații Data Quality existente pentru cazul local/operator.'],
+    )
+    audit_report = build_audit_traceability_report(traceability_case)
+    checklist_report = build_audit_checklist_report(audit_report)
+    payload_before = audit_checklist_ui_payload_from_report(checklist_report, data_quality=data_quality)
+    output = tmp_path / 'local-operator-audit-checklist.docx'
+
+    result = generate_audit_checklist_docx_from_traceability_case(traceability_case, output)
+
+    assert result == output
+    with zipfile.ZipFile(output) as package:
+        xml = package.read('word/document.xml').decode('utf-8')
+    payload_after = audit_checklist_ui_payload_from_report(checklist_report, data_quality=data_quality)
+
+    assert 'Status Data Quality' in xml
+    assert 'WARNING' in xml
+    assert 'Surse găsite' in xml
+    assert '4/4' in xml
+    assert 'Erori' in xml
+    assert '0' in xml
+    assert 'Warning-uri' in xml
+    assert '8' in xml
+    assert 'Issues' in xml
+    assert 'NOT_AVAILABLE' not in xml
+    assert 'PASS_WITH_OBSERVATIONS' in xml
+    assert 'Documente required' in xml
+    assert 'Documente recommended' in xml
+    assert xml.index('Documente required') < xml.index('Documente recommended')
+    assert payload_after == payload_before
+    assert payload_after['report']['data_quality']['status'] == 'WARNING'
+    assert payload_after['report']['data_quality']['sources_found'] == 4
+    assert payload_after['report']['data_quality']['source_count'] == 4
+    assert payload_after['report']['data_quality']['error_count'] == 0
+    assert payload_after['report']['data_quality']['warning_count'] == 8
+    assert payload_after['report']['data_quality']['issue_count'] == 8
 
 
 

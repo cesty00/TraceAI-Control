@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 from src.errors import MissingSourceFileError
@@ -8,6 +9,7 @@ from src.ui.orchestrator import (
     generate_report_from_ui_request,
     validate_ui_generation_request,
 )
+from tests.test_audit_traceability_report import make_case
 
 
 def test_generate_report_from_ui_request_orchestrates_existing_engine() -> None:
@@ -45,6 +47,69 @@ def test_generate_report_from_ui_request_orchestrates_existing_engine() -> None:
 
 def test_generate_audit_checklist_docx_from_traceability_case_is_exported_adapter() -> None:
     assert callable(generate_audit_checklist_docx_from_traceability_case)
+
+
+def test_generate_audit_checklist_docx_from_traceability_case_wires_data_quality_summary(monkeypatch, tmp_path: Path) -> None:
+    traceability_case = make_case()
+    data_quality = {
+        "status": "WARNING",
+        "source_count": 4,
+        "sources_found": 4,
+        "error_count": 0,
+        "warning_count": 8,
+        "issue_count": 8,
+        "issues": [
+            {
+                "severity": "WARNING",
+                "source_name": "nomenclator.xlsx",
+                "sheet_name": "Sheet2",
+                "column_name": "cod articol/produs",
+                "message": "Observație existentă pentru cazul local/operator.",
+            }
+        ],
+    }
+    traceability_case = replace(
+        traceability_case,
+        sections={**traceability_case.sections, "data_quality": data_quality},
+        observations=["Observații Data Quality existente pentru cazul local/operator."],
+    )
+    captured: dict[str, object] = {}
+
+    def fake_generate(report, output_path, policy=None, build_info=None, data_quality_summary=None):
+        captured["output_path"] = Path(output_path)
+        captured["data_quality_summary"] = data_quality_summary
+        return Path(output_path)
+
+    monkeypatch.setattr("src.ui.orchestrator.generate_audit_checklist_docx_report", fake_generate)
+
+    output = tmp_path / "report.docx"
+    result = generate_audit_checklist_docx_from_traceability_case(traceability_case, output)
+
+    assert result == output
+    assert captured["output_path"] == output
+    assert captured["data_quality_summary"] == data_quality
+
+
+def test_generate_audit_checklist_docx_from_traceability_case_allows_missing_data_quality(monkeypatch, tmp_path: Path) -> None:
+    traceability_case = make_case()
+    sections = dict(traceability_case.sections)
+    sections.pop("data_quality", None)
+    traceability_case = replace(traceability_case, sections=sections)
+    captured: dict[str, object] = {}
+
+    def fake_generate(report, output_path, policy=None, build_info=None, data_quality_summary=None):
+        captured["output_path"] = Path(output_path)
+        captured["data_quality_summary"] = data_quality_summary
+        return Path(output_path)
+
+    monkeypatch.setattr("src.ui.orchestrator.generate_audit_checklist_docx_report", fake_generate)
+
+    output = tmp_path / "report.docx"
+    result = generate_audit_checklist_docx_from_traceability_case(traceability_case, output)
+
+    assert result == output
+    assert captured["output_path"] == output
+    assert captured["data_quality_summary"] is None
 
 
 def test_generate_report_from_ui_request_returns_validation_error_without_engine_call() -> None:

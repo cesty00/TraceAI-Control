@@ -70,7 +70,11 @@ def generate_audit_checklist_docx_from_traceability_case(
 
     audit_report = build_audit_traceability_report(traceability_case)
     checklist_report = build_audit_checklist_report(audit_report)
-    return generate_audit_checklist_docx_report(checklist_report, output_path)
+    return generate_audit_checklist_docx_report(
+        checklist_report,
+        output_path,
+        data_quality_summary=traceability_case.sections.get("data_quality"),
+    )
 
 
 def generate_report_from_ui_request(
