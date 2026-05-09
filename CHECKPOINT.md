@@ -537,7 +537,7 @@ changing source_directory / code / lot invalidates the cached preflight used by 
 Diagnostic ZIP remains outside this gate
 operator guidance for OK says the operator can continue normally toward preview / DOCX
 operator guidance for WARNING says the operator continues with attention, reviews observations, and may keep Diagnostic ZIP evidence
-operator guidance for BLOCKER says the operator stops, corrects sources or escaladează, and Diagnostic ZIP is recommended for investigation
+operator guidance for BLOCKER says the operator stops, corrects sources or escalates, and Diagnostic ZIP is recommended for investigation
 PREFLIGHT-UI-01C guidance is derived from the existing PreflightReport.status
 live operator click-through on DS099903883 / 105.26 confirmed WARNING guidance, WARNING dialog, DOCX generation, and Diagnostic ZIP generation
 no release claim
