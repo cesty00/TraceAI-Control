@@ -18,10 +18,11 @@ claim release finalized: NU
 claim hardening complet: NU
 ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS, vezi docs/real_test_pilot_01_execution_record.md
 live click-through PREFLIGHT-UI-01 consemnat separat: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
-următorul pas de proiect: decizie separată pentru warning taxonomy / edge cases / hardening
-ultimul diagnostic produs oficial inspectat direct: run #277 / 25595614738, full diagnostics 184 passed in 2.57s
-ultimul head validat oficial pentru acest sync limitat: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
+următorul pas de proiect: decizie separată pentru integrare controlată / edge cases / hardening
+ultimul diagnostic produs oficial inspectat direct: run #288 / 25601399276, full diagnostics 193 passed in 2.48s
+ultimul head validat oficial pentru acest sync limitat: 4fe8a619a40992e39f0eedb174df315c9eb799b0
 ultimul PR merge-uit de produs pe main: #132
+ultimul PR merge-uit internal-only relevant pentru warning taxonomy: #136
 ultimul sync documentar relevant pe main se confirmă din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 ```
@@ -155,6 +156,57 @@ hardening
 ```
 
 Acest README sync nu marchează `PREFLIGHT-UI-01` ca `DONE`.
+
+## WARNING-TAXONOMY-01C status
+
+`WARNING-TAXONOMY-01C_IMPLEMENTATION_MINIMAL_INTERNAL_CLASSIFIER` este parte din `main` prin PR #136 și este consemnat limitat ca validare post-merge pe `main`.
+
+Starea consemnată pentru acest sync este:
+
+```text
+internal-only warning taxonomy classifier
+merge commit: 4fe8a619a40992e39f0eedb174df315c9eb799b0
+TraceAI Diagnostics: #288 / 25601399276
+Tests and diagnostic report = success
+pytest: 193 passed in 2.48s
+reference_comparison.md = PASS
+artifact TraceAI-Diagnostics generat
+real_audit_checklist_report.docx generat
+real_audit_checklist_ui.json generat
+fără schimbări user-facing
+fără DTO/JSON changes
+fără UI behavior change
+nu fully integrated user-facing
+```
+
+Acest sync consemnează numai un classifier intern și nu schimbă:
+
+```text
+PreflightReport.status
+Data Quality semantics
+renderer DOCX
+workflow-uri
+source mappings
+```
+
+Backlogul rămas după această integrare limitată este:
+
+```text
+integrare controlată
+edge cases
+hardening
+```
+
+Acest README sync nu afirmă:
+
+```text
+DONE
+release
+production-ready
+daily-use
+hardening complet
+warning taxonomy fully integrated user-facing
+```
 
 ## Data Quality severity status
 
@@ -437,17 +489,18 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #277 / 25595614738
-ultimul head validat oficial pentru acest sync limitat: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
-pytest: 184 passed in 2.57s
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #288 / 25601399276
+ultimul head validat oficial pentru acest sync limitat: 4fe8a619a40992e39f0eedb174df315c9eb799b0
+pytest: 193 passed in 2.48s
 Tests and diagnostic report = success
 reference_comparison.md = PASS
 artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
 funcționalitatea PREFLIGHT-UI-01B consemnată aici: DOCX gate bazat pe preflight curent pentru source_directory + code + lot
 funcționalitatea PREFLIGHT-UI-01C consemnată aici: guidance operator-facing pentru OK / WARNING / BLOCKER, derivat din PreflightReport.status
+funcționalitatea WARNING-TAXONOMY-01C consemnată aici: classifier intern internal-only fără schimbări user-facing, fără DTO/JSON changes și fără UI behavior change
 live operator click-through consemnat separat aici: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS, preflight WARNING, DOCX generat, Diagnostic ZIP generat, erori 0, warnings 8, issues 8
 REAL-TEST-PILOT-01 rămâne execuție pilot separată în docs/real_test_pilot_01_execution_record.md, cu Data Quality ERROR, blockers none și artifacts retained yes
-aceasta este validare oficială generică pe main și click-through limitat, nu release, nu production-ready, nu daily-use, nu DONE și nu hardening complet
+aceasta este validare oficială generică pe main și click-through limitat, nu release, nu production-ready, nu daily-use, nu DONE, nu hardening complet și nu fully integrated user-facing warning taxonomy
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
 
@@ -472,7 +525,7 @@ release finalized
 După `PREFLIGHT-UI-01 COMPLETED_WITH_OBSERVATIONS`, rămân backlog:
 
 ```text
-warning taxonomy
+integrare controlată
 edge cases
 hardening
 broader UI timing evidence
