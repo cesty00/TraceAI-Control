@@ -45,8 +45,18 @@ AuditChecklistViewModelBuilder = Callable[[dict[str, Any]], AuditChecklistUiView
 AuditChecklistRequestHandler = Callable[[str, str, str], "VisualAuditChecklistResult"]
 PreflightRequestHandler = Callable[[str, str, str], "VisualPreflightResult"]
 DiagnosticBundleRequestHandler = Callable[[str, str, str, str, str | None], VisualDiagnosticBundleResult]
+PreflightGateKey = tuple[str, str, str]
 
 APP_TITLE = "TraceAI Control — Modul Trasabilitate"
+
+DOCX_GATE_ALLOW = "ALLOW"
+DOCX_GATE_BLOCK = "BLOCK"
+DOCX_GATE_CONFIRM = "CONFIRM"
+
+PREFLIGHT_REQUIRED_MESSAGE = "Rulează mai întâi «Verifică surse» pentru valorile curente înainte de generarea raportului DOCX."
+PREFLIGHT_BLOCKER_MESSAGE = "Preflight-ul curent are blocaje. Oprește-te înainte de generarea raportului DOCX și verifică detaliile."
+PREFLIGHT_WARNING_CONFIRMATION_MESSAGE = "Preflight-ul curent are observații. Poți continua cu atenție. Vrei să continui generarea raportului DOCX?"
+PREFLIGHT_WARNING_CANCELLED_MESSAGE = "Generarea raportului DOCX a fost anulată. Confirmă observațiile din preflight înainte de continuare."
 
 
 @dataclass(frozen=True)
@@ -67,6 +77,105 @@ class VisualPreflightResult:
     report: PreflightReport | None
     message: str
     error: str | None = None
+
+
+@dataclass(frozen=True)
+class PreflightGateSnapshot:
+    """Last successful preflight tied to the exact UI form values."""
+
+    source_directory: str
+    code: str
+    lot: str
+    report: PreflightReport
+
+
+@dataclass(frozen=True)
+class DocxGenerationGateDecision:
+    """Decision returned before starting DOCX generation from the UI."""
+
+    status: str
+    message: str
+
+
+def normalize_gate_form_value(value: str) -> str:
+    """Normalize UI form values for stable preflight gating."""
+
+    return str(value).strip()
+
+
+def build_preflight_gate_key(source_directory: str, code: str, lot: str) -> PreflightGateKey:
+    """Build the stable key used to bind a preflight result to UI inputs."""
+
+    return (
+        normalize_gate_form_value(source_directory),
+        normalize_gate_form_value(code),
+        normalize_gate_form_value(lot),
+    )
+
+
+def build_preflight_gate_snapshot(
+    source_directory: str,
+    code: str,
+    lot: str,
+    report: PreflightReport,
+) -> PreflightGateSnapshot:
+    """Capture the last successful preflight for the current form values."""
+
+    return build_preflight_gate_snapshot_from_key(
+        build_preflight_gate_key(source_directory, code, lot),
+        report,
+    )
+
+
+def build_preflight_gate_snapshot_from_key(
+    request_key: PreflightGateKey,
+    report: PreflightReport,
+) -> PreflightGateSnapshot:
+    """Capture the last successful preflight for an already-frozen request key."""
+
+    normalized_source_directory, normalized_code, normalized_lot = request_key
+    return PreflightGateSnapshot(
+        source_directory=normalized_source_directory,
+        code=normalized_code,
+        lot=normalized_lot,
+        report=report,
+    )
+
+
+def current_preflight_matches(
+    source_directory: str,
+    code: str,
+    lot: str,
+    snapshot: PreflightGateSnapshot | None,
+) -> bool:
+    """Return whether the cached preflight belongs to the current form values."""
+
+    if snapshot is None:
+        return False
+    return build_preflight_gate_key(source_directory, code, lot) == (
+        snapshot.source_directory,
+        snapshot.code,
+        snapshot.lot,
+    )
+
+
+def evaluate_docx_generation_gate(
+    source_directory: str,
+    code: str,
+    lot: str,
+    snapshot: PreflightGateSnapshot | None,
+) -> DocxGenerationGateDecision:
+    """Decide whether DOCX generation may continue from the current UI state."""
+
+    if not current_preflight_matches(source_directory, code, lot, snapshot):
+        return DocxGenerationGateDecision(status=DOCX_GATE_BLOCK, message=PREFLIGHT_REQUIRED_MESSAGE)
+
+    report = snapshot.report
+    if report.status == "BLOCKER" or report.blockers:
+        return DocxGenerationGateDecision(status=DOCX_GATE_BLOCK, message=PREFLIGHT_BLOCKER_MESSAGE)
+    if report.status == "WARNING":
+        return DocxGenerationGateDecision(status=DOCX_GATE_CONFIRM, message=PREFLIGHT_WARNING_CONFIRMATION_MESSAGE)
+    return DocxGenerationGateDecision(status=DOCX_GATE_ALLOW, message=report.operator_guidance)
 
 
 def build_request_from_form_values(
@@ -341,6 +450,7 @@ def run_visual_app(
     busy = False
     current_view_model: AuditChecklistUiViewModel | None = None
     current_display_model: SectionDisplayModel | None = None
+    last_preflight_snapshot: PreflightGateSnapshot | None = None
     section_by_tree_id: dict[str, str] = {}
     build_info_line = format_build_info_line()
 
@@ -364,6 +474,14 @@ def run_visual_app(
     build_info_var = tk.StringVar(value=build_info_line)
     section_title_var = tk.StringVar(value="Nicio secțiune selectată")
     section_summary_var = tk.StringVar(value="Verificați sursele sau generați previzualizarea audit checklist.")
+
+    def invalidate_preflight_snapshot(*_args: str) -> None:
+        nonlocal last_preflight_snapshot
+        last_preflight_snapshot = None
+
+    source_var.trace_add("write", invalidate_preflight_snapshot)
+    code_var.trace_add("write", invalidate_preflight_snapshot)
+    lot_var.trace_add("write", invalidate_preflight_snapshot)
 
     def choose_source_directory() -> None:
         selected = filedialog.askdirectory(title="Alege folderul cu sursele oficiale")
@@ -546,15 +664,17 @@ def run_visual_app(
             set_preview_text(result.error or result.message)
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
-    def poll_preflight(future: Future[VisualPreflightResult]) -> None:
+    def poll_preflight(future: Future[VisualPreflightResult], request_key: PreflightGateKey) -> None:
+        nonlocal last_preflight_snapshot
         if not future.done():
-            root.after(100, poll_preflight, future)
+            root.after(100, poll_preflight, future, request_key)
             return
         set_busy(False)
         clear_sections()
         try:
             result = future.result()
         except Exception as exc:  # pragma: no cover
+            last_preflight_snapshot = None
             status_var.set(str(exc))
             set_preview_text(str(exc))
             messagebox.showerror(APP_TITLE, str(exc))
@@ -562,11 +682,13 @@ def run_visual_app(
         status_var.set(result.message if result.success else result.error or result.message)
         section_title_var.set("Verificare surse înainte de generare")
         if result.success and result.report is not None:
+            last_preflight_snapshot = build_preflight_gate_snapshot_from_key(request_key, result.report)
             section_summary_var.set(f"Status preflight: {result.report.status}")
             set_preview_text(format_preflight_report(result.report))
             if result.report.status == "BLOCKER":
                 messagebox.showwarning(APP_TITLE, "Preflight a găsit blocaje. Verificați detaliile înainte de generare.")
         else:
+            last_preflight_snapshot = None
             section_summary_var.set("Verificarea surselor nu a reușit.")
             set_preview_text(result.error or result.message)
             messagebox.showerror(APP_TITLE, result.error or result.message)
@@ -594,6 +716,19 @@ def run_visual_app(
 
     def on_generate() -> None:
         if busy:
+            return
+        decision = evaluate_docx_generation_gate(
+            source_directory=source_var.get(),
+            code=code_var.get(),
+            lot=lot_var.get(),
+            snapshot=last_preflight_snapshot,
+        )
+        if decision.status == DOCX_GATE_BLOCK:
+            status_var.set(decision.message)
+            messagebox.showwarning(APP_TITLE, decision.message)
+            return
+        if decision.status == DOCX_GATE_CONFIRM and not messagebox.askyesno(APP_TITLE, decision.message):
+            status_var.set(PREFLIGHT_WARNING_CANCELLED_MESSAGE)
             return
         set_busy(True, "Generare raport DOCX în curs... aplicația rămâne disponibilă.")
         future = submit_visual_form_values_async(
@@ -627,15 +762,16 @@ def run_visual_app(
     def on_preflight() -> None:
         if busy:
             return
+        request_key = build_preflight_gate_key(source_var.get(), code_var.get(), lot_var.get())
         set_busy(True, "Verificare surse în curs...")
         future = submit_preflight_form_values_async(
-            source_directory=source_var.get(),
-            code=code_var.get(),
-            lot=lot_var.get(),
+            source_directory=request_key[0],
+            code=request_key[1],
+            lot=request_key[2],
             executor=executor,
             preflight_request_handler=preflight_request_handler,
         )
-        root.after(100, poll_preflight, future)
+        root.after(100, poll_preflight, future, request_key)
 
     def on_preview_audit() -> None:
         if busy:
