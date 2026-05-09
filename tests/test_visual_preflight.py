@@ -9,7 +9,9 @@ from src.ui.visual import (
     PREFLIGHT_REQUIRED_MESSAGE,
     PREFLIGHT_WARNING_CONFIRMATION_MESSAGE,
     VisualPreflightResult,
+    build_preflight_gate_key,
     build_preflight_gate_snapshot,
+    build_preflight_gate_snapshot_from_key,
     evaluate_docx_generation_gate,
     submit_preflight_form_values,
     submit_preflight_form_values_async,
@@ -126,6 +128,23 @@ def test_evaluate_docx_generation_gate_invalidates_changed_form_values() -> None
     assert changed_code_decision.message == PREFLIGHT_REQUIRED_MESSAGE
     assert changed_lot_decision.status == DOCX_GATE_BLOCK
     assert changed_lot_decision.message == PREFLIGHT_REQUIRED_MESSAGE
+
+
+def test_async_preflight_snapshot_stays_bound_to_original_request_key() -> None:
+    request_key_a = build_preflight_gate_key("/tmp/sources-a", "DS0001", "L001")
+    current_values_b = ("/tmp/sources-b", "DS0002", "L002")
+    snapshot = build_preflight_gate_snapshot_from_key(request_key_a, make_report(status="OK"))
+
+    assert snapshot.source_directory == "/tmp/sources-a"
+    assert snapshot.code == "DS0001"
+    assert snapshot.lot == "L001"
+
+    decision_for_b = evaluate_docx_generation_gate(*current_values_b, snapshot)
+    decision_for_a = evaluate_docx_generation_gate("/tmp/sources-a", "DS0001", "L001", snapshot)
+
+    assert decision_for_b.status == DOCX_GATE_BLOCK
+    assert decision_for_b.message == PREFLIGHT_REQUIRED_MESSAGE
+    assert decision_for_a.status == DOCX_GATE_ALLOW
 
 
 def make_report(status: str) -> PreflightReport:
