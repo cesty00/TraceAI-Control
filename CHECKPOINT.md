@@ -69,6 +69,35 @@ status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
 
+Latest internal-only warning taxonomy validation inspected directly in this checkpoint:
+
+```text
+TraceAI Diagnostics
+workflow run: #288 / 25601399276
+commit on main: 4fe8a619a40992e39f0eedb174df315c9eb799b0
+validation case: DS099903883 / 105.26
+Tests and diagnostic report: success
+pytest: 193 passed in 2.48s
+reference_comparison.md: PASS
+artifact TraceAI-Diagnostics: generated
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated
+scope of this evidence: official post-merge validation on main for WARNING-TAXONOMY-01C internal-only classifier
+user-facing changes confirmed here: none
+DTO/JSON changes confirmed here: none
+UI behavior changes confirmed here: none
+not claimed here: DONE / release / production-ready / daily-use / hardening complete / fully integrated user-facing warning taxonomy
+```
+
+Latest merged internal-only warning taxonomy PR now on `main`:
+
+```text
+PR #136 — WARNING-TAXONOMY-01C
+merge commit: 4fe8a619a40992e39f0eedb174df315c9eb799b0
+status in this checkpoint: internal-only classifier integrated on main
+official post-merge green validation confirmed in this checkpoint: yes, limited-scope main validation only
+```
+
 No product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, hardening-complete claim, or extended product `DONE` is made by this checkpoint refresh.
 
 ## PREFLIGHT-UI-01 status sync completed with observations
@@ -145,6 +174,60 @@ PREFLIGHT-UI-01 nu este hardening complet.
 warning taxonomy / edge cases / hardening rămân backlog.
 ```
 
+## WARNING-TAXONOMY-01C status sync
+
+```text
+micro-stage: WARNING-TAXONOMY-01C-STATUS-SYNC
+scope: documentation sync only
+status: documented
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that `WARNING-TAXONOMY-01C_IMPLEMENTATION_MINIMAL_INTERNAL_CLASSIFIER` was merged into `main` via PR #136;
+- record merge commit `4fe8a619a40992e39f0eedb174df315c9eb799b0`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `#288 / 25601399276`;
+- record that `Tests and diagnostic report = success` for the official run on `main`;
+- record that `pytest` finished green with `193 passed in 2.48s`;
+- record that `reference_comparison.md = PASS`;
+- record that artifact `TraceAI-Diagnostics` was generated and inspected;
+- record that `real_audit_checklist_report.docx` and `real_audit_checklist_ui.json` were generated;
+- record that the warning taxonomy internal classifier was added as `internal-only`;
+- keep explicit that this sync confirms no user-facing changes, no DTO/JSON changes, and no UI behavior change;
+- keep explicit that warning taxonomy is not fully integrated user-facing and that the next backlog remains controlled integration / edge cases / hardening.
+
+Recorded evidence for this sync:
+
+```text
+PR #136: merged on main
+merge commit: 4fe8a619a40992e39f0eedb174df315c9eb799b0
+TraceAI Diagnostics: #288 / 25601399276
+Tests and diagnostic report: success
+pytest: 193 passed in 2.48s
+reference_comparison.md: PASS
+artifact TraceAI-Diagnostics: generated
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated
+scope: internal-only warning taxonomy classifier
+user-facing changes: none
+DTO/JSON changes: none
+UI behavior changes: none
+```
+
+Boundary retained for this sync:
+
+```text
+WARNING-TAXONOMY-01C nu este DONE.
+WARNING-TAXONOMY-01C nu este release.
+WARNING-TAXONOMY-01C nu este production-ready.
+WARNING-TAXONOMY-01C nu este daily-use.
+WARNING-TAXONOMY-01C nu este hardening complet.
+WARNING-TAXONOMY-01C nu este fully integrated user-facing.
+următorul backlog rămâne: integrare controlată / edge cases / hardening.
+```
+
 ## PREFLIGHT-UI-01C status sync
 
 ```text
@@ -215,6 +298,7 @@ Forbidden in this micro-stage:
 - any daily-use release claim;
 - any release-finalized claim;
 - any `DONE` claim for `PREFLIGHT-UI-01`;
+- any `DONE` claim for `WARNING-TAXONOMY-01C`;
 - any extended product DONE claim;
 - any hardening-complete claim.
 
@@ -300,7 +384,7 @@ legal or commercial final validation
 
 The following remain outside the closure and stay in backlog:
 
-- warning taxonomy refinement;
+- controlled warning taxonomy integration;
 - edge cases;
 - hardening;
 - broader UI timing evidence;
@@ -357,7 +441,7 @@ The next project decision after this sync should be handled separately as a new 
 Recommended backlog area:
 
 ```text
-warning taxonomy / edge cases / hardening
+controlled integration / edge cases / hardening
 ```
 
 ## Active documents
@@ -382,6 +466,6 @@ warning taxonomy / edge cases / hardening
 
 ## Control note
 
-This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`.
+This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS` and records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form.
 
-It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, or final legal/commercial validation.
+It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, fully integrated user-facing warning taxonomy, or final legal/commercial validation.
