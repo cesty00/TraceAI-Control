@@ -5,7 +5,7 @@ TraceAI Control generează raport DOCX auditabil pentru trasabilitatea unui arti
 ## Status curent
 
 ```text
-stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality / Preflight / DOCX Data Quality Summary
+stadiu: Strict Audit / Data Quality / Typed Errors / Packaging / Observability / Report Quality / Preflight / DOCX Data Quality Summary / DOCX Document Register Grouping
 etapă produs validată oficial cu DONE pe main: ERRORS-01_PR2_4_DONE
 ultimul stage produs închis oficial cu DONE pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
@@ -18,9 +18,9 @@ claim release finalized: NU
 claim hardening complet: NU
 ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS, vezi docs/real_test_pilot_01_execution_record.md
 live click-through PREFLIGHT-UI-01 consemnat separat: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
-ultimul diagnostic produs oficial inspectat direct: run #295 / 25605251025, full diagnostics 202 passed in 2.33s
-ultimul head validat oficial pentru acest sync limitat: d2f40727d90529c2d95112a63d0cd279a0295add
-ultimul PR merge-uit de produs pe main: #138
+ultimul diagnostic produs oficial inspectat direct: run #302 / 25608540779, full diagnostics 203 passed in 4.86s
+ultimul head validat oficial pentru acest sync limitat: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+ultimul PR merge-uit de produs pe main: #140
 ultimul PR merge-uit internal-only relevant pentru warning taxonomy: #136
 ultimul sync documentar relevant pe main se confirmă din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md și din istoricul PR-urilor merge-uite
@@ -28,7 +28,7 @@ PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md �
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar consemnează oficial că `PREFLIGHT-UI-01` este închis funcțional limitat ca `COMPLETED_WITH_OBSERVATIONS` și că `DOCX-DATA-ENRICHMENT-01B` are validare oficială de artifact consemnată pe `main` în limită docs-only.
+Acest sync documentar consemnează oficial că `PREFLIGHT-UI-01` este închis funcțional limitat ca `COMPLETED_WITH_OBSERVATIONS`, că `DOCX-DATA-ENRICHMENT-01B` are validare oficială de artifact consemnată pe `main` în limită docs-only și că `DOCX-DATA-ENRICHMENT-01C` are validare oficială de artifact consemnată pe `main` pentru gruparea registrului de documente în DOCX.
 
 Formulare obligatorie pentru această stare:
 
@@ -45,6 +45,11 @@ DOCX-DATA-ENRICHMENT-01B nu este release.
 DOCX-DATA-ENRICHMENT-01B nu este production-ready.
 DOCX-DATA-ENRICHMENT-01B nu este daily-use.
 DOCX-DATA-ENRICHMENT-01B nu este hardening complet.
+DOCX-DATA-ENRICHMENT-01C nu este DONE.
+DOCX-DATA-ENRICHMENT-01C nu este release.
+DOCX-DATA-ENRICHMENT-01C nu este production-ready.
+DOCX-DATA-ENRICHMENT-01C nu este daily-use.
+DOCX-DATA-ENRICHMENT-01C nu este hardening complet.
 ```
 
 Dovezile principale consemnate:
@@ -52,14 +57,17 @@ Dovezile principale consemnate:
 ```text
 PREFLIGHT-UI-01B: integrat și validat
 PREFLIGHT-UI-01C: integrat și validat
-PR #138 merge commit: d2f40727d90529c2d95112a63d0cd279a0295add
-TraceAI Diagnostics: #295 / 25605251025
+PR #140 merge commit: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+TraceAI Diagnostics: #302 / 25608540779
 Tests and diagnostic report = success
-pytest: 202 passed in 2.33s
+pytest: 203 passed in 4.86s
 reference_comparison.md = PASS
-artifact TraceAI-Diagnostics / 6896843359 generat și inspectat
+artifact TraceAI-Diagnostics / 6897757137 generat și inspectat
 real_audit_checklist_report.docx generat
 real_audit_checklist_ui.json generat
+registru documente în DOCX grupat pe Documente required / Documente recommended
+PR #138 merge commit: d2f40727d90529c2d95112a63d0cd279a0295add
+TraceAI Diagnostics: #295 / 25605251025
 Data Quality summary prezent în DOCX
 DOCX vs JSON data_quality aliniat
 wording conservator
@@ -110,6 +118,50 @@ docs/pp03_data_gap_analysis_01.md
 Robocop trebuie să acționeze ca developer atunci când etapa cere programare: inspectează codul, propune designul minim sigur, implementează, adaugă teste, pregătește validarea GitHub și nu marchează `DONE` fără TraceAI Diagnostics verde și artifact inspectat.
 
 Actualizările recente de orchestrare și operare au adăugat reguli pentru autonomie controlată, roluri preflight/pilot, fallback manual pentru diagnostic și limite explicite pentru mutații. Aceste schimbări documentare nu promovează singure produsul la o etapă nouă validată.
+
+## DOCX-DATA-ENRICHMENT-01C status
+
+`DOCX-DATA-ENRICHMENT-01C` este parte din `main` prin PR #140 și este consemnat limitat în acest sync ca validare oficială de artifact pe `main` pentru gruparea registrului de documente în checklist-ul DOCX.
+
+Starea consemnată pentru acest sync este:
+
+```text
+merge commit: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+TraceAI Diagnostics: #302 / 25608540779
+Tests and diagnostic report = success
+pytest: 203 passed in 4.86s
+reference_comparison.md = PASS
+artifact TraceAI-Diagnostics / 6897757137 generat și inspectat
+real_audit_checklist_report.docx generat
+real_audit_checklist_ui.json generat
+registru documente în DOCX grupat pe Documente required / Documente recommended
+schimbare DOCX-only / presentation-only
+fără DTO/JSON changes
+fără UI behavior change
+fără Data Quality logic change
+fără verdict rules change
+```
+
+Acest sync consemnează numai dovada documentară și de artifact pentru etapa 01C și nu schimbă:
+
+```text
+DTO / JSON
+UI behavior
+Data Quality logic
+verdict rules
+workflow-uri
+source mappings
+```
+
+Acest README sync nu afirmă:
+
+```text
+DONE
+release
+production-ready
+daily-use
+hardening complet
+```
 
 ## DOCX-DATA-ENRICHMENT-01B status
 
@@ -469,6 +521,8 @@ Checklist DOCX-ul generat conține textul aprobat din `Card verdict auditor`, te
 
 PR #138 este consemnat aici strict ca dovadă de artifact pentru `DOCX-DATA-ENRICHMENT-01B`: sumarul Data Quality este prezent în DOCX, este aliniat cu `real_audit_checklist_ui.json`, wording-ul rămâne conservator, iar verdictul raportului rămâne `PASS_WITH_OBSERVATIONS`.
 
+PR #140 este consemnat aici strict ca dovadă de artifact pentru `DOCX-DATA-ENRICHMENT-01C`: registrul de documente din checklist-ul DOCX este grupat pe `Documente required` și `Documente recommended`, iar schimbarea rămâne DOCX-only / presentation-only fără DTO/JSON, UI, Data Quality sau verdict-rules changes.
+
 ## UI
 
 UI-ul vizual este Tkinter și orchestrează fluxul validat fără business logic.
@@ -540,16 +594,15 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #295 / 25605251025
-ultimul head validat oficial pentru acest sync limitat: d2f40727d90529c2d95112a63d0cd279a0295add
-pytest: 202 passed in 2.33s
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run #302 / 25608540779
+ultimul head validat oficial pentru acest sync limitat: 4fb109192ab129438f1ea018ba0f2bcac03a40e3
+pytest: 203 passed in 4.86s
 Tests and diagnostic report = success
 reference_comparison.md = PASS
 artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
-Data Quality summary în DOCX este prezent
-DOCX vs JSON data_quality este aliniat
-wording-ul raportului este conservator
-verdictul raportului rămâne PASS_WITH_OBSERVATIONS
+funcționalitatea DOCX-DATA-ENRICHMENT-01C consemnată aici: registru documente în DOCX grupat pe Documente required / Documente recommended
+funcționalitatea DOCX-DATA-ENRICHMENT-01C consemnată aici rămâne: DOCX-only / presentation-only, fără DTO/JSON, fără UI behavior, fără Data Quality logic și fără verdict rules changes
+funcționalitatea DOCX-DATA-ENRICHMENT-01B consemnată aici: Data Quality summary în DOCX prezent și aliniat cu JSON
 funcționalitatea PREFLIGHT-UI-01B consemnată aici: DOCX gate bazat pe preflight curent pentru source_directory + code + lot
 funcționalitatea PREFLIGHT-UI-01C consemnată aici: guidance operator-facing pentru OK / WARNING / BLOCKER, derivat din PreflightReport.status
 funcționalitatea WARNING-TAXONOMY-01C consemnată aici: classifier intern internal-only fără schimbări user-facing, fără DTO/JSON changes și fără UI behavior change
