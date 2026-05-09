@@ -201,8 +201,18 @@ class AuditReportPolicy:
         return (important + secondary)[: self.max_visible_lot_flows]
 
     def select_document_register(self, rows: Sequence[ChecklistDocumentRegisterLine]) -> list[ChecklistDocumentRegisterLine]:
-        priority = {'PRD': 0, 'WMS': 1, 'NIR': 2}
-        return sorted(rows, key=lambda row: (priority.get(row.area, 9), row.related_code, row.related_lot, row.document_reference))[: self.max_visible_document_register_rows]
+        status_priority = {'required': 0, 'recommended': 1}
+        area_priority = {'PRD': 0, 'WMS': 1, 'NIR': 2}
+        return sorted(
+            rows,
+            key=lambda row: (
+                status_priority.get(row.status, 9),
+                area_priority.get(row.area, 9),
+                row.related_code,
+                row.related_lot,
+                row.document_reference,
+            ),
+        )[: self.max_visible_document_register_rows]
 
     def overflow_note(self, total: int, visible: int, label: str) -> str | None:
         if total <= visible:
