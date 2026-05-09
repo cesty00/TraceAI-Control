@@ -48,6 +48,7 @@ from src.report.docx_layout import (
 from src.rules.run_traceability_case import run_traceability_case
 
 MISSING = 'FARA DATE IDENTIFICATE'
+NOT_AVAILABLE = 'NOT_AVAILABLE'
 Q = chr(34)
 DOCUMENT_REGISTER_CHECKBOX = '☐'
 DOCUMENT_REGISTER_COLUMN_WIDTHS = [420, 900, 1550, 1800, 900, 900, 1200, 1900, 850]
@@ -224,15 +225,11 @@ def primary_production_order(report: AuditChecklistReport) -> ChecklistProductio
     return None
 
 
-def sync_docx_data_quality_from_source(report: AuditChecklistReport, data_quality: dict[str, Any] | None) -> AuditChecklistReport:
-    '''Copy existing Data Quality display fields into the DOCX report instance.'''
-
+def normalize_docx_data_quality_summary(data_quality: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(data_quality, dict):
-        return report
-    for key in DOCX_DATA_QUALITY_KEYS:
-        if key in data_quality:
-            report.data_quality[key] = data_quality[key]
-    return report
+        return {}
+    return {key: data_quality[key] for key in DOCX_DATA_QUALITY_KEYS if key in data_quality}
+
 
 
 def data_quality_text(value: object, default: str = '0') -> str:
@@ -240,20 +237,26 @@ def data_quality_text(value: object, default: str = '0') -> str:
     return text or default
 
 
+
 def data_quality_count(summary: dict[str, Any], key: str) -> str:
     return data_quality_text(summary.get(key, 0), '0')
 
 
+
 def data_quality_sources(summary: dict[str, Any]) -> str:
     source_count = data_quality_count(summary, 'source_count')
-    sources_found = data_quality_text(summary.get('sources_found', source_count), source_count)
+    if 'sources_found' not in summary:
+        return NOT_AVAILABLE
+    sources_found = data_quality_text(summary.get('sources_found'), NOT_AVAILABLE)
     return f'{sources_found}/{source_count}'
+
 
 
 def data_quality_issue_value(issue: dict[str, Any], key: str) -> str:
     value = issue.get(key)
     text = str(value).strip() if value is not None else ''
     return text or MISSING
+
 
 
 def data_quality_issue_location(issue: dict[str, Any]) -> str:
@@ -263,6 +266,7 @@ def data_quality_issue_location(issue: dict[str, Any]) -> str:
     ]
     meaningful = [part for part in parts if part != MISSING]
     return ' / '.join(meaningful) if meaningful else MISSING
+
 
 
 def data_quality_issue_rows(summary: dict[str, Any], policy: AuditReportPolicy) -> list[list[str]]:
@@ -284,8 +288,13 @@ def data_quality_issue_rows(summary: dict[str, Any], policy: AuditReportPolicy) 
     return rows
 
 
-def build_data_quality_summary_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
-    summary = report.data_quality if isinstance(report.data_quality, dict) else {}
+
+def build_data_quality_summary_section(
+    report: AuditChecklistReport,
+    data_quality_summary: dict[str, Any] | None,
+    policy: AuditReportPolicy,
+) -> list[str]:
+    summary = normalize_docx_data_quality_summary(data_quality_summary)
     parts = [
         paragraph('Sumar Data Quality', style='Heading1'),
         literal_paragraph(
@@ -295,7 +304,7 @@ def build_data_quality_summary_section(report: AuditChecklistReport, policy: Aud
         table(
             ['Indicator', 'Valoare'],
             [
-                ['Status Data Quality', data_quality_text(summary.get('status'), 'NOT_AVAILABLE')],
+                ['Status Data Quality', data_quality_text(summary.get('status'), NOT_AVAILABLE)],
                 ['Surse găsite', data_quality_sources(summary)],
                 ['Erori', data_quality_count(summary, 'error_count')],
                 ['Warning-uri', data_quality_count(summary, 'warning_count')],
@@ -315,6 +324,7 @@ def build_data_quality_summary_section(report: AuditChecklistReport, policy: Aud
     return parts
 
 
+
 def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
     code = _header_footer_text(report.exercise.code)
     lot = _header_footer_text(report.exercise.lot)
@@ -329,6 +339,7 @@ def build_checklist_header_xml(report: AuditChecklistReport, build_info: BuildIn
         f'<w:r><w:rPr><w:sz w:val={Q}13{Q}/><w:rFonts w:ascii={Q}Arial{Q} w:hAnsi={Q}Arial{Q}/></w:rPr><w:t>{product_name}</w:t></w:r>'
         f'</w:p></w:hdr>'
     )
+
 
 
 def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildInfo) -> str:
@@ -346,9 +357,11 @@ def build_checklist_footer_xml(report: AuditChecklistReport, build_info: BuildIn
     )
 
 
+
 def _header_footer_text(value: object) -> str:
     text = str(value).strip() if value is not None else MISSING
     return html.escape(text or MISSING, quote=False)
+
 
 
 def generate_audit_checklist_docx_report(
@@ -356,6 +369,7 @@ def generate_audit_checklist_docx_report(
     output_path: str | Path,
     policy: AuditReportPolicy = DEFAULT_POLICY,
     build_info: BuildInfo | None = None,
+    data_quality_summary: dict[str, Any] | None = None,
 ) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -369,21 +383,23 @@ def generate_audit_checklist_docx_report(
         package.writestr('word/styles.xml', STYLES_XML)
         package.writestr('word/header1.xml', build_checklist_header_xml(report, metadata))
         package.writestr('word/footer1.xml', build_checklist_footer_xml(report, metadata))
-        package.writestr('word/document.xml', build_document_xml(report, policy, metadata))
+        package.writestr('word/document.xml', build_document_xml(report, policy, metadata, data_quality_summary=data_quality_summary))
     return output
+
 
 
 def build_document_xml(
     report: AuditChecklistReport,
     policy: AuditReportPolicy = DEFAULT_POLICY,
     build_info: BuildInfo | None = None,
+    data_quality_summary: dict[str, Any] | None = None,
 ) -> str:
     metadata = build_info or get_build_info()
     body: list[str] = []
     body.extend(build_title_block(report, metadata))
     body.extend(build_auditor_verdict_card_section(report, policy))
     body.extend(build_quick_auditor_guide_section())
-    body.extend(build_data_quality_summary_section(report, policy))
+    body.extend(build_data_quality_summary_section(report, data_quality_summary, policy))
     body.extend(build_conformity_section(report, policy))
     body.extend(build_exercise_section(report, policy))
     body.extend(build_downstream_section(report, policy))
@@ -397,6 +413,7 @@ def build_document_xml(
     body.extend(build_conclusion_section(report, policy))
     body.extend(build_build_info_section(metadata))
     return wrap_document(''.join(body))
+
 
 
 def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> list[str]:
@@ -419,6 +436,7 @@ def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> li
             spacing_after=100,
         ),
     ]
+
 
 
 def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -448,6 +466,7 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
     ]
 
 
+
 def build_quick_auditor_guide_section() -> list[str]:
     return [
         paragraph('Ghid rapid pentru auditor', style='Heading1'),
@@ -457,6 +476,7 @@ def build_quick_auditor_guide_section() -> list[str]:
         ),
         *bullets(QUICK_AUDITOR_GUIDE_ITEMS),
     ]
+
 
 
 def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -469,6 +489,7 @@ def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPo
         ),
         table(['Cerință', 'Status în test', 'Dovezi', 'Observații'], rows),
     ]
+
 
 
 def build_exercise_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -488,6 +509,7 @@ def build_exercise_section(report: AuditChecklistReport, policy: AuditReportPoli
     ]
 
 
+
 def build_downstream_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     rows = [[d.client, d.address, d.delivery_date, d.delivered_quantity, d.delivery_document_type, d.delivery_document_number, d.wms_order, policy.downstream_observation(d.observation)] for d in report.downstream]
     if not rows:
@@ -499,6 +521,7 @@ def build_downstream_section(report: AuditChecklistReport, policy: AuditReportPo
         paragraph('Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare și cu documentele WMS indicate.'),
         table(['Client', 'Adresă', 'Dată livrare', 'Cantitate livrată', 'Tip document', 'Număr document', 'Comandă WMS', 'Observații'], rows),
     ]
+
 
 
 def build_upstream_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -513,6 +536,7 @@ def build_upstream_section(report: AuditChecklistReport, policy: AuditReportPoli
     ]
 
 
+
 def build_third_party_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     raw_lines = [line for line in report.upstream if line.material_type == 'Materie primă']
     if not raw_lines:
@@ -523,6 +547,7 @@ def build_third_party_section(report: AuditChecklistReport, policy: AuditReportP
         paragraph('Această verificare evidențiază dacă loturile de materie primă folosite în produsul auditat au avut și livrări directe către terți. Informația este importantă pentru separarea consumului intern de alte ieșiri ale aceluiași lot sursă.'),
         table(['Cod MP', 'Lot MP', 'Materie primă', 'Cantitate consumată', 'Livrări MP către terți', 'Detalii'], rows),
     ]
+
 
 
 def build_production_consumption_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -538,6 +563,7 @@ def build_production_consumption_section(report: AuditChecklistReport, policy: A
     ]
 
 
+
 def production_order_summary_rows(rows: list[ChecklistProductionConsumption], policy: AuditReportPolicy) -> list[list[str]]:
     summary: OrderedDict[str, ChecklistProductionConsumption] = OrderedDict()
     for row in rows:
@@ -547,10 +573,12 @@ def production_order_summary_rows(rows: list[ChecklistProductionConsumption], po
     return [[row.production_order, row.production_date, row.finished_product_quantity, row.wms_production_out, policy.delivery(row.associated_delivery)] for row in summary.values()]
 
 
+
 def production_consumption_rows(rows: list[ChecklistProductionConsumption], policy: AuditReportPolicy) -> list[list[str]]:
     if not rows:
         return [[MISSING] * 6]
     return [[row.production_order, row.material_type, row.consumed_code, row.consumed_lot, policy.name(row.consumed_name), row.consumed_quantity] for row in rows]
+
 
 
 def build_lot_flow_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -567,6 +595,7 @@ def build_lot_flow_section(report: AuditChecklistReport, policy: AuditReportPoli
     if note:
         parts.append(paragraph(note))
     return parts
+
 
 
 def build_document_register_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -592,6 +621,7 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
     return parts
 
 
+
 def build_conclusion_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     return [
         paragraph('Concluzie audit intern', style='Heading1'),
@@ -600,6 +630,7 @@ def build_conclusion_section(report: AuditChecklistReport, policy: AuditReportPo
         paragraph(f'Bilanț PRD vs WMS: {report.balance.status}. {policy.short(report.balance.observation, 120)}'),
         *bullets(compact_conclusion_observations(report, policy)),
     ]
+
 
 
 def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
@@ -613,6 +644,7 @@ def compact_conclusion_observations(report: AuditChecklistReport, policy: AuditR
     ]
 
 
+
 def build_build_info_section(build_info: BuildInfo) -> list[str]:
     return [
         paragraph('Informații build raport', style='Heading1'),
@@ -621,8 +653,10 @@ def build_build_info_section(build_info: BuildInfo) -> list[str]:
     ]
 
 
+
 def xml_attrs(pairs: Iterable[tuple[str, object]]) -> str:
     return ''.join(f' {name}={Q}{html.escape(str(value), quote=False)}{Q}' for name, value in pairs if value is not None)
+
 
 
 def literal_paragraph(
@@ -646,6 +680,7 @@ def literal_paragraph(
     return f'<w:p><w:pPr>{style_xml}{align_xml}{spacing_xml}</w:pPr><w:r><w:rPr>{bold_xml}</w:rPr><w:t>{safe_text}</w:t></w:r></w:p>'
 
 
+
 def literal_table(headers: list[str], rows: list[list[object]], column_widths: Sequence[int] | None = None) -> str:
     xml_rows = [literal_table_row(headers, is_header=True, column_widths=column_widths)]
     xml_rows.extend(literal_table_row(row, column_widths=column_widths) for row in rows)
@@ -661,12 +696,14 @@ def literal_table(headers: list[str], rows: list[list[object]], column_widths: S
     return f'<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{"".join(xml_rows)}</w:tbl>'
 
 
+
 def literal_table_row(values: Iterable[object], is_header: bool = False, column_widths: Sequence[int] | None = None) -> str:
     cells = []
     for index, value in enumerate(values):
         width = column_widths[index] if column_widths and index < len(column_widths) else None
         cells.append(literal_table_cell(value, is_header=is_header, width=width))
     return f'<w:tr>{table_row_properties_xml(is_header)}{"".join(cells)}</w:tr>'
+
 
 
 def literal_table_cell(value: object, is_header: bool = False, width: int | None = None) -> str:
@@ -682,8 +719,10 @@ def literal_table_cell(value: object, is_header: bool = False, width: int | None
     return f'<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing{xml_attrs([("w:after", 0)])}/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz{xml_attrs([("w:val", size)])}/><w:rFonts{xml_attrs([("w:ascii", "Arial"), ("w:hAnsi", "Arial")])}/></w:rPr><w:t>{safe_text}</w:t></w:r></w:p></w:tc>'
 
 
+
 def extract_document_text_from_xml(document_xml: str) -> str:
     return document_xml.replace('<w:t>', '\n').replace('</w:t>', '\n')
+
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -696,8 +735,11 @@ def main(argv: list[str] | None = None) -> int:
     traceability_case = run_traceability_case(args.source_directory, args.code, args.lot)
     audit_report = build_audit_traceability_report(traceability_case)
     checklist_report = build_audit_checklist_report(audit_report)
-    sync_docx_data_quality_from_source(checklist_report, traceability_case.sections.get('data_quality'))
-    generate_audit_checklist_docx_report(checklist_report, args.output)
+    generate_audit_checklist_docx_report(
+        checklist_report,
+        args.output,
+        data_quality_summary=traceability_case.sections.get('data_quality'),
+    )
     return 0 if checklist_report.conclusion_status != 'INCOMPLETE' else 1
 
 
