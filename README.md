@@ -16,7 +16,8 @@ claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
 claim hardening complet: NU
-ultimul pilot real controlat consemnat: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
+ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS, vezi docs/real_test_pilot_01_execution_record.md
+live click-through PREFLIGHT-UI-01 consemnat separat: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
 următorul pas de proiect: decizie separată pentru warning taxonomy / edge cases / hardening
 ultimul diagnostic produs oficial inspectat direct: run #277 / 25595614738, full diagnostics 184 passed in 2.57s
 ultimul head validat oficial pentru acest sync limitat: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
@@ -55,7 +56,7 @@ real_audit_checklist_report.docx generat
 real_audit_checklist_ui.json generat
 ```
 
-Live operator click-through consemnat pentru cazul `DS099903883 / 105.26`:
+Live operator click-through consemnat separat pentru PREFLIGHT-UI-01 pe cazul `DS099903883 / 105.26`:
 
 ```text
 surse: 4/4
@@ -217,22 +218,40 @@ product DONE extins
 
 ## REAL-TEST-PILOT-01 status
 
-`REAL-TEST-PILOT-01` este documentat prin definiție, checklist scurt și execution record dedicat.
+`REAL-TEST-PILOT-01` este execuția/pilotul separat documentat în:
 
-Rezultatul documentat pentru pilot este acum aliniat cu statusul `PREFLIGHT-UI-01 COMPLETED_WITH_OBSERVATIONS`:
+```text
+docs/real_test_pilot_01_execution_record.md
+```
+
+Rezultatul oficial al pilotului rămâne cel din documentul dedicat:
+
+```text
+REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS
+controlled real-test pass with observations
+```
+
+Rezumatul operațional al pilotului separat este:
 
 ```text
 case: DS099903883 / 105.26
 sources found: 4/4
 preflight: WARNING
-operator guidance displayed: „Există observații la surse. Poți continua cu atenție.”
-WARNING dialog observed: „Preflight-ul curent are observații. Poți continua cu atenție. Vrei să continui generarea raportului DOCX?”
-DOCX generated: yes
-Diagnostic ZIP generated: yes
-errors: 0
-warnings: 8
-issues: 8
-result: PASS_WITH_OBSERVATIONS
+blockers: none
+Data Quality: ERROR
+artifacts retained: yes
+DOCX real generated: yes
+Diagnostic ZIP real generated: yes
+```
+
+Observațiile pilotului rămân parte din dovada pilotului, nu sunt rescrise de click-through-ul PREFLIGHT-UI:
+
+```text
+Data Quality ERROR este prezent și explicit.
+Data Quality ERROR este așteptat pentru acest caz și nu este ascuns.
+preflight-ul este WARNING, nu BLOCKED.
+nu există blockers care să invalideze pilotul.
+artifactele relevante au fost păstrate.
 ```
 
 Acest rezultat nu declară:
@@ -244,6 +263,26 @@ release finalized
 etapă produs DONE
 hardening complet
 ```
+
+## PREFLIGHT-UI-01 live click-through evidence
+
+Live click-through-ul pentru `PREFLIGHT-UI-01` este consemnat separat de `REAL-TEST-PILOT-01` și este folosit ca dovadă limitată pentru comportamentul 01B + 01C:
+
+```text
+case: DS099903883 / 105.26
+sources: 4/4
+preflight: WARNING
+guidance displayed: „Există observații la surse. Poți continua cu atenție.”
+WARNING dialog observed: „Preflight-ul curent are observații. Poți continua cu atenție. Vrei să continui generarea raportului DOCX?”
+DOCX generated: yes
+Diagnostic ZIP generated: yes
+errors: 0
+warnings: 8
+issues: 8
+result: PASS_WITH_OBSERVATIONS
+```
+
+Acest click-through nu rescrie sumarul oficial `REAL-TEST-PILOT-01` și nu schimbă documentul dedicat pilotului.
 
 ## Diagnostics orchestration
 
@@ -406,7 +445,8 @@ reference_comparison.md = PASS
 artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
 funcționalitatea PREFLIGHT-UI-01B consemnată aici: DOCX gate bazat pe preflight curent pentru source_directory + code + lot
 funcționalitatea PREFLIGHT-UI-01C consemnată aici: guidance operator-facing pentru OK / WARNING / BLOCKER, derivat din PreflightReport.status
-live operator click-through consemnat aici: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS, preflight WARNING, DOCX generat, Diagnostic ZIP generat, erori 0, warnings 8, issues 8
+live operator click-through consemnat separat aici: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS, preflight WARNING, DOCX generat, Diagnostic ZIP generat, erori 0, warnings 8, issues 8
+REAL-TEST-PILOT-01 rămâne execuție pilot separată în docs/real_test_pilot_01_execution_record.md, cu Data Quality ERROR, blockers none și artifacts retained yes
 aceasta este validare oficială generică pe main și click-through limitat, nu release, nu production-ready, nu daily-use, nu DONE și nu hardening complet
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
