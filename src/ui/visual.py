@@ -58,6 +58,16 @@ PREFLIGHT_BLOCKER_MESSAGE = "Preflight-ul curent are blocaje. Oprește-te înain
 PREFLIGHT_WARNING_CONFIRMATION_MESSAGE = "Preflight-ul curent are observații. Poți continua cu atenție. Vrei să continui generarea raportului DOCX?"
 PREFLIGHT_WARNING_CANCELLED_MESSAGE = "Generarea raportului DOCX a fost anulată. Confirmă observațiile din preflight înainte de continuare."
 
+PREFLIGHT_NEXT_STEP_OK_MESSAGE = "Pas următor: preflight OK. Operatorul poate continua normal spre preview / DOCX."
+PREFLIGHT_NEXT_STEP_WARNING_MESSAGE = (
+    "Pas următor: preflight WARNING. Operatorul poate continua doar cu atenție după revizuirea observațiilor. "
+    "Diagnostic ZIP este recomandat pentru păstrarea dovezilor."
+)
+PREFLIGHT_NEXT_STEP_BLOCKER_MESSAGE = (
+    "Pas următor: preflight BLOCKER. Operatorul trebuie să se oprească, să corecteze sursele sau să escaladeze. "
+    "Diagnostic ZIP este recomandat pentru investigație."
+)
+
 
 @dataclass(frozen=True)
 class VisualAuditChecklistResult:
@@ -95,6 +105,28 @@ class DocxGenerationGateDecision:
 
     status: str
     message: str
+
+
+def build_preflight_operator_next_step(report: PreflightReport) -> str:
+    """Return the UI next step from the existing preflight status only."""
+
+    if report.status == "BLOCKER":
+        return PREFLIGHT_NEXT_STEP_BLOCKER_MESSAGE
+    if report.status == "WARNING":
+        return PREFLIGHT_NEXT_STEP_WARNING_MESSAGE
+    if report.status == "OK":
+        return PREFLIGHT_NEXT_STEP_OK_MESSAGE
+    return report.operator_guidance
+
+
+def format_visual_preflight_report(report: PreflightReport) -> str:
+    """Format the core preflight report with UI-only operator next-step guidance."""
+
+    return (
+        f"{format_preflight_report(report).rstrip()}\n\n"
+        "Pas următor operator:\n"
+        f"{build_preflight_operator_next_step(report)}\n"
+    )
 
 
 def normalize_gate_form_value(value: str) -> str:
@@ -274,7 +306,7 @@ def submit_preflight_form_values(source_directory: str, code: str, lot: str) -> 
     return VisualPreflightResult(
         success=True,
         report=report,
-        message=report.operator_guidance,
+        message=build_preflight_operator_next_step(report),
         error=None,
     )
 
@@ -683,8 +715,8 @@ def run_visual_app(
         section_title_var.set("Verificare surse înainte de generare")
         if result.success and result.report is not None:
             last_preflight_snapshot = build_preflight_gate_snapshot_from_key(request_key, result.report)
-            section_summary_var.set(f"Status preflight: {result.report.status}")
-            set_preview_text(format_preflight_report(result.report))
+            section_summary_var.set(f"Status preflight: {result.report.status}. {result.message}")
+            set_preview_text(format_visual_preflight_report(result.report))
             if result.report.status == "BLOCKER":
                 messagebox.showwarning(APP_TITLE, "Preflight a găsit blocaje. Verificați detaliile înainte de generare.")
         else:

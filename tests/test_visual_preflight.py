@@ -6,13 +6,18 @@ from src.ui.visual import (
     DOCX_GATE_BLOCK,
     DOCX_GATE_CONFIRM,
     PREFLIGHT_BLOCKER_MESSAGE,
+    PREFLIGHT_NEXT_STEP_BLOCKER_MESSAGE,
+    PREFLIGHT_NEXT_STEP_OK_MESSAGE,
+    PREFLIGHT_NEXT_STEP_WARNING_MESSAGE,
     PREFLIGHT_REQUIRED_MESSAGE,
     PREFLIGHT_WARNING_CONFIRMATION_MESSAGE,
     VisualPreflightResult,
     build_preflight_gate_key,
     build_preflight_gate_snapshot,
     build_preflight_gate_snapshot_from_key,
+    build_preflight_operator_next_step,
     evaluate_docx_generation_gate,
+    format_visual_preflight_report,
     submit_preflight_form_values,
     submit_preflight_form_values_async,
 )
@@ -26,7 +31,7 @@ def test_submit_preflight_form_values_rejects_missing_fields() -> None:
     assert result.error == "Câmpuri obligatorii lipsă: source_directory"
 
 
-def test_submit_preflight_form_values_uses_core_operator_guidance(monkeypatch) -> None:
+def test_submit_preflight_form_values_uses_ui_next_step_guidance(monkeypatch) -> None:
     report = PreflightReport(
         schema_version="preflight-report.v1",
         source_directory="/tmp/sources",
@@ -60,7 +65,7 @@ def test_submit_preflight_form_values_uses_core_operator_guidance(monkeypatch) -
 
     assert result.success is True
     assert result.report is report
-    assert result.message == "Există observații la surse. Poți continua cu atenție."
+    assert result.message == PREFLIGHT_NEXT_STEP_WARNING_MESSAGE
 
 
 def test_submit_preflight_form_values_async_uses_request_handler() -> None:
@@ -79,6 +84,50 @@ def test_submit_preflight_form_values_async_uses_request_handler() -> None:
     assert result.success is True
     assert result.report is report
     assert result.message == "ok"
+
+
+def test_preflight_next_step_guidance_ok() -> None:
+    report = make_report(status="OK")
+
+    assert build_preflight_operator_next_step(report) == PREFLIGHT_NEXT_STEP_OK_MESSAGE
+    assert "continua normal spre preview / DOCX" in build_preflight_operator_next_step(report)
+
+
+def test_preflight_next_step_guidance_warning() -> None:
+    report = make_report(status="WARNING")
+
+    guidance = build_preflight_operator_next_step(report)
+
+    assert guidance == PREFLIGHT_NEXT_STEP_WARNING_MESSAGE
+    assert "continua doar cu atenție" in guidance
+    assert "revizuirea observațiilor" in guidance
+    assert "Diagnostic ZIP" in guidance
+
+
+def test_preflight_next_step_guidance_blocker() -> None:
+    report = make_report(status="BLOCKER")
+
+    guidance = build_preflight_operator_next_step(report)
+
+    assert guidance == PREFLIGHT_NEXT_STEP_BLOCKER_MESSAGE
+    assert "trebuie să se oprească" in guidance
+    assert "să corecteze sursele sau să escaladeze" in guidance
+    assert "Diagnostic ZIP" in guidance
+
+
+def test_preflight_next_step_guidance_uses_report_status_only() -> None:
+    report = make_report(status="OK", warnings=["warning present"], blockers=["blocker present"])
+
+    assert build_preflight_operator_next_step(report) == PREFLIGHT_NEXT_STEP_OK_MESSAGE
+
+
+def test_visual_preflight_report_includes_next_step_guidance() -> None:
+    report = make_report(status="BLOCKER")
+
+    formatted = format_visual_preflight_report(report)
+
+    assert "Pas următor operator:" in formatted
+    assert PREFLIGHT_NEXT_STEP_BLOCKER_MESSAGE in formatted
 
 
 def test_evaluate_docx_generation_gate_blocks_without_current_preflight() -> None:
@@ -147,9 +196,13 @@ def test_async_preflight_snapshot_stays_bound_to_original_request_key() -> None:
     assert decision_for_a.status == DOCX_GATE_ALLOW
 
 
-def make_report(status: str) -> PreflightReport:
-    warnings = ["warning"] if status == "WARNING" else []
-    blockers = ["blocker"] if status == "BLOCKER" else []
+def make_report(
+    status: str,
+    warnings: list[str] | None = None,
+    blockers: list[str] | None = None,
+) -> PreflightReport:
+    default_warnings = ["warning"] if status == "WARNING" else []
+    default_blockers = ["blocker"] if status == "BLOCKER" else []
     guidance = {
         "OK": "Sursele sunt pregătite. Poți continua cu generarea raportului.",
         "WARNING": "Există observații la surse. Poți continua cu atenție.",
@@ -169,6 +222,6 @@ def make_report(status: str) -> PreflightReport:
         ),
         status=status,
         operator_guidance=guidance,
-        warnings=warnings,
-        blockers=blockers,
+        warnings=default_warnings if warnings is None else warnings,
+        blockers=default_blockers if blockers is None else blockers,
     )
