@@ -4,20 +4,36 @@ Data checkpoint: 2026-05-09
 
 ## Current status
 
-Latest completed product stage on current `main` remains: ERRORS-01_PR2_4_DONE.
+Latest product baseline with official `DONE` claim remains: ERRORS-01_PR2_4_DONE.
 
 Latest completed `REPORT-QUALITY` stage on current `main` remains: REPORT-QUALITY-01E-3_DONE.
 
-Current active product stage on current `main`:
+Current PREFLIGHT-UI stage status on `main`:
 
 ```text
 PREFLIGHT-UI-01
-status: active on main
-completed merged slice on main: PREFLIGHT-UI-01C via PR #132
-remaining stage-level DONE claim: none
+status: COMPLETED_WITH_OBSERVATIONS
+functional closure: limited
+DONE claim: none
+release claim: none
+production-ready claim: none
+daily-use claim: none
+hardening-complete claim: none
 ```
 
-Latest official product validation remains:
+Mandatory stage wording:
+
+```text
+PREFLIGHT-UI-01 este închis funcțional limitat ca COMPLETED_WITH_OBSERVATIONS.
+PREFLIGHT-UI-01 nu este DONE.
+PREFLIGHT-UI-01 nu este release.
+PREFLIGHT-UI-01 nu este production-ready.
+PREFLIGHT-UI-01 nu este daily-use.
+PREFLIGHT-UI-01 nu este hardening complet.
+warning taxonomy / edge cases / hardening rămân backlog.
+```
+
+Latest official product validation baseline remains:
 
 ```text
 TraceAI Diagnostics Smoke
@@ -41,7 +57,7 @@ artifact TraceAI-Diagnostics: generated
 real_audit_checklist_report.docx: generated
 real_audit_checklist_ui.json: generated
 scope of this evidence: official post-merge integration validation on main for PREFLIGHT-UI-01C
-not claimed here: release / production-ready / daily-use / stage-level DONE / extended product DONE
+not claimed here: release / production-ready / daily-use / DONE / hardening complete / extended product DONE
 ```
 
 Latest merged product-facing PR now on `main`:
@@ -53,7 +69,81 @@ status in this checkpoint: technically integrated on main
 official post-merge green validation confirmed in this checkpoint: yes, limited-scope main integration validation only
 ```
 
-No new product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, stage-level `DONE` for `PREFLIGHT-UI-01`, or extended product `DONE` is made by this checkpoint refresh.
+No product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, hardening-complete claim, or extended product `DONE` is made by this checkpoint refresh.
+
+## PREFLIGHT-UI-01 status sync completed with observations
+
+```text
+micro-stage: PREFLIGHT-UI-01_STATUS_SYNC_COMPLETED_WITH_OBSERVATIONS
+scope: documentation sync only
+status: documented
+PREFLIGHT-UI-01 stage state: COMPLETED_WITH_OBSERVATIONS
+functional closure: limited
+product-stage DONE claim: none
+release claim: none
+```
+
+Purpose:
+
+- synchronize official documentation state for `PREFLIGHT-UI-01` as `COMPLETED_WITH_OBSERVATIONS`;
+- record that `PREFLIGHT-UI-01B` was integrated and validated;
+- record that `PREFLIGHT-UI-01C` was integrated and validated;
+- record that `PREFLIGHT-UI-01` is functionally closed in a limited way, with observations;
+- keep explicit that this is not `DONE`, not release, not production-ready, not daily-use, and not hardening complete.
+
+Evidence recorded for PREFLIGHT-UI-01B:
+
+```text
+PREFLIGHT-UI-01B: integrated and validated
+PR: #129
+functionality: DOCX generation gated by latest relevant preflight for source_directory + code + lot
+validation: post-merge TraceAI Diagnostics on main recorded in previous checkpoint sync
+scope: limited UI orchestration gate
+```
+
+Evidence recorded for PREFLIGHT-UI-01C:
+
+```text
+PREFLIGHT-UI-01C: integrated and validated
+PR: #132
+merge commit: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
+TraceAI Diagnostics: #277 / 25595614738
+Tests and diagnostic report: success
+pytest: 184 passed in 2.57s
+reference_comparison.md: PASS
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated
+functionality: operator-facing guidance for OK / WARNING / BLOCKER, derived from PreflightReport.status
+scope: limited UI next-step guidance
+```
+
+Live operator click-through evidence recorded for case `DS099903883 / 105.26`:
+
+```text
+case: DS099903883 / 105.26
+sources: 4/4
+preflight: WARNING
+operator guidance displayed: „Există observații la surse. Poți continua cu atenție.”
+WARNING dialog observed: „Preflight-ul curent are observații. Poți continua cu atenție. Vrei să continui generarea raportului DOCX?”
+DOCX generated: yes
+Diagnostic ZIP generated: yes
+result: PASS_WITH_OBSERVATIONS
+errors: 0
+warnings: 8
+issues: 8
+```
+
+Status interpretation:
+
+```text
+PREFLIGHT-UI-01 este închis funcțional limitat ca COMPLETED_WITH_OBSERVATIONS.
+PREFLIGHT-UI-01 nu este DONE.
+PREFLIGHT-UI-01 nu este release.
+PREFLIGHT-UI-01 nu este production-ready.
+PREFLIGHT-UI-01 nu este daily-use.
+PREFLIGHT-UI-01 nu este hardening complet.
+warning taxonomy / edge cases / hardening rămân backlog.
+```
 
 ## PREFLIGHT-UI-01C status sync
 
@@ -65,7 +155,7 @@ product-stage claim: none
 release claim: none
 ```
 
-Purpose:
+Purpose retained from the prior sync:
 
 - record that `PREFLIGHT-UI-01C` was merged into `main` via PR #132;
 - record merge commit `baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416`;
@@ -75,29 +165,7 @@ Purpose:
 - record that `reference_comparison.md = PASS`;
 - record that artifact `TraceAI-Diagnostics` was generated and inspected;
 - record that `real_audit_checklist_report.docx` and `real_audit_checklist_ui.json` were generated;
-- record that `PREFLIGHT-UI-01C` adds operator-facing next-step guidance for `OK`, `WARNING`, and `BLOCKER`, derived from `PreflightReport.status`;
-- synchronize `CHECKPOINT.md` and `README.md` with the validated post-merge repository state.
-
-Merged changes now part of `main` and relevant to this sync:
-
-- PR #132 — implement `PREFLIGHT-UI-01C` for operator-facing next-step guidance after preflight.
-
-`PREFLIGHT-UI-01C` is treated in this sync as:
-
-```text
-merged
-technically integrated on main
-officially validated post-merge on main with limited-scope evidence
-limited to UI-side next-step guidance derived from existing PreflightReport.status
-not a product-stage DONE claim
-not a release claim
-```
-
-Mandatory limitation recorded in this checkpoint:
-
-```text
-This is official integration validation on main, not release validation, not production-ready validation, not daily-use validation, not a stage-level DONE for PREFLIGHT-UI-01, and not an extended product DONE claim.
-```
+- record that `PREFLIGHT-UI-01C` adds operator-facing next-step guidance for `OK`, `WARNING`, and `BLOCKER`, derived from `PreflightReport.status`.
 
 ## Previous PREFLIGHT-UI-01B status sync
 
@@ -146,13 +214,13 @@ Forbidden in this micro-stage:
 - any production-ready claim;
 - any daily-use release claim;
 - any release-finalized claim;
-- any automatic closure of `PREFLIGHT-UI-01`;
-- any stage-level `DONE` claim for `PREFLIGHT-UI-01`;
-- any extended product DONE claim.
+- any `DONE` claim for `PREFLIGHT-UI-01`;
+- any extended product DONE claim;
+- any hardening-complete claim.
 
-## Product baseline and active stage
+## Product baseline and PREFLIGHT-UI stage state
 
-The last officially validated product baseline remains:
+The last product baseline with official `DONE` claim remains:
 
 ```text
 ERRORS-01_PR2_4_DONE
@@ -166,18 +234,13 @@ Confirmed baseline behavior from the existing validated state:
 - audit DOCX and UI JSON continue to derive from the shared audit source of truth;
 - report quality stage remains `REPORT-QUALITY-01E-3_DONE`.
 
-The currently active next product-facing stage on `main` remains:
+The currently recorded PREFLIGHT-UI stage state on `main` is:
 
 ```text
-PREFLIGHT-UI-01
-```
-
-Current recorded state for that stage:
-
-```text
+PREFLIGHT-UI-01: COMPLETED_WITH_OBSERVATIONS
 completed merged slice on main: PREFLIGHT-UI-01C
-dedicated real-case pilot documented: REAL-TEST-PILOT-01
-official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation only for PREFLIGHT-UI-01C
+dedicated real-case pilot / live operator click-through: DS099903883 / 105.26 = PASS_WITH_OBSERVATIONS
+official validation recorded in this checkpoint beyond existing ERRORS-01_PR2_4 baseline: limited-scope main integration validation for PREFLIGHT-UI-01C
 stage-level DONE claim: none
 ```
 
@@ -200,9 +263,12 @@ operator guidance for OK says the operator can continue normally toward preview 
 operator guidance for WARNING says the operator continues with attention, reviews observations, and may keep Diagnostic ZIP evidence
 operator guidance for BLOCKER says the operator stops, corrects sources or escalates, and Diagnostic ZIP is recommended for investigation
 PREFLIGHT-UI-01C guidance is derived from the existing PreflightReport.status
+live operator click-through on DS099903883 / 105.26 confirmed WARNING guidance, WARNING dialog, DOCX generation, and Diagnostic ZIP generation
 no release claim
 no production-ready claim
 no daily-use claim
+no DONE claim
+no hardening-complete claim
 ```
 
 Official main validation evidence recorded in this sync:
@@ -226,9 +292,20 @@ stage-level DONE for PREFLIGHT-UI-01
 release
 production-ready
 daily-use internal release
+hardening complete
 legal or commercial final validation
-closure of PREFLIGHT-UI-01
 ```
+
+## Backlog retained after COMPLETED_WITH_OBSERVATIONS
+
+The following remain outside the closure and stay in backlog:
+
+- warning taxonomy refinement;
+- edge cases;
+- hardening;
+- broader UI timing evidence;
+- broader real-case validation matrix;
+- operator-facing packaging / download / rollback guidance.
 
 ## Validation policy remains unchanged
 
@@ -275,13 +352,13 @@ The following remain relevant before any stronger release claim:
 
 ## Recommended next step after this docs sync
 
-The active product stage remains:
+The next project decision after this sync should be handled separately as a new approved micro-stage.
+
+Recommended backlog area:
 
 ```text
-PREFLIGHT-UI-01
+warning taxonomy / edge cases / hardening
 ```
-
-The next project decision after this sync should be handled separately as a new approved micro-stage.
 
 ## Active documents
 
@@ -305,6 +382,6 @@ The next project decision after this sync should be handled separately as a new 
 
 ## Control note
 
-This checkpoint sync records the technical integration of `PREFLIGHT-UI-01C` on `main` together with limited-scope official integration validation on `main`.
+This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`.
 
-It does not promote the application, does not close release readiness, does not close `PREFLIGHT-UI-01`, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, stage-level DONE, extended product DONE, or final legal/commercial validation.
+It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, or final legal/commercial validation.
