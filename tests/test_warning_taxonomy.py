@@ -89,9 +89,17 @@ def test_source_degradation_data_quality_error_and_missing_diagnostic_zip_raise_
 
 
 def test_ds099903883_105_26_remains_warning_compatible_not_blocker() -> None:
-    report = make_report(status=STATUS_WARNING, warnings=["Data Quality ERROR"], blockers=[])
+    report = make_report(
+        status=STATUS_WARNING,
+        code="DS099903883",
+        lot="105.26",
+        warnings=["Data Quality ERROR"],
+        blockers=[],
+    )
     classification = data_quality_error_non_blocking()
 
+    assert report.subject.code == "DS099903883"
+    assert report.subject.lot == "105.26"
     assert report.status == STATUS_WARNING
     assert report.blockers == []
     assert classification.severity == WarningTaxonomySeverity.WARNING_ESCALATE
@@ -133,6 +141,8 @@ def test_01c_existing_wording_is_not_modified() -> None:
 
 def make_report(
     status: str,
+    code: str = "DS0001",
+    lot: str = "L001",
     warnings: list[str] | None = None,
     blockers: list[str] | None = None,
 ) -> PreflightReport:
@@ -149,8 +159,8 @@ def make_report(
         build_info={},
         sources=[],
         subject=PreflightSubjectStatus(
-            code="DS0001",
-            lot="L001",
+            code=code,
+            lot=lot,
             status="OK",
             total_records=2,
             records_by_source={"production": 1, "wms": 1},
