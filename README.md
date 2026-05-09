@@ -10,26 +10,26 @@ etapă produs validată oficial pe main: ERRORS-01_PR2_4_DONE
 ultimul stage produs închis oficial pe main: ERRORS-01_PR2_4_DONE
 ultimul stage REPORT-QUALITY închis pe main: REPORT-QUALITY-01E-3_DONE
 etapă produs activă pe main: PREFLIGHT-UI-01
-slice completat și merge-uit pe main: PREFLIGHT-UI-01B prin PR #129
+slice completat și merge-uit pe main: PREFLIGHT-UI-01C prin PR #132
 status oficial de etapă pentru PREFLIGHT-UI-01: activ, fără DONE claim
-micro-stage documentar curent: PREFLIGHT-UI-01B-STATUS-SYNC
+micro-stage documentar curent: PREFLIGHT-UI-01C-STATUS-SYNC
 claim production-ready: NU
 claim daily-use release: NU
 claim release finalized: NU
 ultimul pilot real controlat consemnat: REAL-TEST-PILOT-01 = PASS_WITH_OBSERVATIONS
 următorul pas de proiect: decizie separată pentru următorul micro-stage după acest sync docs-only
-ultimul diagnostic produs oficial inspectat direct: run 25593679232, full diagnostics 179 passed in 1.94s
-ultimul head validat oficial pentru acest sync limitat: 37b12def62ab70789cf03ba501ccf573bc495e39
-ultimul PR merge-uit de produs pe main: #129
+ultimul diagnostic produs oficial inspectat direct: run 25595614738, full diagnostics 184 passed in 2.57s
+ultimul head validat oficial pentru acest sync limitat: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
+ultimul PR merge-uit de produs pe main: #132
 ultimul sync documentar relevant pe main se confirmă din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 PR-urile relevante pe main pentru acest context se urmăresc din CHECKPOINT.md și din istoricul PR-urilor merge-uite
 ```
 
 Etapa activă și starea oficială se citesc din `CHECKPOINT.md`, `AGENTS.md` și `docs/robocop_operating_manual.md`.
 
-Acest sync documentar consemnează că PR #129 a fost integrat tehnic pe `main` în commitul `37b12def62ab70789cf03ba501ccf573bc495e39` și validat post-merge prin TraceAI Diagnostics run `25593679232` pe cazul implicit `DS099903883 / 105.26`, cu `Tests and diagnostic report = success`, `179 passed in 1.94s`, `reference_comparison.md = PASS`, artifact `TraceAI-Diagnostics` generat, `real_audit_checklist_report.docx` generat și `real_audit_checklist_ui.json` generat.
+Acest sync documentar consemnează că PR #132 a fost integrat tehnic pe `main` în commitul `baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416` și validat post-merge prin TraceAI Diagnostics run `25595614738` pe cazul implicit `DS099903883 / 105.26`, cu `Tests and diagnostic report = success`, `184 passed in 2.57s`, `reference_comparison.md = PASS`, artifact `TraceAI-Diagnostics` generat, `real_audit_checklist_report.docx` generat și `real_audit_checklist_ui.json` generat.
 
-În aceeași validare oficială post-merge, `PREFLIGHT-UI-01B` este consemnat limitat ca funcționalitate UI de control: generarea raportului DOCX este gate-uită de ultimul preflight relevant pentru combinația curentă `source_directory + code + lot`.
+În aceeași validare oficială post-merge, `PREFLIGHT-UI-01C` este consemnat limitat ca funcționalitate UI de control: guidance operator-facing pentru `OK` / `WARNING` / `BLOCKER`, derivat din `PreflightReport.status`.
 
 Limitare obligatorie pentru acest sync: aceasta este validare oficială de integrare pe `main`, nu release, nu production-ready, nu daily-use, nu product DONE extins, nu validare legală/comercială finală și nu închide automat `PREFLIGHT-UI-01`.
 
@@ -63,7 +63,7 @@ Actualizările recente de orchestrare și operare au adăugat reguli pentru auto
 
 ## PREFLIGHT-UI status
 
-`PREFLIGHT-UI-01B` este deja merge-uit pe `main` prin PR #129 și este tratat oficial în acest sync ca:
+`PREFLIGHT-UI-01C` este deja merge-uit pe `main` prin PR #132 și este tratat oficial în acest sync ca:
 
 ```text
 merged
@@ -74,17 +74,10 @@ validated post-merge on main with limited-scope official evidence
 Acest slice adaugă limitat:
 
 ```text
-gate pentru generarea DOCX pe baza ultimului preflight relevant pentru source_directory + code + lot
-invalidarea gate-ului când source_directory / code / lot se schimbă
-confirmare explicită la WARNING
-blocare la BLOCKER sau fără preflight curent
-Diagnostic ZIP rămâne în afara gate-ului DOCX
-```
-
-și păstrează limitele arhitecturale:
-
-```text
-fără business logic în UI
+guidance operator-facing pentru OK
+guidance operator-facing pentru WARNING
+guidance operator-facing pentru BLOCKER
+derivat din PreflightReport.status
 fără schimbare de DTO audit
 fără schimbare de contract audit_checklist_ui.json
 fără schimbare de renderer DOCX
@@ -275,6 +268,7 @@ Generează Diagnostic ZIP
 Generează raport DOCX
 status operator-facing pentru preflight surse
 gate DOCX bazat pe ultimul preflight relevant pentru source_directory + code + lot
+guidance operator-facing pentru OK / WARNING / BLOCKER derivat din PreflightReport.status
 ```
 
 Mesajele UI pot returna acum:
@@ -331,12 +325,12 @@ urcă artifact ZIP descărcabil
 ## Testare
 
 ```text
-ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run 25593679232
-ultimul head validat oficial pentru acest sync limitat: 37b12def62ab70789cf03ba501ccf573bc495e39
-pytest: 179 passed in 1.94s
+ultimul artifact produs oficial inspectat direct: TraceAI-Diagnostics din run 25595614738
+ultimul head validat oficial pentru acest sync limitat: baaf98dc4e03c74ab2778a85e6ab7a1b3b61a416
+pytest: 184 passed in 2.57s
 reference_comparison.md = PASS
 artifactul inspectat include real_audit_checklist_report.docx și real_audit_checklist_ui.json
-funcționalitatea PREFLIGHT-UI-01B consemnată aici: gate DOCX după ultimul preflight relevant pentru source_directory + code + lot
+funcționalitatea PREFLIGHT-UI-01C consemnată aici: guidance operator-facing pentru OK / WARNING / BLOCKER derivat din PreflightReport.status
 aceasta este validare oficială generică pe main, nu release, nu production-ready și nu extinde produsul la DONE
 AGENTS.md stabilește explicit că testele locale sunt doar investigație, nu validare oficială pentru DONE
 ```
