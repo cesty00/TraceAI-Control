@@ -45,6 +45,7 @@ AuditChecklistViewModelBuilder = Callable[[dict[str, Any]], AuditChecklistUiView
 AuditChecklistRequestHandler = Callable[[str, str, str], "VisualAuditChecklistResult"]
 PreflightRequestHandler = Callable[[str, str, str], "VisualPreflightResult"]
 DiagnosticBundleRequestHandler = Callable[[str, str, str, str, str | None], VisualDiagnosticBundleResult]
+PreflightGateKey = tuple[str, str, str]
 
 APP_TITLE = "TraceAI Control — Modul Trasabilitate"
 
@@ -102,7 +103,7 @@ def normalize_gate_form_value(value: str) -> str:
     return str(value).strip()
 
 
-def build_preflight_gate_key(source_directory: str, code: str, lot: str) -> tuple[str, str, str]:
+def build_preflight_gate_key(source_directory: str, code: str, lot: str) -> PreflightGateKey:
     """Build the stable key used to bind a preflight result to UI inputs."""
 
     return (
@@ -120,11 +121,19 @@ def build_preflight_gate_snapshot(
 ) -> PreflightGateSnapshot:
     """Capture the last successful preflight for the current form values."""
 
-    normalized_source_directory, normalized_code, normalized_lot = build_preflight_gate_key(
-        source_directory,
-        code,
-        lot,
+    return build_preflight_gate_snapshot_from_key(
+        build_preflight_gate_key(source_directory, code, lot),
+        report,
     )
+
+
+def build_preflight_gate_snapshot_from_key(
+    request_key: PreflightGateKey,
+    report: PreflightReport,
+) -> PreflightGateSnapshot:
+    """Capture the last successful preflight for an already-frozen request key."""
+
+    normalized_source_directory, normalized_code, normalized_lot = request_key
     return PreflightGateSnapshot(
         source_directory=normalized_source_directory,
         code=normalized_code,
@@ -655,10 +664,10 @@ def run_visual_app(
             set_preview_text(result.error or result.message)
             messagebox.showerror(APP_TITLE, result.error or result.message)
 
-    def poll_preflight(future: Future[VisualPreflightResult]) -> None:
+    def poll_preflight(future: Future[VisualPreflightResult], request_key: PreflightGateKey) -> None:
         nonlocal last_preflight_snapshot
         if not future.done():
-            root.after(100, poll_preflight, future)
+            root.after(100, poll_preflight, future, request_key)
             return
         set_busy(False)
         clear_sections()
@@ -673,12 +682,7 @@ def run_visual_app(
         status_var.set(result.message if result.success else result.error or result.message)
         section_title_var.set("Verificare surse înainte de generare")
         if result.success and result.report is not None:
-            last_preflight_snapshot = build_preflight_gate_snapshot(
-                source_var.get(),
-                code_var.get(),
-                lot_var.get(),
-                result.report,
-            )
+            last_preflight_snapshot = build_preflight_gate_snapshot_from_key(request_key, result.report)
             section_summary_var.set(f"Status preflight: {result.report.status}")
             set_preview_text(format_preflight_report(result.report))
             if result.report.status == "BLOCKER":
@@ -758,15 +762,16 @@ def run_visual_app(
     def on_preflight() -> None:
         if busy:
             return
+        request_key = build_preflight_gate_key(source_var.get(), code_var.get(), lot_var.get())
         set_busy(True, "Verificare surse în curs...")
         future = submit_preflight_form_values_async(
-            source_directory=source_var.get(),
-            code=code_var.get(),
-            lot=lot_var.get(),
+            source_directory=request_key[0],
+            code=request_key[1],
+            lot=request_key[2],
             executor=executor,
             preflight_request_handler=preflight_request_handler,
         )
-        root.after(100, poll_preflight, future)
+        root.after(100, poll_preflight, future, request_key)
 
     def on_preview_audit() -> None:
         if busy:
