@@ -111,6 +111,16 @@ class AuditReportPolicy:
             return self.short(text, self.max_receipt_chars)
         return self.short(f'{parts[0]}; {parts[1]}; +{len(parts) - 2} alte', self.max_receipt_chars)
 
+    def third_party(self, value: object) -> str:
+        text = str(value).strip() if value is not None else MISSING
+        if not text or text == MISSING:
+            return MISSING
+        if text.startswith('DA;'):
+            return self.short(text, 85)
+        if 'nu se aplic' in text.casefold():
+            return 'Nu se aplică'
+        return self.short(text, 85)
+
     def audit_dates(self, value: object) -> str:
         text = str(value).strip() if value is not None else MISSING
         if not text or text == MISSING:
