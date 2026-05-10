@@ -72,8 +72,8 @@ def test_audit_checklist_docx_pp03_conclusion_section_is_between_register_and_bu
 
     assert conclusion_index > register_index
     assert conclusion_index < build_index
-    assert "Raportul sintetizează informațiile identificate" in xml
-    assert "nu înlocuiește verificarea documentelor fizice" in xml
+    assert "Raportul sintetizează datele identificate și documentele care trebuie verificate." in xml
+    assert "nu înlocuiește controlul documentelor fizice" in xml
 
 
 
@@ -130,7 +130,7 @@ def test_audit_checklist_docx_document_register_is_printable_checklist() -> None
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
-    assert "Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită" in xml
+    assert "Secțiunea arată documentele fizice care trebuie căutate pentru verificarea auditului" in xml
     assert "Bifat" in xml
     assert DOCUMENT_REGISTER_CHECKBOX in xml
     assert "required" in xml
@@ -204,24 +204,22 @@ def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
     xml = build_document_xml(report)
 
     for upstream_header in [
-        "Cantitate recepționată",
+        "Document recepție",
         "Dată recepție",
         "Furnizor",
-        "Tip document",
-        "Număr document",
-        "Dată document",
+        "Cantitate recepționată",
+        "Cantitate consumată",
         "Stoc lot sursă",
-        "Livrări terți",
     ]:
         assert upstream_header in xml
 
     for downstream_header in [
         "Client",
-        "Adresă",
+        "Destinație",
         "Dată livrare",
-        "Cantitate livrată",
-        "Număr document",
+        "Document livrare",
         "Comandă WMS",
+        "Cantitate livrată",
     ]:
         assert downstream_header in xml
 
@@ -329,8 +327,8 @@ def test_audit_checklist_docx_downstream_section_mentions_physical_delivery_docu
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
-    assert "Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare" in xml
-    assert "documentele WMS indicate" in xml
+    assert "Tabelul arată livrările identificate pentru lotul de produs finit." in xml
+    assert "Document WMS; detaliile se verifică în sursa fizică." in xml
 
 
 
