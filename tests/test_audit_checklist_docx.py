@@ -396,6 +396,7 @@ def test_audit_checklist_docx_pp03_01a_does_not_add_banned_pp03_fields() -> None
         "Country",
         "Țara de origine",
         "Country of origin",
+        "Data expirare",
         "Received quantity",
     ]:
         assert banned_text not in xml
