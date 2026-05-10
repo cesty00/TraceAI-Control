@@ -540,7 +540,10 @@ def build_aval_section(report: AuditChecklistReport, policy: AuditReportPolicy) 
             line.material_type,
             line.code,
             line.lot,
-            policy.delivery_document(line.document_type, line.document_number),
+            policy.name(line.name),
+            line.document_type,
+            line.document_number,
+            policy.audit_dates(line.document_date),
             policy.audit_dates(line.receipt_date),
             policy.name(line.supplier),
             checklist_received_quantity(line),
@@ -551,13 +554,13 @@ def build_aval_section(report: AuditChecklistReport, policy: AuditReportPolicy) 
         for line in report.upstream
     ]
     if not rows:
-        rows = [[MISSING] * 10]
+        rows = [[MISSING] * 13]
     return [
         paragraph('AVAL — Materii prime, ambalaje, auxiliare și loturi sursă', style='Heading1'),
         literal_paragraph('Secțiunea arată loturile sursă care intră în produsul finit și documentele prin care ele pot fi urmărite înapoi.', spacing_after=50),
         paragraph('Recepții loturi sursă', style='Heading2'),
-        paragraph('Tabelul prezintă recepțiile identificate pentru loturile sursă. Auditorul verifică documentul de recepție, furnizorul, data, cantitatea și lotul.'),
-        table(['Tip material', 'Cod intern', 'Lot sursă', 'Document recepție', 'Dată recepție', 'Furnizor', 'Cantitate recepționată', 'Cantitate consumată', 'Stoc lot sursă', 'Observații'], rows),
+        paragraph('Tabelul prezintă recepțiile identificate pentru loturile sursă. Auditorul verifică documentul de recepție, furnizorul, datele documentare, cantitatea și lotul.'),
+        table(['Tip material', 'Cod intern', 'Lot sursă', 'Materie primă / ambalaj', 'Tip document', 'Număr document', 'Dată document', 'Dată recepție', 'Furnizor', 'Cantitate recepționată', 'Cantitate consumată', 'Stoc lot sursă', 'Observații'], rows),
         *build_third_party_section(report, policy),
     ]
 
