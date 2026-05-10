@@ -735,8 +735,10 @@ def literal_paragraph(
     spacing_before: int | None = None,
     spacing_after: int | None = None,
 ) -> str:
-    style_xml = f'<w:pStyle{xml_attrs([('w:val', style)])}/>' if style else ''
-    align_xml = f'<w:jc{xml_attrs([('w:val', align)])}/>' if align else ''
+    style_attrs = xml_attrs([('w:val', style)]) if style else ''
+    style_xml = f'<w:pStyle{style_attrs}/>' if style else ''
+    align_attrs = xml_attrs([('w:val', align)]) if align else ''
+    align_xml = f'<w:jc{align_attrs}/>' if align else ''
     spacing_pairs = []
     if spacing_before is not None:
         spacing_pairs.append(('w:before', spacing_before))
@@ -751,15 +753,17 @@ def literal_paragraph(
 def literal_table(headers: list[str], rows: list[list[object]], column_widths: Sequence[int] | None = None) -> str:
     xml_rows = [literal_table_row(headers, is_header=True, column_widths=column_widths)]
     xml_rows.extend(literal_table_row(row, column_widths=column_widths) for row in rows)
+    border_attrs = xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])
     borders = (
-        f'<w:tblBorders><w:top{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
-        f'<w:left{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
-        f'<w:bottom{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
-        f'<w:right{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
-        f'<w:insideH{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
-        f'<w:insideV{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/></w:tblBorders>'
+        f'<w:tblBorders><w:top{border_attrs}/>'
+        f'<w:left{border_attrs}/>'
+        f'<w:bottom{border_attrs}/>'
+        f'<w:right{border_attrs}/>'
+        f'<w:insideH{border_attrs}/>'
+        f'<w:insideV{border_attrs}/></w:tblBorders>'
     )
-    table_properties = apply_table_layout_properties(f'<w:tblStyle{xml_attrs([('w:val', 'TraceAITable')])}/>')
+    table_style_attrs = xml_attrs([('w:val', 'TraceAITable')])
+    table_properties = apply_table_layout_properties(f'<w:tblStyle{table_style_attrs}/>' )
     return f'<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{"".join(xml_rows)}</w:tbl>'
 
 
@@ -772,16 +776,25 @@ def literal_table_row(values: Iterable[object], is_header: bool = False, column_
 
 
 def literal_table_cell(value: object, is_header: bool = False, width: int | None = None) -> str:
-    shading_xml = f'<w:shd{xml_attrs([('w:fill', 'EDEDED')])}/>' if is_header else ''
+    shading_attrs = xml_attrs([('w:fill', 'EDEDED')]) if is_header else ''
+    shading_xml = f'<w:shd{shading_attrs}/>' if is_header else ''
     bold_xml = '<w:b/>' if is_header else ''
     size = '15' if is_header else '14'
     text = str(value).strip() if value is not None else MISSING
-    width_xml = f'<w:tcW{xml_attrs([('w:w', width), ('w:type', 'dxa')])}/>' if width is not None else ''
+    width_attrs = xml_attrs([('w:w', width), ('w:type', 'dxa')]) if width is not None else ''
+    width_xml = f'<w:tcW{width_attrs}/>' if width is not None else ''
+    margin_top_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
+    margin_left_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
+    margin_bottom_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
+    margin_right_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
     cell_properties = apply_cell_layout_properties(
-        f'{width_xml}{shading_xml}<w:tcMar><w:top{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:left{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:bottom{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:right{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/></w:tcMar>'
+        f'{width_xml}{shading_xml}<w:tcMar><w:top{margin_top_attrs}/><w:left{margin_left_attrs}/><w:bottom{margin_bottom_attrs}/><w:right{margin_right_attrs}/></w:tcMar>'
     )
     safe_text = html.escape(text or MISSING, quote=False)
-    return f'<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing{xml_attrs([('w:after', 0)])}/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz{xml_attrs([('w:val', size)])}/><w:rFonts{xml_attrs([('w:ascii', 'Arial'), ('w:hAnsi', 'Arial')])}/></w:rPr><w:t>{safe_text}</w:t></w:r></w:p></w:tc>'
+    spacing_attrs = xml_attrs([('w:after', 0)])
+    size_attrs = xml_attrs([('w:val', size)])
+    font_attrs = xml_attrs([('w:ascii', 'Arial'), ('w:hAnsi', 'Arial')])
+    return f'<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing{spacing_attrs}/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz{size_attrs}/><w:rFonts{font_attrs}/></w:rPr><w:t>{safe_text}</w:t></w:r></w:p></w:tc>'
 
 
 def extract_document_text_from_xml(document_xml: str) -> str:
