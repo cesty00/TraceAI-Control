@@ -1,10 +1,3 @@
-'''Checklist-aligned audit DOCX renderer.
-
-This renderer consumes AuditChecklistReport, not raw TraceabilityCase tables. It
-keeps the report audit-oriented: concise text, explicit sections and stable
-WordprocessingML output.
-'''
-
 from __future__ import annotations
 
 import argparse
@@ -13,6 +6,7 @@ import re
 import zipfile
 from collections import OrderedDict
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -69,12 +63,14 @@ DOCX_DATA_QUALITY_KEYS = (
     'issues',
 )
 MAX_DOCX_DATA_QUALITY_ISSUES = 5
+AUDIT_DATE_TOKEN_RE = re.compile(
+    r'\b\d{4}-\d{1,2}-\d{1,2}(?:[T ]\d{1,2}:\d{2}(?::\d{2})?)?\b'
+    r'|\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?\b'
+)
 
 
 @dataclass(frozen=True)
 class AuditReportPolicy:
-    '''Controls how much detail is visible in the audit DOCX.'''
-
     max_name_chars: int = 42
     max_observation_chars: int = 70
     max_receipt_chars: int = 120
@@ -115,15 +111,46 @@ class AuditReportPolicy:
             return self.short(text, self.max_receipt_chars)
         return self.short(f'{parts[0]}; {parts[1]}; +{len(parts) - 2} alte', self.max_receipt_chars)
 
-    def third_party(self, value: object) -> str:
+    def audit_dates(self, value: object) -> str:
         text = str(value).strip() if value is not None else MISSING
         if not text or text == MISSING:
             return MISSING
-        if text.startswith('DA;'):
-            return self.short(text, 85)
-        if 'nu se aplic' in text.casefold():
-            return 'Nu se aplică'
-        return self.short(text, 85)
+        parsed_dates = [
+            parsed for parsed in (self._parse_audit_date_token(match.group(0)) for match in AUDIT_DATE_TOKEN_RE.finditer(text)) if parsed is not None
+        ]
+        if not parsed_dates:
+            return text
+        unique_dates = []
+        seen = set()
+        for parsed in parsed_dates:
+            if parsed in seen:
+                continue
+            seen.add(parsed)
+            unique_dates.append(parsed)
+        if len(unique_dates) == 1:
+            label = unique_dates[0].strftime('%d/%m/%Y')
+            if len(parsed_dates) > 1:
+                return f'{label} ({len(parsed_dates)} mișcări)'
+            return label
+        return '; '.join(item.strftime('%d/%m/%Y') for item in unique_dates)
+
+    def _parse_audit_date_token(self, token: str):
+        normalized = token.replace('T', ' ').strip().split(' ', 1)[0]
+        for fmt in ('%Y-%m-%d', '%d.%m.%Y', '%d-%m-%Y', '%d/%m/%Y', '%d.%m.%y', '%d-%m-%y', '%d/%m/%y'):
+            try:
+                return datetime.strptime(normalized, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    def delivery_document(self, document_type: object, document_number: object) -> str:
+        left = str(document_type).strip() if document_type is not None else ''
+        right = str(document_number).strip() if document_number is not None else ''
+        if not left and not right:
+            return MISSING
+        if left and right:
+            return self.short(f'{left} / {right}', 90)
+        return self.short(left or right, 90)
 
     def upstream_observation(self, value: object) -> str:
         text = str(value).strip() if value is not None else 'OK'
@@ -144,7 +171,7 @@ class AuditReportPolicy:
         text = str(value).strip() if value is not None else 'OK'
         if not text or text == MISSING:
             return 'OK'
-        return 'Document WMS; data/adresa se completează dacă există în sursă'
+        return 'Document WMS; detaliile se verifică în sursa fizică.'
 
     def third_party_note(self, line: ChecklistUpstreamLine) -> str:
         if line.third_party_delivery_status == 'NU':
@@ -190,8 +217,8 @@ class AuditReportPolicy:
         return self.short(text, 55)
 
     def select_lot_flows(self, rows: Sequence[ChecklistLotFlow]) -> list[ChecklistLotFlow]:
-        important: list[ChecklistLotFlow] = []
-        secondary: list[ChecklistLotFlow] = []
+        important = []
+        secondary = []
         for row in rows:
             text = f'{row.material_type} {row.third_party_deliveries} {row.stock_at_moment} {row.observation}'.casefold()
             if row.material_type in {'Materie primă', 'Material auxiliar / gaz'} or 'da' in text or 'fara date' not in text:
@@ -224,8 +251,6 @@ DEFAULT_POLICY = AuditReportPolicy()
 
 
 def table(headers: list[str], rows: list[list[object]]) -> str:
-    '''Render major audit checklist tables using the compact visual design renderer.'''
-
     return compact_audit_table(headers, rows)
 
 
@@ -259,15 +284,13 @@ def data_quality_sources(summary: dict[str, Any]) -> str:
 
 
 def data_quality_compact_summary(summary: dict[str, Any]) -> str:
-    return ' / '.join(
-        [
-            data_quality_text(summary.get('status'), NOT_AVAILABLE),
-            data_quality_sources(summary),
-            data_quality_count(summary, 'error_count'),
-            data_quality_count(summary, 'warning_count'),
-            data_quality_count(summary, 'issue_count'),
-        ]
-    )
+    return ' / '.join([
+        data_quality_text(summary.get('status'), NOT_AVAILABLE),
+        data_quality_sources(summary),
+        data_quality_count(summary, 'error_count'),
+        data_quality_count(summary, 'warning_count'),
+        data_quality_count(summary, 'issue_count'),
+    ])
 
 
 def data_quality_issue_value(issue: dict[str, Any], key: str) -> str:
@@ -277,10 +300,7 @@ def data_quality_issue_value(issue: dict[str, Any], key: str) -> str:
 
 
 def data_quality_issue_location(issue: dict[str, Any]) -> str:
-    parts = [
-        data_quality_issue_value(issue, 'sheet_name'),
-        data_quality_issue_value(issue, 'column_name'),
-    ]
+    parts = [data_quality_issue_value(issue, 'sheet_name'), data_quality_issue_value(issue, 'column_name')]
     meaningful = [part for part in parts if part != MISSING]
     return ' / '.join(meaningful) if meaningful else MISSING
 
@@ -304,16 +324,12 @@ def data_quality_issue_rows(summary: dict[str, Any], policy: AuditReportPolicy) 
     return rows
 
 
-def build_data_quality_summary_section(
-    report: AuditChecklistReport,
-    data_quality_summary: dict[str, Any] | None,
-    policy: AuditReportPolicy,
-) -> list[str]:
+def build_data_quality_summary_section(report: AuditChecklistReport, data_quality_summary: dict[str, Any] | None, policy: AuditReportPolicy) -> list[str]:
     summary = normalize_docx_data_quality_summary(data_quality_summary)
     parts = [
         paragraph('Sumar Data Quality', style='Heading1'),
         literal_paragraph(
-            'Sumarul Data Quality este preluat din modelul audit existent. El nu schimbă verdictul raportului și nu înlocuiește verificarea documentelor fizice.',
+            'Secțiunea arată dacă sursele necesare au fost găsite și cât de complete sunt datele extrase. Dacă apare FARA DATE IDENTIFICATE, informația nu a fost găsită clar în sursele disponibile și trebuie verificată în documentele fizice.',
             spacing_after=50,
         ),
         table(
@@ -327,19 +343,14 @@ def build_data_quality_summary_section(
                 ['Verdict raport', report.conclusion_status],
             ],
         ),
-        literal_paragraph(
-            f'Rezumat compact: {data_quality_compact_summary(summary)}',
-            spacing_after=50,
-        ),
+        literal_paragraph(f'Rezumat compact: {data_quality_compact_summary(summary)}', spacing_after=50),
     ]
     issue_rows = data_quality_issue_rows(summary, policy)
     if issue_rows:
-        parts.extend(
-            [
-                paragraph('Observații Data Quality', style='Heading2'),
-                table(['Severitate', 'Sursă', 'Loc', 'Observație'], issue_rows),
-            ]
-        )
+        parts.extend([
+            paragraph('Observații Data Quality', style='Heading2'),
+            table(['Severitate', 'Sursă', 'Loc', 'Observație'], issue_rows),
+        ])
     return parts
 
 
@@ -379,13 +390,7 @@ def _header_footer_text(value: object) -> str:
     return html.escape(text or MISSING, quote=False)
 
 
-def generate_audit_checklist_docx_report(
-    report: AuditChecklistReport,
-    output_path: str | Path,
-    policy: AuditReportPolicy = DEFAULT_POLICY,
-    build_info: BuildInfo | None = None,
-    data_quality_summary: dict[str, Any] | None = None,
-) -> Path:
+def generate_audit_checklist_docx_report(report: AuditChecklistReport, output_path: str | Path, policy: AuditReportPolicy = DEFAULT_POLICY, build_info: BuildInfo | None = None, data_quality_summary: dict[str, Any] | None = None) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     metadata = build_info or get_build_info()
@@ -402,14 +407,9 @@ def generate_audit_checklist_docx_report(
     return output
 
 
-def build_document_xml(
-    report: AuditChecklistReport,
-    policy: AuditReportPolicy = DEFAULT_POLICY,
-    build_info: BuildInfo | None = None,
-    data_quality_summary: dict[str, Any] | None = None,
-) -> str:
+def build_document_xml(report: AuditChecklistReport, policy: AuditReportPolicy = DEFAULT_POLICY, build_info: BuildInfo | None = None, data_quality_summary: dict[str, Any] | None = None) -> str:
     metadata = build_info or get_build_info()
-    body: list[str] = []
+    body = []
     body.extend(build_title_block(report, metadata))
     body.extend(build_auditor_verdict_card_section(report, policy))
     body.extend(build_data_quality_summary_section(report, data_quality_summary, policy))
@@ -430,22 +430,9 @@ def build_document_xml(
 def build_title_block(report: AuditChecklistReport, build_info: BuildInfo) -> list[str]:
     return [
         paragraph('TEST DE TRASABILITATE PENTRU AUDIT', style='Title'),
-        literal_paragraph(
-            f'{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}',
-            bold=True,
-            align='center',
-            spacing_after=40,
-        ),
-        literal_paragraph(
-            'Raport completat din fișierele sursă disponibile: WMS trasabilitate, raport producție, stoc la moment și nomenclator.',
-            align='center',
-            spacing_after=40,
-        ),
-        literal_paragraph(
-            f'Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}',
-            align='center',
-            spacing_after=100,
-        ),
+        literal_paragraph(f'{report.exercise.code} / {report.exercise.lot} — {report.exercise.product_name}', bold=True, align='center', spacing_after=40),
+        literal_paragraph('Raportul reunește datele identificate în sursele disponibile pentru codul și lotul analizat. El ajută auditorul să urmărească produsul finit, loturile sursă și documentele fizice care trebuie verificate.', align='center', spacing_after=40),
+        literal_paragraph(f'Build raport: {build_info.app_version} / commit {build_info.short_commit} / generat {build_info.generated_at}', align='center', spacing_after=100),
     ]
 
 
@@ -453,10 +440,7 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
     main_order = primary_production_order(report)
     return [
         paragraph('Card verdict auditor', style='Heading1'),
-        literal_paragraph(
-            'Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice.', spacing_after=50),
         table(
             ['Indicator audit', 'Status / valoare'],
             [
@@ -464,7 +448,7 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
                 ['Cod produs finit', report.exercise.code],
                 ['Lot produs finit', report.exercise.lot],
                 ['Denumire produs finit', policy.name(report.exercise.product_name)],
-                ['Dată producție principală', main_order.production_date if main_order else MISSING],
+                ['Dată producție principală', policy.audit_dates(main_order.production_date if main_order else MISSING)],
                 ['Cantitate produsă PRD', report.balance.prd_produced],
                 ['Stoc produs finit / DSD', policy.stock(report.balance.stock_at_moment)],
                 ['Bilanț PRD vs WMS', f'{report.balance.status} — {policy.short(report.balance.observation, 90)}'],
@@ -474,10 +458,7 @@ def build_auditor_verdict_card_section(report: AuditChecklistReport, policy: Aud
             ],
         ),
         paragraph('Ghid rapid PP-03', style='Heading2'),
-        literal_paragraph(
-            'Ghid rapid PP-03: Card verdict, Sumar Data Quality, Rezumat conformare, AMONTE, AVAL, Comenzi producție și consumuri, Fluxuri loturi și documente, Registru documente fizice și Informații build.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Ghid rapid PP-03: Card verdict, Sumar Data Quality, Rezumat conformare, AMONTE, AVAL, Comenzi producție și consumuri, Fluxuri loturi și documente, Registru documente fizice și Informații build.', spacing_after=50),
         *bullets(QUICK_AUDITOR_GUIDE_ITEMS),
     ]
 
@@ -486,10 +467,7 @@ def build_conformity_section(report: AuditChecklistReport, policy: AuditReportPo
     rows = [[item.requirement, item.status, policy.short(item.evidence, 95), policy.short(item.observation, 95)] for item in report.conformity]
     return [
         paragraph('Rezumat conformare checklist', style='Heading1'),
-        literal_paragraph(
-            'Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual.', spacing_after=50),
         table(['Cerință', 'Status în test', 'Dovezi', 'Observații'], rows),
     ]
 
@@ -502,64 +480,47 @@ def build_amonte_section(report: AuditChecklistReport, policy: AuditReportPolicy
         [
             d.client,
             d.address,
-            d.delivery_date,
-            d.delivered_quantity,
-            d.delivery_document_type,
-            d.delivery_document_number,
+            policy.audit_dates(d.delivery_date),
+            policy.delivery_document(d.delivery_document_type, d.delivery_document_number),
             d.wms_order,
+            d.delivered_quantity,
             policy.downstream_observation(d.observation),
         ]
         for d in report.downstream
     ]
     if not downstream_rows:
-        downstream_rows = [[MISSING] * 8]
+        downstream_rows = [[MISSING] * 7]
     return [
         paragraph('AMONTE — Produs finit, producție și livrări', style='Heading1'),
-        literal_paragraph(
-            'Secțiunea AMONTE păstrează terminologia PP-03 pentru produsul finit și reunește fișa principală, bilanțul și livrările identificate, fără a schimba logica raportului.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Secțiunea urmărește produsul finit: ce s-a produs, ce s-a livrat și ce documente trebuie verificate pentru confirmare.', spacing_after=50),
         paragraph('Fișa principală a exercițiului', style='Heading2'),
         paragraph('Fișa principală fixează produsul finit și lotul analizat. Această secțiune este punctul de plecare al verificării pentru produsul finit și pentru livrările identificate în sursele oficiale.'),
-        table(
-            ['Indicator', 'Valoare'],
-            [
-                ['Cod produs finit', exercise.code],
-                ['Lot produs finit', exercise.lot],
-                ['Denumire produs finit', exercise.product_name],
-                ['Status verificare', exercise.result],
-            ],
-        ),
+        table(['Indicator', 'Valoare'], [
+            ['Cod produs finit', exercise.code],
+            ['Lot produs finit', exercise.lot],
+            ['Denumire produs finit', exercise.product_name],
+            ['Status verificare', exercise.result],
+        ]),
         paragraph('Repere rapide produs finit', style='Heading2'),
         paragraph('Reperele rapide regrupează denumirea produsului, data de producție, cantitatea produsă și stocul produsului finit, pentru o citire rapidă înainte de bilanț și livrări.'),
-        table(
-            ['Indicator', 'Valoare'],
-            [
-                ['Denumire produs finit', exercise.product_name],
-                ['Dată producție principală', main_order.production_date if main_order else MISSING],
-                ['Cantitate produsă PRD', balance.prd_produced],
-                ['Stoc produs finit / DSD', policy.stock(balance.stock_at_moment)],
-            ],
-        ),
+        table(['Indicator', 'Valoare'], [
+            ['Denumire produs finit', exercise.product_name],
+            ['Dată producție principală', policy.audit_dates(main_order.production_date if main_order else MISSING)],
+            ['Cantitate produsă PRD', balance.prd_produced],
+            ['Stoc produs finit / DSD', policy.stock(balance.stock_at_moment)],
+        ]),
         paragraph('Bilanț produs finit', style='Heading2'),
         paragraph('Bilanțul compară cantitatea produsă în PRD cu intrările și ieșirile lotului în WMS. Scopul este să confirme că lotul produs poate fi urmărit până la livrările către clienți sau până la stocul rămas.'),
-        table(
-            ['Indicator', 'Cantitate / status', 'Observație'],
-            [
-                ['Cantitate produsă PRD', balance.prd_produced, 'Sursă PRD'],
-                ['Intrare WMS produs finit', balance.wms_production_out, 'Intrare produs finit WMS'],
-                ['Cantitate livrată WMS', balance.wms_delivered, 'Valoare semnată WMS'],
-                ['Stoc produs finit / DSD', policy.stock(balance.stock_at_moment), 'Dacă există în stoc'],
-                ['Status bilanț', balance.status, policy.short(balance.observation, 90)],
-            ],
-        ),
+        table(['Indicator', 'Cantitate / status', 'Observație'], [
+            ['Cantitate produsă PRD', balance.prd_produced, 'Sursă PRD'],
+            ['Intrare WMS produs finit', balance.wms_production_out, 'Intrare produs finit WMS'],
+            ['Cantitate livrată WMS', balance.wms_delivered, 'Valoare semnată WMS'],
+            ['Stoc produs finit / DSD', policy.stock(balance.stock_at_moment), 'Dacă există în stoc'],
+            ['Status bilanț', balance.status, policy.short(balance.observation, 90)],
+        ]),
         paragraph('Livrări produs finit', style='Heading2'),
-        paragraph('Livrările produsului finit sunt afișate în ordinea aval a WMS, dar rămân sub secțiunea AMONTE conform terminologiei PP-03 cerute pentru raportul DOCX.'),
-        paragraph('Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare și cu documentele WMS indicate.'),
-        table(
-            ['Client', 'Adresă', 'Dată livrare', 'Cantitate livrată', 'Tip document', 'Număr document', 'Comandă WMS', 'Observații'],
-            downstream_rows,
-        ),
+        paragraph('Tabelul arată livrările identificate pentru lotul de produs finit. Auditorul verifică documentul de livrare, clientul, data și cantitatea livrată.'),
+        table(['Client', 'Destinație', 'Dată livrare', 'Document livrare', 'Comandă WMS', 'Cantitate livrată', 'Observații'], downstream_rows),
     ]
 
 
@@ -569,31 +530,24 @@ def build_aval_section(report: AuditChecklistReport, policy: AuditReportPolicy) 
             line.material_type,
             line.code,
             line.lot,
-            policy.name(line.name),
-            line.consumed_quantity,
-            checklist_received_quantity(line),
-            line.receipt_date,
+            policy.delivery_document(line.document_type, line.document_number),
+            policy.audit_dates(line.receipt_date),
             policy.name(line.supplier),
-            line.document_type,
-            line.document_number,
-            line.document_date,
+            checklist_received_quantity(line),
+            line.consumed_quantity,
             policy.stock(line.stock_at_moment),
-            line.third_party_delivery_status,
             policy.upstream_observation(line.observation),
         ]
         for line in report.upstream
     ]
     if not rows:
-        rows = [[MISSING] * 14]
+        rows = [[MISSING] * 10]
     return [
         paragraph('AVAL — Materii prime, ambalaje, auxiliare și loturi sursă', style='Heading1'),
-        literal_paragraph(
-            'Secțiunea AVAL păstrează terminologia PP-03 pentru loturile sursă și grupează materiile prime, ambalajele, auxiliarele și documentele lor de intrare.',
-            spacing_after=50,
-        ),
-        paragraph('Loturi sursă și consumuri identificate', style='Heading2'),
-        paragraph('Tabelul urmărește loturile care au intrat în produsul finit: materii prime, ambalaje și materiale auxiliare, inclusiv gazul atunci când este folosit. Pentru fiecare lot sunt afișate clar consumul, recepția și stocul lotului sursă, împreună cu contextul documentar deja prezent în model.'),
-        table(['Tip material', 'Cod intern', 'Lot sursă', 'Materie primă / ambalaj', 'Cantitate consumată', 'Cantitate recepționată', 'Dată recepție', 'Furnizor', 'Tip document', 'Număr document', 'Dată document', 'Stoc lot sursă', 'Livrări terți', 'Observații'], rows),
+        literal_paragraph('Secțiunea arată loturile sursă care intră în produsul finit și documentele prin care ele pot fi urmărite înapoi.', spacing_after=50),
+        paragraph('Recepții loturi sursă', style='Heading2'),
+        paragraph('Tabelul prezintă recepțiile identificate pentru loturile sursă. Auditorul verifică documentul de recepție, furnizorul, data, cantitatea și lotul.'),
+        table(['Tip material', 'Cod intern', 'Lot sursă', 'Document recepție', 'Dată recepție', 'Furnizor', 'Cantitate recepționată', 'Cantitate consumată', 'Stoc lot sursă', 'Observații'], rows),
         *build_third_party_section(report, policy),
     ]
 
@@ -624,12 +578,12 @@ def build_production_consumption_section(report: AuditChecklistReport, policy: A
 
 
 def production_order_summary_rows(rows: list[ChecklistProductionConsumption], policy: AuditReportPolicy) -> list[list[str]]:
-    summary: OrderedDict[str, ChecklistProductionConsumption] = OrderedDict()
+    summary = OrderedDict()
     for row in rows:
         summary.setdefault(row.production_order, row)
     if not summary:
         return [[MISSING] * 5]
-    return [[row.production_order, row.production_date, row.finished_product_quantity, row.wms_production_out, policy.delivery(row.associated_delivery)] for row in summary.values()]
+    return [[row.production_order, policy.audit_dates(row.production_date), row.finished_product_quantity, row.wms_production_out, policy.delivery(row.associated_delivery)] for row in summary.values()]
 
 
 def production_consumption_rows(rows: list[ChecklistProductionConsumption], policy: AuditReportPolicy) -> list[list[str]]:
@@ -660,27 +614,14 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 
     def register_rows(lines: Sequence[ChecklistDocumentRegisterLine]) -> list[list[object]]:
         return [
-            [
-                DOCUMENT_REGISTER_CHECKBOX,
-                line.area,
-                line.document_type,
-                policy.register_reference(line.document_reference),
-                line.related_code,
-                line.related_lot,
-                policy.delivery(line.related_order),
-                policy.register_reason(line.why_needed),
-                line.status,
-            ]
+            [DOCUMENT_REGISTER_CHECKBOX, line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed), line.status]
             for line in lines
         ]
 
     def register_group(title: str, lines: Sequence[ChecklistDocumentRegisterLine]) -> list[str]:
         if not lines:
             return []
-        return [
-            paragraph(title, style='Heading2'),
-            literal_table(headers, register_rows(lines), column_widths=DOCUMENT_REGISTER_COLUMN_WIDTHS),
-        ]
+        return [paragraph(title, style='Heading2'), literal_table(headers, register_rows(lines), column_widths=DOCUMENT_REGISTER_COLUMN_WIDTHS)]
 
     required_lines = [line for line in selected if line.status == 'required']
     recommended_lines = [line for line in selected if line.status == 'recommended']
@@ -688,10 +629,7 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 
     parts = [
         paragraph('Registru documente fizice', style='Heading1'),
-        literal_paragraph(
-            'Registrul indică documentele care trebuie pregătite în dosarul de audit. Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită pentru documentele fizice.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Secțiunea arată documentele fizice care trebuie căutate pentru verificarea auditului, pe baza datelor identificate în sursele disponibile.', spacing_after=50),
     ]
     if not selected:
         parts.append(literal_table(headers, [[MISSING] * len(headers)], column_widths=DOCUMENT_REGISTER_COLUMN_WIDTHS))
@@ -708,10 +646,7 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
 def build_conclusion_section() -> list[str]:
     return [
         paragraph('Concluzie audit intern', style='Heading1'),
-        literal_paragraph(
-            'Raportul sintetizează informațiile identificate în sursele WMS și PRD disponibile pentru produsul și lotul analizat. El nu înlocuiește verificarea documentelor fizice, ci indică ce date au fost găsite și ce documente trebuie pregătite pentru dosarul de audit.',
-            spacing_after=50,
-        ),
+        literal_paragraph('Raportul sintetizează datele identificate și documentele care trebuie verificate. El nu completează date lipsă și nu înlocuiește controlul documentelor fizice.', spacing_after=50),
     ]
 
 
@@ -727,14 +662,7 @@ def xml_attrs(pairs: Iterable[tuple[str, object]]) -> str:
     return ''.join(f' {name}={Q}{html.escape(str(value), quote=False)}{Q}' for name, value in pairs if value is not None)
 
 
-def literal_paragraph(
-    text: object,
-    style: str | None = None,
-    bold: bool = False,
-    align: str | None = None,
-    spacing_before: int | None = None,
-    spacing_after: int | None = None,
-) -> str:
+def literal_paragraph(text: object, style: str | None = None, bold: bool = False, align: str | None = None, spacing_before: int | None = None, spacing_after: int | None = None) -> str:
     style_attrs = xml_attrs([('w:val', style)]) if style else ''
     style_xml = f'<w:pStyle{style_attrs}/>' if style else ''
     align_attrs = xml_attrs([('w:val', align)]) if align else ''
@@ -763,7 +691,7 @@ def literal_table(headers: list[str], rows: list[list[object]], column_widths: S
         f'<w:insideV{border_attrs}/></w:tblBorders>'
     )
     table_style_attrs = xml_attrs([('w:val', 'TraceAITable')])
-    table_properties = apply_table_layout_properties(f'<w:tblStyle{table_style_attrs}/>' )
+    table_properties = apply_table_layout_properties(f'<w:tblStyle{table_style_attrs}/>')
     return f'<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{"".join(xml_rows)}</w:tbl>'
 
 
@@ -787,9 +715,7 @@ def literal_table_cell(value: object, is_header: bool = False, width: int | None
     margin_left_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
     margin_bottom_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
     margin_right_attrs = xml_attrs([('w:w', 40), ('w:type', 'dxa')])
-    cell_properties = apply_cell_layout_properties(
-        f'{width_xml}{shading_xml}<w:tcMar><w:top{margin_top_attrs}/><w:left{margin_left_attrs}/><w:bottom{margin_bottom_attrs}/><w:right{margin_right_attrs}/></w:tcMar>'
-    )
+    cell_properties = apply_cell_layout_properties(f'{width_xml}{shading_xml}<w:tcMar><w:top{margin_top_attrs}/><w:left{margin_left_attrs}/><w:bottom{margin_bottom_attrs}/><w:right{margin_right_attrs}/></w:tcMar>')
     safe_text = html.escape(text or MISSING, quote=False)
     spacing_attrs = xml_attrs([('w:after', 0)])
     size_attrs = xml_attrs([('w:val', size)])
@@ -811,11 +737,7 @@ def main(argv: list[str] | None = None) -> int:
     traceability_case = run_traceability_case(args.source_directory, args.code, args.lot)
     audit_report = build_audit_traceability_report(traceability_case)
     checklist_report = build_audit_checklist_report(audit_report)
-    generate_audit_checklist_docx_report(
-        checklist_report,
-        args.output,
-        data_quality_summary=traceability_case.sections.get('data_quality'),
-    )
+    generate_audit_checklist_docx_report(checklist_report, args.output, data_quality_summary=traceability_case.sections.get('data_quality'))
     return 0 if checklist_report.conclusion_status != 'INCOMPLETE' else 1
 
 
