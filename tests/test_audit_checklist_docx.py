@@ -127,8 +127,39 @@ def test_audit_checklist_docx_document_register_is_printable_checklist() -> None
 
     assert "Secțiunea arată documentele fizice care trebuie căutate pentru verificarea auditului" in xml
     assert "Bifat" in xml
+    assert "Status" in xml
+    assert "Sursă" in xml
+    assert "Referință document" in xml
+    assert "Cod relevant" in xml
+    assert "Lot relevant" in xml
+    assert "Comandă relevantă" in xml
+    assert "Motiv audit" in xml
     assert DOCUMENT_REGISTER_CHECKBOX in xml
     assert "required" in xml
+
+
+def test_audit_checklist_docx_document_register_uses_polished_headers_in_order() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = "".join(build_document_register_section(report, AuditReportPolicy()))
+
+    expected_headers = [
+        "Bifat",
+        "Status",
+        "Sursă",
+        "Tip document",
+        "Referință document",
+        "Cod relevant",
+        "Lot relevant",
+        "Comandă relevantă",
+        "Motiv audit",
+    ]
+
+    for header in expected_headers:
+        assert header in xml
+
+    for previous, current in zip(expected_headers, expected_headers[1:]):
+        assert xml.index(previous) < xml.index(current)
+
 
 
 def test_audit_checklist_docx_groups_document_register_by_required_and_recommended() -> None:
@@ -140,6 +171,7 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
     expected_rows = [
         [
             DOCUMENT_REGISTER_CHECKBOX,
+            line.status,
             line.area,
             line.document_type,
             policy.register_reference(line.document_reference),
@@ -147,13 +179,13 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
             line.related_lot,
             policy.delivery(line.related_order),
             policy.register_reason(line.why_needed),
-            line.status,
         ]
         for line in selected
     ]
     grouped_rows = [
         [
             DOCUMENT_REGISTER_CHECKBOX,
+            line.status,
             line.area,
             line.document_type,
             policy.register_reference(line.document_reference),
@@ -161,13 +193,13 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
             line.related_lot,
             policy.delivery(line.related_order),
             policy.register_reason(line.why_needed),
-            line.status,
         ]
         for line in selected
         if line.status == "required"
     ] + [
         [
             DOCUMENT_REGISTER_CHECKBOX,
+            line.status,
             line.area,
             line.document_type,
             policy.register_reference(line.document_reference),
@@ -175,7 +207,6 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
             line.related_lot,
             policy.delivery(line.related_order),
             policy.register_reason(line.why_needed),
-            line.status,
         ]
         for line in selected
         if line.status == "recommended"
@@ -187,9 +218,24 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
     assert len(grouped_rows) == len(expected_rows)
     assert grouped_rows == expected_rows
     assert xml.count(DOCUMENT_REGISTER_CHECKBOX) == len(selected)
-    assert [row[-1] for row in grouped_rows] == [line.status for line in selected]
+    assert [row[1] for row in grouped_rows] == [line.status for line in selected]
     assert report.conclusion_status == "PASS"
     assert all(claim not in xml.casefold() for claim in ["done", "release", "production-ready", "daily-use"])
+
+
+def test_audit_checklist_docx_document_register_keeps_missing_explicit() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = "".join(build_document_register_section(report, AuditReportPolicy()))
+
+    assert "FARA DATE IDENTIFICATE" in xml
+
+
+def test_audit_checklist_docx_document_register_does_not_add_banned_headers() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = "".join(build_document_register_section(report, AuditReportPolicy()))
+
+    for banned_header in ["Număr document", "Dată document", "Dată recepție", "Furnizor"]:
+        assert banned_header not in xml
 
 
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:

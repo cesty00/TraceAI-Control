@@ -45,7 +45,7 @@ MISSING = 'FARA DATE IDENTIFICATE'
 NOT_AVAILABLE = 'NOT_AVAILABLE'
 Q = chr(34)
 DOCUMENT_REGISTER_CHECKBOX = '☐'
-DOCUMENT_REGISTER_COLUMN_WIDTHS = [420, 900, 1550, 1800, 900, 900, 1200, 1900, 850]
+DOCUMENT_REGISTER_COLUMN_WIDTHS = [420, 850, 900, 1550, 1800, 900, 900, 1200, 1900]
 QUICK_AUDITOR_GUIDE_ITEMS = [
     '1. Citește Card verdict și Sumar Data Quality.',
     '2. Verifică Rezumat conformare checklist.',
@@ -623,11 +623,11 @@ def build_lot_flow_section(report: AuditChecklistReport, policy: AuditReportPoli
 
 def build_document_register_section(report: AuditChecklistReport, policy: AuditReportPolicy) -> list[str]:
     selected = policy.select_document_register(report.document_register)
-    headers = ['Bifat', 'Zona', 'Tip document', 'Referință', 'Cod', 'Lot', 'Comandă', 'Motiv', 'Status']
+    headers = ['Bifat', 'Status', 'Sursă', 'Tip document', 'Referință document', 'Cod relevant', 'Lot relevant', 'Comandă relevantă', 'Motiv audit']
 
     def register_rows(lines: Sequence[ChecklistDocumentRegisterLine]) -> list[list[object]]:
         return [
-            [DOCUMENT_REGISTER_CHECKBOX, line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed), line.status]
+            [DOCUMENT_REGISTER_CHECKBOX, line.status, line.area, line.document_type, policy.register_reference(line.document_reference), line.related_code, line.related_lot, policy.delivery(line.related_order), policy.register_reason(line.why_needed)]
             for line in lines
         ]
 
