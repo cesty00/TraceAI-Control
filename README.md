@@ -154,7 +154,7 @@ DOCX-AUDIT-USABILITY-01A-STATUS-SYNC consemnează validarea post-merge pentru PR
 Starea corectă pentru acest sync este:
 
 ```text
-documented pending review
+documented
 ```
 
 Dovezile oficiale confirmate pentru acest sync sunt:
