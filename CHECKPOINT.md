@@ -110,6 +110,74 @@ official post-merge green validation confirmed in this checkpoint: yes, limited-
 
 No product `DONE`, release `DONE`, production-ready, daily-use release, release-finalized claim, hardening-complete claim, or extended product `DONE` is made by this checkpoint refresh.
 
+## DOCX-AUDIT-USABILITY-01A status sync
+
+```text
+micro-stage: DOCX-AUDIT-USABILITY-01A-STATUS-SYNC
+status: documented pending review
+scope: documentation sync only
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #145 was merged into main;
+- record merge commit e2f0da9b81e9f4ef2cd3676df439bdeca5c6d6ed;
+- record final PR head a63297c5776e6dfbd7199576aeb95f810553f3fc;
+- record official post-merge validation on main through TraceAI Diagnostics #330 / 25635051236;
+- record artifact TraceAI-Diagnostics / 6905601883;
+- record that pytest-output.txt shows 221 passed in 12.56s;
+- record that reference_comparison.md = PASS;
+- record that real_audit_checklist_report.docx was generated;
+- record that real_audit_checklist_ui.json was generated;
+- record that the official DOCX artifact confirms the 01A usability changes;
+- record that the official UI JSON artifact remains coherent.
+
+Recorded evidence for this sync:
+
+```text
+PR #145: merged on main
+merge commit: e2f0da9b81e9f4ef2cd3676df439bdeca5c6d6ed
+final PR head: a63297c5776e6dfbd7199576aeb95f810553f3fc
+TraceAI Diagnostics: #330 / 25635051236
+artifact TraceAI-Diagnostics / 6905601883: generated and inspected
+pytest-output.txt: 221 passed in 12.56s
+reference_comparison.md: PASS
+real_audit_checklist_report.docx: generated and inspected
+real_audit_checklist_ui.json: generated and inspected
+DOCX date-only formatting where applicable: confirmed
+AMONTE before AVAL: confirmed
+AVAL fields visible: Materie primă / ambalaj, Tip document, Număr document, Dată document, Dată recepție
+FARA DATE IDENTIFICATE explicit: confirmed
+PASS_WITH_OBSERVATIONS present: confirmed
+WARNING / 4/4 / 0 / 8 / 8 present: confirmed
+Documente required before Documente recommended: confirmed
+UI JSON subject.result: PASS_WITH_OBSERVATIONS
+UI JSON data_quality.status: WARNING
+UI JSON data_quality.sources_found: 4
+UI JSON data_quality.warning_count: 8
+UI JSON data_quality.issue_count: 8
+```
+
+Boundary retained for this sync:
+
+```text
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu este DONE.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu este release.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu este production-ready.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu este daily-use.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă cod.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă teste.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă workflow-uri.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă DTO / JSON.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă UI.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă calcule.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă verdict rules.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă Data Quality logic.
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC nu schimbă source mappings.
+```
+
 ## PP03-DOCX-ORDERED-REPORT-01A status sync
 
 ```text

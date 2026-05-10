@@ -147,6 +147,56 @@ Robocop trebuie să acționeze ca developer atunci când etapa cere programare: 
 
 Actualizările recente de orchestrare și operare au adăugat reguli pentru autonomie controlată, roluri preflight/pilot, fallback manual pentru diagnostic și limite explicite pentru mutații. Aceste schimbări documentare nu promovează singure produsul la o etapă nouă validată.
 
+## DOCX-AUDIT-USABILITY-01A status
+
+DOCX-AUDIT-USABILITY-01A-STATUS-SYNC consemnează validarea post-merge pentru PR #145, strict ca documentare a dovezilor oficiale deja existente pe main.
+
+Starea corectă pentru acest sync este:
+
+```text
+documented pending review
+```
+
+Dovezile oficiale confirmate pentru acest sync sunt:
+
+```text
+PR #145 merged
+merge commit: e2f0da9b81e9f4ef2cd3676df439bdeca5c6d6ed
+final PR head: a63297c5776e6dfbd7199576aeb95f810553f3fc
+TraceAI Diagnostics #330 / 25635051236 = success
+artifact TraceAI-Diagnostics / 6905601883
+pytest-output.txt: 221 passed in 12.56s
+reference_comparison.md = PASS
+real_audit_checklist_report.docx generated
+real_audit_checklist_ui.json generated
+```
+
+Confirmările oficiale consemnate din artifacte sunt:
+
+```text
+DOCX: date fără oră unde se aplică
+DOCX: AMONTE înainte de AVAL
+DOCX: AVAL conține Materie primă / ambalaj, Tip document, Număr document, Dată document, Dată recepție
+DOCX: FARA DATE IDENTIFICATE rămâne explicit
+DOCX: PASS_WITH_OBSERVATIONS prezent
+DOCX: WARNING / 4/4 / 0 / 8 / 8 prezent
+DOCX: Documente required înainte de Documente recommended
+UI JSON: subject.result = PASS_WITH_OBSERVATIONS
+UI JSON: data_quality.status = WARNING
+UI JSON: sources_found = 4
+UI JSON: warning_count = 8
+UI JSON: issue_count = 8
+```
+
+Acest status nu afirmă:
+
+```text
+DONE
+release
+production-ready
+daily-use
+```
+
 ## PP03-DOCX-ORDERED-REPORT-01A status
 
 `PP03-DOCX-ORDERED-REPORT-01A` este consemnat limitat în acest sync ca validare oficială de artifact pe `main` pentru ordinea și terminologia PP03 din checklist-ul DOCX.
