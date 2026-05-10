@@ -60,6 +60,21 @@ def test_audit_checklist_docx_pp03_section_order_is_stable() -> None:
     assert register_index < build_index
 
 
+def test_audit_checklist_docx_pp03_conclusion_section_is_between_register_and_build() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Concluzie audit intern" in xml
+    conclusion_index = xml.index("Concluzie audit intern")
+    register_index = xml.index("Registru documente fizice")
+    build_index = xml.index("Informații build")
+
+    assert conclusion_index > register_index
+    assert conclusion_index < build_index
+    assert "Raportul sintetizează informațiile identificate" in xml
+    assert "nu înlocuiește verificarea documentelor fizice" in xml
+
+
 
 def test_audit_checklist_docx_contains_auditor_verdict_card_before_data_quality() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
