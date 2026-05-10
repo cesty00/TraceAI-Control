@@ -72,9 +72,8 @@ def test_audit_checklist_docx_pp03_conclusion_section_is_between_register_and_bu
 
     assert conclusion_index > register_index
     assert conclusion_index < build_index
-    assert "Raportul sintetizează informațiile identificate" in xml
-    assert "nu înlocuiește verificarea documentelor fizice" in xml
-
+    assert "Raportul sintetizează datele identificate și documentele care trebuie verificate." in xml
+    assert "nu înlocuiește controlul documentelor fizice" in xml
 
 
 def test_audit_checklist_docx_contains_auditor_verdict_card_before_data_quality() -> None:
@@ -99,7 +98,6 @@ def test_audit_checklist_docx_auditor_verdict_card_uses_approved_01e_text() -> N
     assert "Cardul verdict sintetizează cazul de audit și indică zonele principale care trebuie citite înaintea verificării documentelor fizice." in xml
 
 
-
 def test_audit_checklist_docx_quick_guide_uses_pp03_order_text() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
@@ -107,13 +105,11 @@ def test_audit_checklist_docx_quick_guide_uses_pp03_order_text() -> None:
     assert "Ghid rapid PP-03: Card verdict, Sumar Data Quality, Rezumat conformare, AMONTE, AVAL, Comenzi producție și consumuri, Fluxuri loturi și documente, Registru documente fizice și Informații build." in xml
 
 
-
 def test_audit_checklist_docx_conformity_summary_uses_approved_01e_3_text() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
     assert "Rezumatul de conformare arată dacă raportul conține informațiile necesare pentru verificarea trasabilității. Observațiile explică limitele datelor sau verificările care trebuie completate manual." in xml
-
 
 
 def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
@@ -125,16 +121,14 @@ def test_audit_checklist_docx_contains_quick_auditor_guide_points() -> None:
         assert guide_item in xml
 
 
-
 def test_audit_checklist_docx_document_register_is_printable_checklist() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
-    assert "Coloana Bifat permite folosirea tabelului ca listă de verificare tipărită" in xml
+    assert "Secțiunea arată documentele fizice care trebuie căutate pentru verificarea auditului" in xml
     assert "Bifat" in xml
     assert DOCUMENT_REGISTER_CHECKBOX in xml
     assert "required" in xml
-
 
 
 def test_audit_checklist_docx_groups_document_register_by_required_and_recommended() -> None:
@@ -198,33 +192,32 @@ def test_audit_checklist_docx_groups_document_register_by_required_and_recommend
     assert all(claim not in xml.casefold() for claim in ["done", "release", "production-ready", "daily-use"])
 
 
-
 def test_audit_checklist_docx_uses_explicit_checklist_columns() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
     for upstream_header in [
-        "Cantitate recepționată",
-        "Dată recepție",
-        "Furnizor",
+        "Materie primă / ambalaj",
         "Tip document",
         "Număr document",
         "Dată document",
+        "Dată recepție",
+        "Furnizor",
+        "Cantitate recepționată",
+        "Cantitate consumată",
         "Stoc lot sursă",
-        "Livrări terți",
     ]:
         assert upstream_header in xml
 
     for downstream_header in [
         "Client",
-        "Adresă",
+        "Destinație",
         "Dată livrare",
-        "Cantitate livrată",
-        "Număr document",
+        "Document livrare",
         "Comandă WMS",
+        "Cantitate livrată",
     ]:
         assert downstream_header in xml
-
 
 
 def test_audit_checklist_docx_renders_build_information() -> None:
@@ -246,7 +239,6 @@ def test_audit_checklist_docx_renders_build_information() -> None:
     assert format_build_info_line(build_info) == "TraceAI Control 1.0.0 | commit abcdef123456 | channel local | generated generated-at"
 
 
-
 def test_audit_checklist_docx_renders_split_receipt_fields_when_available() -> None:
     traceability_case = make_case()
     raw_row = traceability_case.report_tables.order_traceability.rows[0]
@@ -263,13 +255,11 @@ def test_audit_checklist_docx_renders_split_receipt_fields_when_available() -> N
     assert "125 Kilogram; loc. Depozit Principal" in xml
 
 
-
 def test_audit_report_policy_compacts_stock_location_label() -> None:
     policy = AuditReportPolicy()
 
     assert policy.stock("125 Kilogram; locații: Depozit Principal") == "125 Kilogram; loc. Depozit Principal"
     assert policy.stock("FARA DATE IDENTIFICATE") == "FARA DATE IDENTIFICATE"
-
 
 
 def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) -> None:
@@ -290,7 +280,6 @@ def test_generate_audit_checklist_docx_report_writes_valid_docx(tmp_path: Path) 
     assert "Rezumat conformare checklist" in document_xml
     assert "00_DATA_QUALITY — verificare surse înainte de raport" in document_xml
     assert "Informații build" in document_xml
-
 
 
 def test_generate_audit_checklist_docx_report_writes_case_metadata_header_footer(tmp_path: Path) -> None:
@@ -324,14 +313,12 @@ def test_generate_audit_checklist_docx_report_writes_case_metadata_header_footer
     assert 'w:instr="PAGE"' in footer_xml
 
 
-
 def test_audit_checklist_docx_downstream_section_mentions_physical_delivery_documents() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
-    assert "Auditorul trebuie să compare aceste rânduri cu documentele fizice de livrare" in xml
-    assert "documentele WMS indicate" in xml
-
+    assert "Tabelul arată livrările identificate pentru lotul de produs finit." in xml
+    assert "Document WMS; detaliile se verifică în sursa fizică." in xml
 
 
 def test_audit_checklist_docx_title_block_uses_compact_spacing_after_polish() -> None:
@@ -351,7 +338,6 @@ def test_audit_checklist_docx_title_block_uses_compact_spacing_after_polish() ->
     assert 'w:spacing w:after="100"' in xml
 
 
-
 def test_audit_checklist_docx_document_register_uses_printable_checklist_column_widths() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
 
@@ -360,7 +346,6 @@ def test_audit_checklist_docx_document_register_uses_printable_checklist_column_
     for width in DOCUMENT_REGISTER_COLUMN_WIDTHS[:3]:
         assert f'w:tcW w:w="{width}" w:type="dxa"' in xml
     assert DOCUMENT_REGISTER_CHECKBOX in xml
-
 
 
 def test_audit_checklist_docx_pp03_01a_surfaces_b_fields_more_clearly() -> None:
@@ -379,12 +364,15 @@ def test_audit_checklist_docx_pp03_01a_surfaces_b_fields_more_clearly() -> None:
         "Cod intern",
         "Lot sursă",
         "Materie primă / ambalaj",
+        "Tip document",
+        "Număr document",
+        "Dată document",
+        "Dată recepție",
         "Cantitate consumată",
         "Stoc lot sursă",
         "Cod intern consum",
     ]:
         assert expected_text in xml
-
 
 
 def test_audit_checklist_docx_pp03_01a_does_not_add_banned_pp03_fields() -> None:
@@ -402,7 +390,6 @@ def test_audit_checklist_docx_pp03_01a_does_not_add_banned_pp03_fields() -> None
         assert banned_text not in xml
 
 
-
 def test_audit_checklist_docx_pp03_terms_are_not_inverted() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
@@ -411,3 +398,173 @@ def test_audit_checklist_docx_pp03_terms_are_not_inverted() -> None:
     assert "AVAL — Materii prime, ambalaje, auxiliare și loturi sursă" in xml
     assert "03_TABEL_II_AVAL — Livrări produs finit" not in xml
     assert "02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare" not in xml
+
+
+def test_audit_checklist_docx_formats_date_without_time_and_preserves_missing() -> None:
+    policy = AuditReportPolicy()
+
+    assert policy.audit_dates("2026-04-10") == "10/04/2026"
+    assert policy.audit_dates("FARA DATE IDENTIFICATE") == "FARA DATE IDENTIFICATE"
+
+
+def test_audit_checklist_docx_compacts_multiple_timestamps_from_same_day() -> None:
+    policy = AuditReportPolicy()
+
+    value = "2026-04-10T08:00:00; 2026-04-10 11:15; 10.04.2026 14:30:59"
+
+    assert policy.audit_dates(value) == "10/04/2026 (3 mișcări)"
+
+
+def test_audit_checklist_docx_01a_minimal_keeps_amonte_aval_tables_and_descriptive_texts() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    for downstream_header in [
+        "Client",
+        "Destinație",
+        "Dată livrare",
+        "Document livrare",
+        "Comandă WMS",
+        "Cantitate livrată",
+    ]:
+        assert downstream_header in xml
+
+    for upstream_header in [
+        "Materie primă / ambalaj",
+        "Tip document",
+        "Număr document",
+        "Dată document",
+        "Dată recepție",
+        "Furnizor",
+        "Cantitate recepționată",
+        "Cantitate consumată",
+        "Stoc lot sursă",
+    ]:
+        assert upstream_header in xml
+
+    for descriptive_text in [
+        "Secțiunea urmărește produsul finit: ce s-a produs, ce s-a livrat și ce documente trebuie verificate pentru confirmare.",
+        "Tabelul arată livrările identificate pentru lotul de produs finit. Auditorul verifică documentul de livrare, clientul, data și cantitatea livrată.",
+        "Secțiunea arată loturile sursă care intră în produsul finit și documentele prin care ele pot fi urmărite înapoi.",
+        "Tabelul prezintă recepțiile identificate pentru loturile sursă. Auditorul verifică documentul de recepție, furnizorul, datele documentare, cantitatea și lotul.",
+    ]:
+        assert descriptive_text in xml
+
+    assert xml.index("AMONTE — Produs finit, producție și livrări") < xml.index(
+        "AVAL — Materii prime, ambalaje, auxiliare și loturi sursă"
+    )
+
+
+def test_audit_checklist_docx_01a_minimal_preserves_statuses_summary_and_json_contract() -> None:
+    from src.audit.audit_checklist_report import audit_checklist_report_to_dict
+    from src.audit.audit_traceability_report import STATUS_PASS_WITH_OBSERVATIONS
+
+    traceability_case = make_case()
+    traceability_case.observations.append("observatie suplimentara pentru audit")
+    traceability_case.sections["data_quality"] = {
+        "status": "WARNING",
+        "source_count": 4,
+        "sources_found": 4,
+        "error_count": 0,
+        "warning_count": 8,
+        "issue_count": 8,
+    }
+    expected_data_quality = dict(traceability_case.sections["data_quality"])
+
+    audit_report = build_audit_traceability_report(traceability_case)
+    checklist_report = build_audit_checklist_report(audit_report)
+    xml = build_document_xml(checklist_report, data_quality_summary=traceability_case.sections["data_quality"])
+    checklist_report_dict = audit_checklist_report_to_dict(checklist_report)
+
+    assert audit_report.conclusion.status == STATUS_PASS_WITH_OBSERVATIONS
+    assert checklist_report.conclusion_status == STATUS_PASS_WITH_OBSERVATIONS
+    assert "PASS_WITH_OBSERVATIONS" in xml
+    assert "Rezumat compact: WARNING / 4/4 / 0 / 8 / 8" in xml
+    assert "Documente required" in xml
+    assert "Documente recommended" in xml
+    assert xml.index("Documente required") < xml.index("Documente recommended")
+    assert traceability_case.sections["data_quality"] == expected_data_quality
+    assert audit_report.data_quality == expected_data_quality
+    assert checklist_report.data_quality == expected_data_quality
+    assert checklist_report_dict["conclusion_status"] == STATUS_PASS_WITH_OBSERVATIONS
+    assert checklist_report_dict["data_quality"]["warning_count"] == 8
+    assert checklist_report_dict["data_quality"]["issue_count"] == 8
+
+
+def test_audit_checklist_docx_aval_shows_material_name() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Materie primă / ambalaj" in xml
+    assert "CREVETI INTREGI PREFIERTI 20-30 BAX 5 KG" in xml
+
+
+def test_audit_checklist_docx_aval_shows_document_type() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Tip document" in xml
+    assert "WMS recepție" in xml
+
+
+def test_audit_checklist_docx_aval_shows_document_number() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Număr document" in xml
+    assert "300005747" in xml
+
+
+def test_audit_checklist_docx_aval_shows_document_date() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Dată document" in xml
+    assert "09/04/2026" in xml
+
+
+def test_audit_checklist_docx_aval_shows_receipt_date_separately() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Dată document" in xml
+    assert "Dată recepție" in xml
+    assert xml.index("Dată document") < xml.index("Dată recepție")
+
+
+def test_audit_checklist_docx_aval_keeps_distinct_receipt_date_when_it_differs() -> None:
+    traceability_case = make_case()
+    raw_row = traceability_case.report_tables.order_traceability.rows[0]
+    raw_row.values["Recepții WMS consum"] = "total 5000 Kilogram; 300005747/Fish Invest LTD/2026-04-09: 5000 Kilogram"
+    raw_row.values["Data recepție consum"] = "2026-04-10T08:15:00"
+
+    report = build_audit_checklist_report(build_audit_traceability_report(traceability_case))
+    xml = build_document_xml(report)
+
+    assert "Dată document" in xml
+    assert "Dată recepție" in xml
+    assert "09/04/2026" in xml
+    assert "10/04/2026" in xml
+
+
+def test_audit_checklist_docx_aval_formats_dates_without_time() -> None:
+    traceability_case = make_case()
+    raw_row = traceability_case.report_tables.order_traceability.rows[0]
+    raw_row.values["Data recepție consum"] = "2026-04-10T08:15:00"
+
+    report = build_audit_checklist_report(build_audit_traceability_report(traceability_case))
+    xml = build_document_xml(report)
+
+    assert "10/04/2026" in xml
+    assert "T08:15:00" not in xml
+    assert "08:15:00" not in xml
+
+
+def test_audit_checklist_docx_aval_keeps_missing_explicit() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    assert "Tip document" in xml
+    assert "Dată document" in xml
+    assert "Dată recepție" in xml
+    assert "FARA DATE IDENTIFICATE" in xml
