@@ -40,14 +40,24 @@ def test_audit_checklist_docx_pp03_section_order_is_stable() -> None:
     report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
     xml = build_document_xml(report)
 
-    assert xml.index("Card verdict auditor") < xml.index("Sumar Data Quality")
-    assert xml.index("Sumar Data Quality") < xml.index("Rezumat conformare checklist")
-    assert xml.index("Rezumat conformare checklist") < xml.index("AMONTE — Produs finit, producție și livrări")
-    assert xml.index("AMONTE — Produs finit, producție și livrări") < xml.index("AVAL — Materii prime, ambalaje, auxiliare și loturi sursă")
-    assert xml.index("AVAL — Materii prime, ambalaje, auxiliare și loturi sursă") < xml.index("Comenzi producție și consumuri")
-    assert xml.index("Comenzi producție și consumuri") < xml.index("Fluxuri loturi și documente")
-    assert xml.index("Fluxuri loturi și documente") < xml.index("Registru documente fizice")
-    assert xml.index("Registru documente fizice") < xml.index("Informații build")
+    card_index = xml.index("Card verdict auditor")
+    data_quality_index = xml.index("Sumar Data Quality", card_index + 1)
+    conformity_index = xml.index("Rezumat conformare checklist", data_quality_index + 1)
+    amonte_index = xml.index("AMONTE — Produs finit, producție și livrări", conformity_index + 1)
+    aval_index = xml.index("AVAL — Materii prime, ambalaje, auxiliare și loturi sursă", amonte_index + 1)
+    production_index = xml.index("Comenzi producție și consumuri", aval_index + 1)
+    flow_index = xml.index("Fluxuri loturi și documente", production_index + 1)
+    register_index = xml.index("Registru documente fizice", flow_index + 1)
+    build_index = xml.index("Informații build", register_index + 1)
+
+    assert card_index < data_quality_index
+    assert data_quality_index < conformity_index
+    assert conformity_index < amonte_index
+    assert amonte_index < aval_index
+    assert aval_index < production_index
+    assert production_index < flow_index
+    assert flow_index < register_index
+    assert register_index < build_index
 
 
 
