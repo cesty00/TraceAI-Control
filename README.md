@@ -848,3 +848,39 @@ CHECKPOINT.md
 ```
 
 Regulă: `CHECKPOINT.md` și `README.md` se actualizează împreună după fiecare PR merge-uit, diagnostic verde important, validare Windows sau schimbare de etapă.
+
+## DOCX-AUDIT-USABILITY-01B existing register fields polish status
+
+`DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH` este parte din `main` prin PR #148 și este consemnat limitat în acest sync ca validare oficială de artifact pe `main` pentru polish-ul headerelor și ordinii registrului de documente fizice, folosind numai câmpurile existente.
+
+Starea consemnată pentru acest sync este:
+
+```text
+PR #148 merged
+merge commit: a6f0918d73f914b78075d7e5b94425aa9ff51bc6
+TraceAI Diagnostics #336 / 25638869023 = success
+artifact TraceAI-Diagnostics / 6906742306 generat și inspectat
+pytest-output.txt: 224 passed in 2.79s
+reference_comparison.md = PASS
+real_audit_checklist_report.docx generat și inspectat
+real_audit_checklist_ui.json generat
+DOCX confirmă headerele registrului: Bifat / Status / Sursă / Tip document / Referință document / Cod relevant / Lot relevant / Comandă relevantă / Motiv audit
+schimbare docs-only consemnată aici: validare de artifact pentru polish-ul registrului deja merge-uit pe main
+fără code changes în acest sync
+fără tests changes în acest sync
+fără workflow changes în acest sync
+fără DTO/JSON changes în acest sync
+fără UI changes în acest sync
+fără model changes în acest sync
+fără Data Quality changes în acest sync
+fără verdict changes în acest sync
+```
+
+Acest README sync nu afirmă:
+
+```text
+DONE
+release
+production-ready
+daily-use
+```
