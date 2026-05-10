@@ -411,3 +411,95 @@ def test_audit_checklist_docx_pp03_terms_are_not_inverted() -> None:
     assert "AVAL — Materii prime, ambalaje, auxiliare și loturi sursă" in xml
     assert "03_TABEL_II_AVAL — Livrări produs finit" not in xml
     assert "02_TABEL_I_AMONTE — Materii prime, ambalaje și materiale auxiliare" not in xml
+
+
+
+def test_audit_checklist_docx_formats_date_without_time_and_preserves_missing() -> None:
+    policy = AuditReportPolicy()
+
+    assert policy.audit_dates("2026-04-10") == "10/04/2026"
+    assert policy.audit_dates("FARA DATE IDENTIFICATE") == "FARA DATE IDENTIFICATE"
+
+
+
+def test_audit_checklist_docx_compacts_multiple_timestamps_from_same_day() -> None:
+    policy = AuditReportPolicy()
+
+    value = "2026-04-10T08:00:00; 2026-04-10 11:15; 10.04.2026 14:30:59"
+
+    assert policy.audit_dates(value) == "10/04/2026 (3 mișcări)"
+
+
+
+def test_audit_checklist_docx_01a_minimal_keeps_amonte_aval_tables_and_descriptive_texts() -> None:
+    report = build_audit_checklist_report(build_audit_traceability_report(make_case()))
+    xml = build_document_xml(report)
+
+    for downstream_header in [
+        "Client",
+        "Destinație",
+        "Dată livrare",
+        "Document livrare",
+        "Comandă WMS",
+        "Cantitate livrată",
+    ]:
+        assert downstream_header in xml
+
+    for upstream_header in [
+        "Document recepție",
+        "Dată recepție",
+        "Furnizor",
+        "Cantitate recepționată",
+        "Cantitate consumată",
+        "Stoc lot sursă",
+    ]:
+        assert upstream_header in xml
+
+    for descriptive_text in [
+        "Secțiunea urmărește produsul finit: ce s-a produs, ce s-a livrat și ce documente trebuie verificate pentru confirmare.",
+        "Tabelul arată livrările identificate pentru lotul de produs finit. Auditorul verifică documentul de livrare, clientul, data și cantitatea livrată.",
+        "Secțiunea arată loturile sursă care intră în produsul finit și documentele prin care ele pot fi urmărite înapoi.",
+        "Tabelul prezintă recepțiile identificate pentru loturile sursă. Auditorul verifică documentul de recepție, furnizorul, data, cantitatea și lotul.",
+    ]:
+        assert descriptive_text in xml
+
+    assert xml.index("AMONTE — Produs finit, producție și livrări") < xml.index(
+        "AVAL — Materii prime, ambalaje, auxiliare și loturi sursă"
+    )
+
+
+
+def test_audit_checklist_docx_01a_minimal_preserves_statuses_summary_and_json_contract() -> None:
+    from src.audit.audit_checklist_report import audit_checklist_report_to_dict
+    from src.audit.audit_traceability_report import STATUS_PASS_WITH_OBSERVATIONS
+
+    traceability_case = make_case()
+    traceability_case.observations.append("observatie suplimentara pentru audit")
+    traceability_case.sections["data_quality"] = {
+        "status": "WARNING",
+        "source_count": 4,
+        "sources_found": 4,
+        "error_count": 0,
+        "warning_count": 8,
+        "issue_count": 8,
+    }
+    expected_data_quality = dict(traceability_case.sections["data_quality"])
+
+    audit_report = build_audit_traceability_report(traceability_case)
+    checklist_report = build_audit_checklist_report(audit_report)
+    xml = build_document_xml(checklist_report, data_quality_summary=traceability_case.sections["data_quality"])
+    checklist_report_dict = audit_checklist_report_to_dict(checklist_report)
+
+    assert audit_report.conclusion.status == STATUS_PASS_WITH_OBSERVATIONS
+    assert checklist_report.conclusion_status == STATUS_PASS_WITH_OBSERVATIONS
+    assert "PASS_WITH_OBSERVATIONS" in xml
+    assert "Rezumat compact: WARNING / 4/4 / 0 / 8 / 8" in xml
+    assert "Documente required" in xml
+    assert "Documente recommended" in xml
+    assert xml.index("Documente required") < xml.index("Documente recommended")
+    assert traceability_case.sections["data_quality"] == expected_data_quality
+    assert audit_report.data_quality == expected_data_quality
+    assert checklist_report.data_quality == expected_data_quality
+    assert checklist_report_dict["conclusion_status"] == STATUS_PASS_WITH_OBSERVATIONS
+    assert checklist_report_dict["data_quality"]["warning_count"] == 8
+    assert checklist_report_dict["data_quality"]["issue_count"] == 8
