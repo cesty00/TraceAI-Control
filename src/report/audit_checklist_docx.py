@@ -422,6 +422,7 @@ def build_document_xml(
     body.append(page_break())
     body.extend(build_lot_flow_section(report, policy))
     body.extend(build_document_register_section(report, policy))
+    body.extend(build_conclusion_section())
     body.extend(build_build_info_section(metadata))
     return wrap_document(''.join(body))
 
@@ -704,6 +705,16 @@ def build_document_register_section(report: AuditChecklistReport, policy: AuditR
     return parts
 
 
+def build_conclusion_section() -> list[str]:
+    return [
+        paragraph('Concluzie audit intern', style='Heading1'),
+        literal_paragraph(
+            'Raportul sintetizează informațiile identificate în sursele WMS și PRD disponibile pentru produsul și lotul analizat. El nu înlocuiește verificarea documentelor fizice, ci indică ce date au fost găsite și ce documente trebuie pregătite pentru dosarul de audit.',
+            spacing_after=50,
+        ),
+    ]
+
+
 def build_build_info_section(build_info: BuildInfo) -> list[str]:
     return [
         paragraph('Informații build', style='Heading1'),
@@ -724,8 +735,8 @@ def literal_paragraph(
     spacing_before: int | None = None,
     spacing_after: int | None = None,
 ) -> str:
-    style_xml = f'<w:pStyle{xml_attrs([("w:val", style)])}/>' if style else ''
-    align_xml = f'<w:jc{xml_attrs([("w:val", align)])}/>' if align else ''
+    style_xml = f'<w:pStyle{xml_attrs([('w:val', style)])}/>' if style else ''
+    align_xml = f'<w:jc{xml_attrs([('w:val', align)])}/>' if align else ''
     spacing_pairs = []
     if spacing_before is not None:
         spacing_pairs.append(('w:before', spacing_before))
@@ -741,14 +752,14 @@ def literal_table(headers: list[str], rows: list[list[object]], column_widths: S
     xml_rows = [literal_table_row(headers, is_header=True, column_widths=column_widths)]
     xml_rows.extend(literal_table_row(row, column_widths=column_widths) for row in rows)
     borders = (
-        f'<w:tblBorders><w:top{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/>'
-        f'<w:left{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/>'
-        f'<w:bottom{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/>'
-        f'<w:right{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/>'
-        f'<w:insideH{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/>'
-        f'<w:insideV{xml_attrs([("w:val", "single"), ("w:sz", 4), ("w:space", 0), ("w:color", "808080")])}/></w:tblBorders>'
+        f'<w:tblBorders><w:top{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
+        f'<w:left{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
+        f'<w:bottom{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
+        f'<w:right{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
+        f'<w:insideH{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/>'
+        f'<w:insideV{xml_attrs([('w:val', 'single'), ('w:sz', 4), ('w:space', 0), ('w:color', '808080')])}/></w:tblBorders>'
     )
-    table_properties = apply_table_layout_properties(f'<w:tblStyle{xml_attrs([("w:val", "TraceAITable")])}/>')
+    table_properties = apply_table_layout_properties(f'<w:tblStyle{xml_attrs([('w:val', 'TraceAITable')])}/>')
     return f'<w:tbl><w:tblPr>{table_properties}{borders}</w:tblPr>{"".join(xml_rows)}</w:tbl>'
 
 
@@ -761,16 +772,16 @@ def literal_table_row(values: Iterable[object], is_header: bool = False, column_
 
 
 def literal_table_cell(value: object, is_header: bool = False, width: int | None = None) -> str:
-    shading_xml = f'<w:shd{xml_attrs([("w:fill", "EDEDED")])}/>' if is_header else ''
+    shading_xml = f'<w:shd{xml_attrs([('w:fill', 'EDEDED')])}/>' if is_header else ''
     bold_xml = '<w:b/>' if is_header else ''
     size = '15' if is_header else '14'
     text = str(value).strip() if value is not None else MISSING
-    width_xml = f'<w:tcW{xml_attrs([("w:w", width), ("w:type", "dxa")])}/>' if width is not None else ''
+    width_xml = f'<w:tcW{xml_attrs([('w:w', width), ('w:type', 'dxa')])}/>' if width is not None else ''
     cell_properties = apply_cell_layout_properties(
-        f'{width_xml}{shading_xml}<w:tcMar><w:top{xml_attrs([("w:w", 40), ("w:type", "dxa")])}/><w:left{xml_attrs([("w:w", 40), ("w:type", "dxa")])}/><w:bottom{xml_attrs([("w:w", 40), ("w:type", "dxa")])}/><w:right{xml_attrs([("w:w", 40), ("w:type", "dxa")])}/></w:tcMar>'
+        f'{width_xml}{shading_xml}<w:tcMar><w:top{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:left{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:bottom{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/><w:right{xml_attrs([('w:w', 40), ('w:type', 'dxa')])}/></w:tcMar>'
     )
     safe_text = html.escape(text or MISSING, quote=False)
-    return f'<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing{xml_attrs([("w:after", 0)])}/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz{xml_attrs([("w:val", size)])}/><w:rFonts{xml_attrs([("w:ascii", "Arial"), ("w:hAnsi", "Arial")])}/></w:rPr><w:t>{safe_text}</w:t></w:r></w:p></w:tc>'
+    return f'<w:tc><w:tcPr>{cell_properties}</w:tcPr><w:p><w:pPr><w:spacing{xml_attrs([('w:after', 0)])}/></w:pPr><w:r><w:rPr>{bold_xml}<w:sz{xml_attrs([('w:val', size)])}/><w:rFonts{xml_attrs([('w:ascii', 'Arial'), ('w:hAnsi', 'Arial')])}/></w:rPr><w:t>{safe_text}</w:t></w:r></w:p></w:tc>'
 
 
 def extract_document_text_from_xml(document_xml: str) -> str:
