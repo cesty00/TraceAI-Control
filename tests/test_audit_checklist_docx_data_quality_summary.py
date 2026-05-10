@@ -173,6 +173,18 @@ def test_audit_checklist_docx_ds099903883_10526_warning_non_regression() -> None
     assert 'Warning-uri' in xml
     assert 'Issues' in xml
     assert '8' in xml
+    assert 'Rezumat compact: WARNING / 4/4 / 0 / 8 / 8' in xml
+
+
+
+def test_audit_checklist_docx_data_quality_section_stays_before_amonte() -> None:
+    report, data_quality = make_docx_report(
+        data_quality=warning_data_quality(issue_count=8, warning_count=8),
+    )
+
+    xml = build_document_xml(report, data_quality_summary=data_quality)
+
+    assert xml.index('Sumar Data Quality') < xml.index('AMONTE — Produs finit, producție și livrări')
 
 
 
@@ -208,6 +220,9 @@ def test_audit_checklist_docx_local_operator_path_wires_warning_summary_into_doc
     assert 'Issues' in xml
     assert 'NOT_AVAILABLE' not in xml
     assert 'PASS_WITH_OBSERVATIONS' in xml
+    assert 'AMONTE — Produs finit, producție și livrări' in xml
+    assert 'AVAL — Materii prime, ambalaje, auxiliare și loturi sursă' in xml
+    assert xml.index('AMONTE — Produs finit, producție și livrări') < xml.index('AVAL — Materii prime, ambalaje, auxiliare și loturi sursă')
     assert 'Documente required' in xml
     assert 'Documente recommended' in xml
     assert xml.index('Documente required') < xml.index('Documente recommended')
