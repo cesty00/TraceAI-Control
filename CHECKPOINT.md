@@ -822,3 +822,66 @@ controlled integration / edge cases / hardening
 This checkpoint sync records `PREFLIGHT-UI-01` as functionally closed in a limited way with `COMPLETED_WITH_OBSERVATIONS`, records `WARNING-TAXONOMY-01C` as validated on `main` in an internal-only form, records `DOCX-DATA-ENRICHMENT-01B` plus `DOCX-DATA-ENRICHMENT-01C` as artifact-verified on `main` within docs-only sync boundaries, records `DOCX-DATA-ENRICHMENT-01B-WIRING-FIX` as artifact-verified on `main` within a docs-only sync boundary, and records `PP03-DOCX-ORDERED-REPORT-01A` as artifact-verified on `main` within a docs-only sync boundary.
 
 It does not promote the application, does not close release readiness, does not change code/tests/workflows, and does not claim release, production-ready, daily-use, `DONE`, hardening complete, extended product DONE, fully integrated user-facing warning taxonomy, final legal/commercial validation, Data Quality logic change, DTO/JSON change, UI behavior change, verdict-rules change, warning-taxonomy change, source mapping change, or 01C document-register change.
+
+## DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH status sync
+
+```text
+micro-stage: DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH-STATUS-SYNC
+status: documented
+scope: documentation sync only
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #148 was merged into `main`;
+- record merge commit `a6f0918d73f914b78075d7e5b94425aa9ff51bc6`;
+- record official post-merge validation on `main` through TraceAI Diagnostics `#336 / 25638869023`;
+- record artifact `TraceAI-Diagnostics / 6906742306`;
+- record that `pytest-output.txt` shows `224 passed in 2.79s`;
+- record that `reference_comparison.md = PASS`;
+- record that `real_audit_checklist_report.docx` was generated and inspected;
+- record that `real_audit_checklist_ui.json` was generated;
+- record that the official DOCX artifact confirms the polished physical document register headers and ordering using existing register fields only.
+
+Recorded evidence for this sync:
+
+```text
+PR #148: merged on main
+merge commit: a6f0918d73f914b78075d7e5b94425aa9ff51bc6
+TraceAI Diagnostics: #336 / 25638869023
+Tests and diagnostic report: success
+artifact TraceAI-Diagnostics / 6906742306: generated and inspected
+pytest-output.txt: 224 passed in 2.79s
+reference_comparison.md: PASS
+real_audit_checklist_report.docx: generated and inspected
+real_audit_checklist_ui.json: generated
+DOCX register headers confirmed: Bifat / Status / Sursă / Tip document / Referință document / Cod relevant / Lot relevant / Comandă relevantă / Motiv audit
+scope: docs-only status sync for artifact-backed validation already merged on main
+code changes in this sync: none
+tests changes in this sync: none
+workflow changes in this sync: none
+DTO/JSON changes in this sync: none
+UI changes in this sync: none
+model changes in this sync: none
+Data Quality changes in this sync: none
+verdict changes in this sync: none
+```
+
+Boundary retained for this sync:
+
+```text
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu este DONE.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu este release.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu este production-ready.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu este daily-use.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă cod.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă teste.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă workflow-uri.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă DTO / JSON.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă UI.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă model.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă Data Quality.
+DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă verdict.
+```
