@@ -67,7 +67,7 @@ def test_audit_checklist_docx_pp03_conclusion_section_is_between_register_and_bu
     assert "Concluzie audit intern" in xml
     conclusion_index = xml.index("Concluzie audit intern")
     register_index = xml.index("Registru documente fizice")
-    build_index = xml.index("Informații build")
+    build_index = xml.index("Informații build", register_index + 1)
 
     assert conclusion_index > register_index
     assert conclusion_index < build_index
