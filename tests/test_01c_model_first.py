@@ -3,7 +3,12 @@ from pathlib import Path
 
 from src.audit.audit_checklist_report import build_audit_checklist_report
 from src.audit.audit_traceability_report import build_audit_traceability_report
-from src.report.audit_checklist_docx import build_document_xml, generate_audit_checklist_docx_report
+from src.report.audit_checklist_docx import (
+    AuditReportPolicy,
+    build_document_register_section,
+    build_document_xml,
+    generate_audit_checklist_docx_report,
+)
 from src.ui.audit_checklist_json import audit_checklist_ui_payload_from_report
 from tests.test_audit_traceability_report import make_case
 
@@ -85,10 +90,11 @@ def test_docx_still_generates_without_layout_change(tmp_path: Path) -> None:
     _, checklist = build_reports()
 
     xml = build_document_xml(checklist)
+    register_xml = "".join(build_document_register_section(checklist, AuditReportPolicy()))
 
     assert "Registru documente fizice" in xml
     for banned_header in ["Număr document", "Dată document", "Dată recepție", "Furnizor", "Client"]:
-        assert banned_header not in xml
+        assert banned_header not in register_xml
 
     output = generate_audit_checklist_docx_report(checklist, tmp_path / "audit_checklist.docx")
     with zipfile.ZipFile(output) as package:
