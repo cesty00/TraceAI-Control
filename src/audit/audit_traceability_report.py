@@ -142,6 +142,12 @@ class PhysicalDocumentRequirement:
     related_order: str
     why_needed: str
     status: str
+    document_number: str = MISSING
+    document_date: str = MISSING
+    receipt_date: str = MISSING
+    supplier: str = MISSING
+    client: str = MISSING
+    delivery_date: str = MISSING
 
 
 @dataclass(frozen=True)
@@ -501,6 +507,16 @@ def receipt_supplier_from_summary(receipt_summary: str) -> str:
     return parts[1] if len(parts) >= 2 else MISSING
 
 
+def receipt_document_number_from_summary(receipt_summary: str) -> str:
+    first_example = receipt_first_example_from_summary(receipt_summary)
+    if not first_example:
+        return MISSING
+    document = first_example.rsplit(": ", 1)[0].strip() if ": " in first_example else first_example
+    document = document.replace(" | data ", "/")
+    parts = [part.strip() for part in document.split("/") if part.strip()]
+    return parts[0] if parts else MISSING
+
+
 def set_structured_receipt_fields(
     line: UpstreamMaterialLine,
     *,
@@ -558,11 +574,53 @@ def build_source_lot_flows(upstream: list[UpstreamMaterialLine]) -> list[SourceL
 def build_physical_document_requirements(exercise: AuditExercise, downstream: list[FinishedProductDelivery], upstream: list[UpstreamMaterialLine], production_orders: list[ProductionOrderTrace]) -> list[PhysicalDocumentRequirement]:
     documents: list[PhysicalDocumentRequirement] = []
     for order in production_orders:
-        documents.append(PhysicalDocumentRequirement("PRD", "Comandă / raport producție", order.production_order, exercise.code, exercise.lot, order.production_order, "Confirmă producția și consumurile pe comandă.", "required"))
+        documents.append(
+            PhysicalDocumentRequirement(
+                "PRD",
+                "Comandă / raport producție",
+                order.production_order,
+                exercise.code,
+                exercise.lot,
+                order.production_order,
+                "Confirmă producția și consumurile pe comandă.",
+                "required",
+                document_number=order.production_order,
+                document_date=order.production_date,
+            )
+        )
     for delivery in downstream:
-        documents.append(PhysicalDocumentRequirement("WMS", "Document livrare produs finit", delivery.document_number, exercise.code, exercise.lot, delivery.order_number, "Confirmă livrarea aval către client.", "required"))
+        documents.append(
+            PhysicalDocumentRequirement(
+                "WMS",
+                "Document livrare produs finit",
+                delivery.document_number,
+                exercise.code,
+                exercise.lot,
+                delivery.order_number,
+                "Confirmă livrarea aval către client.",
+                "required",
+                document_number=delivery.document_number,
+                client=delivery.client,
+                delivery_date=delivery.delivery_date,
+            )
+        )
     for line in upstream:
-        documents.append(PhysicalDocumentRequirement("NIR" if line.category == "raw_material" else "WMS", "Document intrare / recepție lot sursă", line.document_summary, line.code, line.lot, MISSING, "Confirmă intrarea lotului sursă folosit în lotul auditat.", "required" if line.category in {"raw_material", "packaging"} else "recommended"))
+        documents.append(
+            PhysicalDocumentRequirement(
+                "NIR" if line.category == "raw_material" else "WMS",
+                "Document intrare / recepție lot sursă",
+                line.document_summary,
+                line.code,
+                line.lot,
+                MISSING,
+                "Confirmă intrarea lotului sursă folosit în lotul auditat.",
+                "required" if line.category in {"raw_material", "packaging"} else "recommended",
+                document_number=receipt_document_number_from_summary(line.document_summary),
+                document_date=receipt_date_from_summary(line.document_summary),
+                receipt_date=receipt_date_value(line),
+                supplier=receipt_supplier_value(line),
+            )
+        )
     return documents
 
 
