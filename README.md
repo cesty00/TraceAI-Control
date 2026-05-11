@@ -884,3 +884,52 @@ release
 production-ready
 daily-use
 ```
+
+## TRACEABILITY-PRD-LOT-MATCH-01A status
+
+`TRACEABILITY-PRD-LOT-MATCH-01A repeated identical PRE_LOT` este consemnat limitat în acest sync ca validare oficială pe `main`, strict pentru patch-ul narrow care acceptă repeated-identical `PRE_LOT` fără să extindă modelul complet de loturi.
+
+Starea consemnată pentru acest sync este:
+
+```text
+status recomandat: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+PR #152 merged on main
+merge commit: 6e34005c3f50ec86e77bbd888e71204fa9b93634
+validated PR head before merge: 11251de29fffcfc235703e492cf4e292c4d0c012
+TraceAI Diagnostics run: 25698287360
+artifact: TraceAI-Diagnostics / 6930413961
+Tests and diagnostic report = completed / success
+Smoke pytest = completed / skipped
+pytest-output.txt = 238 passed in 3.33s
+reference_comparison.md = PASS
+reference_comparison.json = PASS
+real_audit_checklist_report.docx generated
+real_audit_checklist_ui.json generated and valid JSON
+audit checklist result = PASS_WITH_OBSERVATIONS
+scope validated here: narrow repeated-identical PRE_LOT patch on main
+```
+
+Boundary obligatoriu pentru această consemnare:
+
+```text
+această etapă nu este DONE
+această etapă nu este release
+această etapă nu este production-ready
+această etapă nu este daily-use
+această etapă validează doar patch-ul narrow pentru repeated_identical PRE_LOT
+nu implementează multi_lot_different support
+nu implementează unclear PRE_LOT support
+nu implementează WMS per-lot reconciliation
+nu implementează report.lot_traceability
+nu schimbă JSON contract
+nu schimbă UI / DOCX messaging
+nu schimbă verdict / status logic
+nu schimbă Data Quality
+nu oferă complete PRE_LOT support
+```
+
+Etapa următoare rămâne doar planificată:
+
+```text
+PRE_LOT-CLASSIFICATION-01 = PLANNED_NOT_STARTED
+```
