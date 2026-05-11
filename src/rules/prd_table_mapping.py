@@ -173,8 +173,11 @@ def build_prd_component_rows(records: list[Any], nomenclator: dict[str, str], ca
         if detected_category != category:
             continue
         key = (code, lot, name, unit)
-        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record})
+        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "orders": set(), "record": record})
         bucket["quantity"] += quantity
+        order = value_by_alias(values, "numar_comanda", "Numar Comanda")
+        if order:
+            bucket["orders"].add(order)
     rows = []
     for (code, lot, name, unit), bucket in sorted(buckets.items()):
         record = bucket["record"]
