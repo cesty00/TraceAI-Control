@@ -681,7 +681,7 @@ changing source_directory / code / lot invalidates the cached preflight used by 
 Diagnostic ZIP remains outside this gate
 operator guidance for OK says the operator can continue normally toward preview / DOCX
 operator guidance for WARNING says the operator continues with attention, reviews observations, and may keep Diagnostic ZIP evidence
-operator guidance for BLOCKER says the operator stops, corrects sources or escaladează, and Diagnostic ZIP is recommended for investigation
+operator guidance for BLOCKER says the operator stops, corrects sursele sau escaladează, and Diagnostic ZIP is recommended for investigation
 PREFLIGHT-UI-01C guidance is derived from the existing PreflightReport.status
 live operator click-through on DS099903883 / 105.26 confirmed WARNING guidance, WARNING dialog, DOCX generation, and Diagnostic ZIP generation
 no release claim
@@ -884,4 +884,74 @@ DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă UI.
 DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă model.
 DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă Data Quality.
 DOCX-AUDIT-USABILITY-01B_EXISTING-REGISTER-FIELDS-POLISH nu schimbă verdict.
+```
+
+## TRACEABILITY-PRD-LOT-MATCH-01A status sync
+
+```text
+micro-stage: TRACEABILITY-PRD-LOT-MATCH-01A-STATUS-SYNC
+status: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+scope: documentation sync only
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #152 was merged into `main`;
+- record merge commit `6e34005c3f50ec86e77bbd888e71204fa9b93634`;
+- record validated PR head before merge `11251de29fffcfc235703e492cf4e292c4d0c012`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `25698287360`;
+- record official artifact `TraceAI-Diagnostics / 6930413961`;
+- record that `pytest-output.txt` shows `238 passed in 3.33s`;
+- record that `reference_comparison.md = PASS`;
+- record that `reference_comparison.json = PASS`;
+- record that `real_audit_checklist_report.docx` was generated;
+- record that `real_audit_checklist_ui.json` was generated and is valid JSON;
+- record that the audit checklist result remains `PASS_WITH_OBSERVATIONS`.
+
+Recorded evidence for this sync:
+
+```text
+PR #152: merged on main
+merge commit: 6e34005c3f50ec86e77bbd888e71204fa9b93634
+validated PR head before merge: 11251de29fffcfc235703e492cf4e292c4d0c012
+TraceAI Diagnostics: 25698287360
+branch: main
+head sha: 6e34005c3f50ec86e77bbd888e71204fa9b93634
+Tests and diagnostic report: completed / success
+Smoke pytest: completed / skipped
+artifact TraceAI-Diagnostics / 6930413961: generated and inspected
+pytest-output.txt: 238 passed in 3.33s
+reference_comparison.md: PASS
+reference_comparison.json: PASS
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated and valid JSON
+audit checklist result: PASS_WITH_OBSERVATIONS
+scope: narrow repeated-identical PRE_LOT patch validated on main
+```
+
+Boundary retained for this sync:
+
+```text
+TRACEABILITY-PRD-LOT-MATCH-01A nu este DONE.
+TRACEABILITY-PRD-LOT-MATCH-01A nu este release.
+TRACEABILITY-PRD-LOT-MATCH-01A nu este production-ready.
+TRACEABILITY-PRD-LOT-MATCH-01A nu este daily-use.
+TRACEABILITY-PRD-LOT-MATCH-01A validează doar patch-ul narrow pentru repeated_identical PRE_LOT.
+TRACEABILITY-PRD-LOT-MATCH-01A nu implementează multi_lot_different support.
+TRACEABILITY-PRD-LOT-MATCH-01A nu implementează unclear PRE_LOT support.
+TRACEABILITY-PRD-LOT-MATCH-01A nu implementează WMS per-lot reconciliation.
+TRACEABILITY-PRD-LOT-MATCH-01A nu implementează report.lot_traceability.
+TRACEABILITY-PRD-LOT-MATCH-01A nu schimbă JSON contract.
+TRACEABILITY-PRD-LOT-MATCH-01A nu schimbă UI / DOCX messaging.
+TRACEABILITY-PRD-LOT-MATCH-01A nu schimbă verdict / status logic.
+TRACEABILITY-PRD-LOT-MATCH-01A nu schimbă Data Quality.
+TRACEABILITY-PRD-LOT-MATCH-01A nu oferă complete PRE_LOT support.
+```
+
+Next planned stage retained after this sync:
+
+```text
+PRE_LOT-CLASSIFICATION-01 = PLANNED_NOT_STARTED
 ```
