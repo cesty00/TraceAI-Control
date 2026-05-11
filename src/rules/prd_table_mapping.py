@@ -85,7 +85,7 @@ def matching_prd_rows(result: Any) -> list[SourceRow]:
             merged.update(original_values)
             if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != code:
                 continue
-            if normalize_match_value(value_by_alias(merged, "pre_lot", "PRE_LOT")) != lot:
+            if not pre_lot_matches_input(value_by_alias(merged, "pre_lot", "PRE_LOT"), lot):
                 continue
             rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values))
     return rows
@@ -173,11 +173,8 @@ def build_prd_component_rows(records: list[Any], nomenclator: dict[str, str], ca
         if detected_category != category:
             continue
         key = (code, lot, name, unit)
-        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "orders": set(), "record": record})
+        bucket = buckets.setdefault(key, {"quantity": Decimal("0"), "record": record})
         bucket["quantity"] += quantity
-        order = value_by_alias(values, "numar_comanda", "Numar Comanda")
-        if order:
-            bucket["orders"].add(order)
     rows = []
     for (code, lot, name, unit), bucket in sorted(buckets.items()):
         record = bucket["record"]
@@ -339,6 +336,21 @@ def value_by_alias(values: dict[str, str], *aliases: str) -> str:
         if normalize_key(key) in normalized_aliases:
             return str(value).strip()
     return ""
+
+
+def pre_lot_matches_input(pre_lot_value: object, input_lot: object) -> bool:
+    normalized_input = normalize_match_value(input_lot)
+    normalized_pre_lot = normalize_match_value(pre_lot_value)
+    if not normalized_input or not normalized_pre_lot:
+        return False
+    if normalized_pre_lot == normalized_input:
+        return True
+    tokens = split_normalized_lot_tokens(pre_lot_value)
+    return bool(tokens) and all(token == normalized_input for token in tokens)
+
+
+def split_normalized_lot_tokens(value: object) -> list[str]:
+    return [token for token in re.split(r"\s*[,;]\s*", normalize_match_value(value)) if token]
 
 
 def normalize_match_value(value: object) -> str:
