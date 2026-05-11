@@ -124,6 +124,12 @@ class ChecklistDocumentRegisterLine:
     related_order: str
     why_needed: str
     status: str
+    document_number: str = MISSING
+    document_date: str = MISSING
+    receipt_date: str = MISSING
+    supplier: str = MISSING
+    client: str = MISSING
+    delivery_date: str = MISSING
 
 
 @dataclass(frozen=True)
@@ -171,7 +177,22 @@ def build_audit_checklist_report(report: AuditTraceabilityReport) -> AuditCheckl
         for flow in report.source_lot_flows
     ]
     document_register = [
-        ChecklistDocumentRegisterLine(document.document_area, document.document_type, document.document_reference, document.related_code, document.related_lot, document.related_order, document.why_needed, document.status)
+        ChecklistDocumentRegisterLine(
+            area=document.document_area,
+            document_type=document.document_type,
+            document_reference=document.document_reference,
+            related_code=document.related_code,
+            related_lot=document.related_lot,
+            related_order=document.related_order,
+            why_needed=document.why_needed,
+            status=document.status,
+            document_number=document.document_number,
+            document_date=document.document_date,
+            receipt_date=document.receipt_date,
+            supplier=document.supplier,
+            client=document.client,
+            delivery_date=document.delivery_date,
+        )
         for document in report.physical_documents
     ]
     exercise = ChecklistExercise(report.exercise.code, report.exercise.lot, report.exercise.product_name, report.exercise.case_type, report.exercise.traceability_result, report.exercise.data_sources, balance.observation)
