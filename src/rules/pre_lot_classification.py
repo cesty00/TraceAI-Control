@@ -8,6 +8,7 @@ PRE_LOT_SINGULAR = "singular"
 PRE_LOT_REPEATED_IDENTICAL = "repeated_identical"
 PRE_LOT_MULTI_LOT_DIFFERENT = "multi_lot_different"
 PRE_LOT_UNCLEAR = "unclear"
+PRE_LOT_QUANTITY_SUFFIX_RE = re.compile(r"\s*\(\s*cant\s*:\s*[^)]*\)\s*$")
 
 
 @dataclass(frozen=True)
@@ -18,13 +19,14 @@ class PreLotClassification:
 
 
 def classify_pre_lot(value: object) -> PreLotClassification:
-    normalized_value = normalize_match_value(value)
-    if not normalized_value:
+    if not normalize_match_value(value):
         return PreLotClassification(PRE_LOT_UNCLEAR, "", ())
 
     tokens = split_normalized_lot_tokens(value)
     if not tokens:
-        return PreLotClassification(PRE_LOT_UNCLEAR, normalized_value, ())
+        return PreLotClassification(PRE_LOT_UNCLEAR, "", ())
+
+    normalized_value = ", ".join(tokens)
 
     if len(tokens) == 1:
         return PreLotClassification(PRE_LOT_SINGULAR, normalized_value, tokens)
@@ -59,4 +61,6 @@ def split_normalized_lot_tokens(value: object) -> tuple[str, ...]:
 
 
 def normalize_match_value(value: object) -> str:
-    return " ".join(str(value).strip().casefold().split())
+    normalized = " ".join(str(value).strip().casefold().split())
+    without_quantity = PRE_LOT_QUANTITY_SUFFIX_RE.sub("", normalized).strip()
+    return " ".join(without_quantity.split())
