@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from src.rules.pre_lot_classification import pre_lot_matches_input as shared_pre_lot_matches_input
+
 ALISOL_AUXILIARY_OBSERVATION = "ALISOL este tratat ca auxiliar / gaz tehnologic, nu ca materie primă alimentară."
 RAW_MATERIAL_ROLE = "materie primă alimentară"
 MISSING = "FARA DATE IDENTIFICATE"
@@ -342,18 +344,7 @@ def value_by_alias(values: dict[str, str], *aliases: str) -> str:
 
 
 def pre_lot_matches_input(pre_lot_value: object, input_lot: object) -> bool:
-    normalized_input = normalize_match_value(input_lot)
-    normalized_pre_lot = normalize_match_value(pre_lot_value)
-    if not normalized_input or not normalized_pre_lot:
-        return False
-    if normalized_pre_lot == normalized_input:
-        return True
-    tokens = split_normalized_lot_tokens(pre_lot_value)
-    return bool(tokens) and all(token == normalized_input for token in tokens)
-
-
-def split_normalized_lot_tokens(value: object) -> list[str]:
-    return [token for token in re.split(r"\s*[,;]\s*", normalize_match_value(value)) if token]
+    return shared_pre_lot_matches_input(pre_lot_value, input_lot)
 
 
 def normalize_match_value(value: object) -> str:

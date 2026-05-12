@@ -4,6 +4,13 @@ from dataclasses import dataclass, field
 import unittest
 
 from src.rules.order_traceability_mapping import matching_prd_rows as order_matching_prd_rows
+from src.rules.pre_lot_classification import (
+    PRE_LOT_MULTI_LOT_DIFFERENT,
+    PRE_LOT_REPEATED_IDENTICAL,
+    PRE_LOT_SINGULAR,
+    PRE_LOT_UNCLEAR,
+    classify_pre_lot,
+)
 from src.rules.prd_table_mapping import (
     build_prd_component_rows,
     build_source_specific_rows,
@@ -72,19 +79,84 @@ def make_result(code: str, lot: str, rows: list[FakeRow]) -> FakeResult:
     return FakeResult(FakeCore(dataset, FakeSelection(code, lot)))
 
 
+class PreLotClassificationTests(unittest.TestCase):
+    def test_singular_classified_correctly(self) -> None:
+        classification = classify_pre_lot("092.26")
+        self.assertEqual(classification.kind, PRE_LOT_SINGULAR)
+        self.assertEqual(classification.tokens, ("092.26",))
+
+    def test_repeated_identical_classified_correctly(self) -> None:
+        classification = classify_pre_lot("092.26, 092.26, 092.26")
+        self.assertEqual(classification.kind, PRE_LOT_REPEATED_IDENTICAL)
+        self.assertEqual(classification.tokens, ("092.26", "092.26", "092.26"))
+
+    def test_multi_lot_different_classified_correctly(self) -> None:
+        classification = classify_pre_lot("092.26, 093.26")
+        self.assertEqual(classification.kind, PRE_LOT_MULTI_LOT_DIFFERENT)
+
+    def test_blank_classified_unclear(self) -> None:
+        self.assertEqual(classify_pre_lot("   ").kind, PRE_LOT_UNCLEAR)
+
+    def test_malformed_no_useful_token_classified_unclear(self) -> None:
+        self.assertEqual(classify_pre_lot("092.26, ,092.26").kind, PRE_LOT_UNCLEAR)
+        self.assertEqual(classify_pre_lot(";;;").kind, PRE_LOT_UNCLEAR)
+
+    def test_comma_separator_supported(self) -> None:
+        self.assertEqual(classify_pre_lot("092.26,092.26").kind, PRE_LOT_REPEATED_IDENTICAL)
+
+    def test_semicolon_separator_supported(self) -> None:
+        self.assertEqual(classify_pre_lot("092.26; 092.26").kind, PRE_LOT_REPEATED_IDENTICAL)
+
+    def test_whitespace_normalization(self) -> None:
+        classification = classify_pre_lot("  092.26 ;   092.26  ")
+        self.assertEqual(classification.kind, PRE_LOT_REPEATED_IDENTICAL)
+        self.assertEqual(classification.tokens, ("092.26", "092.26"))
+
+    def test_quantity_suffix_singular_classified_correctly(self) -> None:
+        classification = classify_pre_lot("061.26 (Cant: 240)")
+        self.assertEqual(classification.kind, PRE_LOT_SINGULAR)
+        self.assertEqual(classification.tokens, ("061.26",))
+
+    def test_quantity_suffix_repeated_identical_classified_correctly(self) -> None:
+        classification = classify_pre_lot("090.26 (Cant: 731), 090.26 (Cant: 2425)")
+        self.assertEqual(classification.kind, PRE_LOT_REPEATED_IDENTICAL)
+        self.assertEqual(classification.tokens, ("090.26", "090.26"))
+
+    def test_quantity_suffix_multi_lot_different_classified_correctly(self) -> None:
+        classification = classify_pre_lot("129.26F1 (Cant: 262), 129.26F2 (Cant: 268)")
+        self.assertEqual(classification.kind, PRE_LOT_MULTI_LOT_DIFFERENT)
+        self.assertEqual(classification.tokens, ("129.26f1", "129.26f2"))
+
+
 class RepeatedPreLotMatchTests(unittest.TestCase):
-    def test_pre_lot_singular_continues_to_match(self) -> None:
+    def test_pre_lot_matches_input_accepts_singular(self) -> None:
         self.assertTrue(pre_lot_matches_input("092.26", "092.26"))
 
-    def test_pre_lot_repeated_identical_matches(self) -> None:
+    def test_pre_lot_matches_input_accepts_repeated_identical(self) -> None:
         self.assertTrue(pre_lot_matches_input("092.26, 092.26, 092.26", "092.26"))
 
-    def test_pre_lot_multiple_different_values_do_not_match(self) -> None:
+    def test_pre_lot_matches_input_rejects_multi_lot_different(self) -> None:
         self.assertFalse(pre_lot_matches_input("092.26, 093.26", "092.26"))
+
+    def test_pre_lot_matches_input_rejects_unclear(self) -> None:
+        self.assertFalse(pre_lot_matches_input("092.26, ,092.26", "092.26"))
+        self.assertFalse(pre_lot_matches_input("", "092.26"))
 
     def test_pre_lot_free_substring_matching_is_not_allowed(self) -> None:
         self.assertFalse(pre_lot_matches_input("X092.26", "092.26"))
         self.assertFalse(pre_lot_matches_input("129.26F14, 129.26F13", "129.26"))
+
+    def test_quantity_suffix_matches_singular_input(self) -> None:
+        self.assertTrue(pre_lot_matches_input("061.26 (Cant: 240)", "061.26"))
+
+    def test_quantity_suffix_matches_repeated_identical_input(self) -> None:
+        self.assertTrue(pre_lot_matches_input("090.26 (Cant: 731), 090.26 (Cant: 2425)", "090.26"))
+
+    def test_quantity_suffix_multi_lot_is_rejected_as_match(self) -> None:
+        self.assertFalse(pre_lot_matches_input("129.26F1 (Cant: 262), 129.26F2 (Cant: 268)", "129.26F1"))
+
+    def test_quantity_suffix_substring_matching_remains_rejected(self) -> None:
+        self.assertFalse(pre_lot_matches_input("061.26X (Cant: 240)", "061.26"))
 
     def test_product_code_remains_exactly_required(self) -> None:
         result = make_result("DS099904181", "092.26", [make_production_row("DS099904182", "092.26")])
@@ -95,6 +167,16 @@ class RepeatedPreLotMatchTests(unittest.TestCase):
         result = make_result("DS099904181", "092.26", [make_production_row("DS099904181", "092.26, 092.26, 092.26")])
         self.assertEqual(len(matching_prd_rows(result)), 1)
         self.assertEqual(len(order_matching_prd_rows(result.core.normalized_dataset, "DS099904181", "092.26")), 1)
+
+    def test_repeated_identical_quantity_suffix_matches_prd_rows(self) -> None:
+        result = make_result("DS099904181", "090.26", [make_production_row("DS099904181", "090.26 (Cant: 731), 090.26 (Cant: 2425)")])
+        self.assertEqual(len(matching_prd_rows(result)), 1)
+        self.assertEqual(len(order_matching_prd_rows(result.core.normalized_dataset, "DS099904181", "090.26")), 1)
+
+    def test_multi_lot_quantity_suffix_is_rejected_in_prd_matching(self) -> None:
+        result = make_result("DS099904181", "129.26F1", [make_production_row("DS099904181", "129.26F1 (Cant: 262), 129.26F2 (Cant: 268)")])
+        self.assertEqual(matching_prd_rows(result), [])
+        self.assertEqual(order_matching_prd_rows(result.core.normalized_dataset, "DS099904181", "129.26F1"), [])
 
     def test_component_classification_is_unchanged_and_packaging_only_appears_after_prd_match(self) -> None:
         matching_result = make_result("DS099904181", "092.26", [make_production_row("DS099904181", "092.26, 092.26")])
