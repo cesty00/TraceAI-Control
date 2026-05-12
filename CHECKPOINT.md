@@ -450,7 +450,7 @@ Purpose:
 - record that `PREFLIGHT-UI-01B` was integrated and validated;
 - record that `PREFLIGHT-UI-01C` was integrated and validated;
 - record that `PREFLIGHT-UI-01` is functionally closed in a limited way, with observations;
-- keep explicit that this is not `DONE`, not release, not production-ready, not daily-use, and not hardening complete.
+- keep explicit that this is not `DONE`, not release, not production-ready, and not daily-use, and not hardening complete.
 
 Evidence recorded for PREFLIGHT-UI-01B:
 
@@ -954,4 +954,102 @@ Next planned stage retained after this sync:
 
 ```text
 PRE_LOT-CLASSIFICATION-01 = PLANNED_NOT_STARTED
+```
+
+## PRE_LOT-CLASSIFICATION-01 status sync
+
+```text
+micro-stage: PRE_LOT-CLASSIFICATION-01-STATUS-SYNC
+status: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+scope: documentation sync only
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #154 was merged into `main`;
+- record merge commit `a5462519394133d79611ddc1d2cd8ac74a4d0301`;
+- record validated PR head before merge `cb291c93cb1987103f8bad38b947249c9acfcf0e`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `25726766859`;
+- record official artifact `TraceAI-Diagnostics / 6941072633`;
+- record that `pytest-output.txt` shows `256 passed in 3.41s`;
+- record that `reference_comparison.md = PASS`;
+- record that `reference_comparison.json = PASS`;
+- record that `real_audit_checklist_report.docx` was generated;
+- record that `real_audit_checklist_ui.json` was generated and is valid JSON;
+- record that diagnostic summary confirms commit `a5462519394133d79611ddc1d2cd8ac74a4d0301`;
+- record the prudent verdict `PASS_WITH_OBSERVATIONS`.
+
+Recorded evidence for this sync:
+
+```text
+PR #154: merged on main
+merge commit: a5462519394133d79611ddc1d2cd8ac74a4d0301
+validated PR head before merge: cb291c93cb1987103f8bad38b947249c9acfcf0e
+TraceAI Diagnostics: 25726766859
+artifact TraceAI-Diagnostics / 6941072633
+branch: main
+head sha: a5462519394133d79611ddc1d2cd8ac74a4d0301
+Tests and diagnostic report: success
+Smoke pytest: skipped
+pytest-output.txt: 256 passed in 3.41s
+reference_comparison.md: PASS
+reference_comparison.json: PASS
+real_audit_checklist_report.docx: generated
+real_audit_checklist_ui.json: generated and valid JSON
+diagnostic summary commit confirmation: a5462519394133d79611ddc1d2cd8ac74a4d0301
+verdict prudent: PASS_WITH_OBSERVATIONS
+scope: internal PRE_LOT classification and defensive suffix normalization validated on main
+```
+
+Validated boundary for this sync:
+
+```text
+Această etapă validează doar clasificarea internă PRE_LOT și normalizarea defensivă a suffix-ului (Cant: ...) pentru matching/clasificare.
+Clase interne introduse: singular / repeated_identical / multi_lot_different / unclear.
+singular match: păstrat.
+repeated_identical match: păstrat.
+multi_lot_different: detectat, dar neacceptat ca match.
+unclear: detectat, dar neacceptat ca match.
+suffix-ul (Cant: ...) este ignorat doar pentru clasificare/matching.
+cantitatea din suffix nu este salvată, expusă sau folosită.
+```
+
+Out of scope retained explicitly:
+
+```text
+PRE_LOT-CLASSIFICATION-01 nu implementează multi_lot_different support.
+PRE_LOT-CLASSIFICATION-01 nu implementează WMS per-lot reconciliation.
+PRE_LOT-CLASSIFICATION-01 nu implementează quantity split per lot.
+PRE_LOT-CLASSIFICATION-01 nu implementează report.lot_traceability.
+PRE_LOT-CLASSIFICATION-01 nu schimbă JSON contract.
+PRE_LOT-CLASSIFICATION-01 nu schimbă UI / DOCX messaging.
+PRE_LOT-CLASSIFICATION-01 nu schimbă verdict / status logic.
+PRE_LOT-CLASSIFICATION-01 nu schimbă Data Quality.
+PRE_LOT-CLASSIFICATION-01 nu oferă complete PRE_LOT support.
+PRE_LOT-CLASSIFICATION-01 nu este release.
+PRE_LOT-CLASSIFICATION-01 nu este production-ready.
+PRE_LOT-CLASSIFICATION-01 nu este daily-use.
+```
+
+Boundary retained for this sync:
+
+```text
+PRE_LOT-CLASSIFICATION-01 nu este DONE.
+PRE_LOT-CLASSIFICATION-01 nu este release.
+PRE_LOT-CLASSIFICATION-01 nu este production-ready.
+PRE_LOT-CLASSIFICATION-01 nu este daily-use.
+PRE_LOT-CLASSIFICATION-01-STATUS-SYNC nu schimbă cod.
+PRE_LOT-CLASSIFICATION-01-STATUS-SYNC nu schimbă teste.
+PRE_LOT-CLASSIFICATION-01-STATUS-SYNC nu schimbă workflow-uri.
+PRE_LOT-CLASSIFICATION-01-STATUS-SYNC nu schimbă UI / DOCX / JSON / verdict / Data Quality / WMS.
+```
+
+Superseding note for planning state:
+
+```text
+Orice mențiune anterioară din documentație care lăsa PRE_LOT-CLASSIFICATION-01 ca PLANNED_NOT_STARTED este înlocuită de acest sync.
+Statusul consemnat corect pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS.
+Etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 = PLANNED_NOT_STARTED.
 ```

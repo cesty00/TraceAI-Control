@@ -933,3 +933,80 @@ Etapa următoare rămâne doar planificată:
 ```text
 PRE_LOT-CLASSIFICATION-01 = PLANNED_NOT_STARTED
 ```
+
+## PRE_LOT-CLASSIFICATION-01 status
+
+`PRE_LOT-CLASSIFICATION-01` este consemnat în acest sync strict ca validare oficială pe `main`, cu `PASS_WITH_OBSERVATIONS`, pentru clasificarea internă `PRE_LOT` și normalizarea defensivă a suffix-ului `(Cant: ...)` folosită exclusiv în matching și clasificare.
+
+Starea consemnată pentru acest sync este:
+
+```text
+status recomandat: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+PR #154 merged on main
+merge commit: a5462519394133d79611ddc1d2cd8ac74a4d0301
+validated PR head before merge: cb291c93cb1987103f8bad38b947249c9acfcf0e
+TraceAI Diagnostics run: 25726766859
+artifact: TraceAI-Diagnostics / 6941072633
+branch: main
+head sha: a5462519394133d79611ddc1d2cd8ac74a4d0301
+Tests and diagnostic report = success
+Smoke pytest = skipped
+pytest-output.txt = 256 passed in 3.41s
+reference_comparison.md = PASS
+reference_comparison.json = PASS
+real_audit_checklist_report.docx generated
+real_audit_checklist_ui.json generated and valid JSON
+diagnostic summary confirms commit a5462519394133d79611ddc1d2cd8ac74a4d0301
+verdict prudent: PASS_WITH_OBSERVATIONS
+```
+
+Boundary validat explicit pentru această consemnare:
+
+```text
+această etapă validează doar clasificarea internă PRE_LOT și normalizarea defensivă a suffix-ului (Cant: ...) pentru matching/clasificare
+PR #154 introduce clase interne: singular / repeated_identical / multi_lot_different / unclear
+singular match este păstrat
+repeated_identical match este păstrat
+multi_lot_different este detectat, dar nu este acceptat ca match
+unclear este detectat, dar nu este acceptat ca match
+suffix-ul (Cant: ...) este ignorat doar pentru clasificare/matching
+cantitatea din suffix nu este salvată, expusă sau folosită
+```
+
+Această consemnare nu afirmă și nu implementează:
+
+```text
+multi_lot_different support
+WMS per-lot reconciliation
+quantity split per lot
+report.lot_traceability
+JSON contract changes
+UI/DOCX messaging
+verdict/status logic changes
+Data Quality changes
+complete PRE_LOT support
+release
+production-ready
+daily-use
+```
+
+Boundary de documentare pentru acest sync:
+
+```text
+nu este DONE
+nu este release
+nu este production-ready
+nu este daily-use
+nu schimbă cod
+nu schimbă teste
+nu schimbă workflow-uri
+nu schimbă UI / DOCX / JSON / verdict / Data Quality / WMS
+```
+
+Notă de supersedare pentru planificare:
+
+```text
+orice mențiune anterioară care lăsa PRE_LOT-CLASSIFICATION-01 la PLANNED_NOT_STARTED este înlocuită de acest sync
+statusul corect consemnat pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 = PLANNED_NOT_STARTED
+```
