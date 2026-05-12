@@ -1048,8 +1048,88 @@ PRE_LOT-CLASSIFICATION-01-STATUS-SYNC nu schimbă UI / DOCX / JSON / verdict / D
 
 Superseding note for planning state:
 
+- Orice mențiune anterioară din documentație care lăsa PRE_LOT-CLASSIFICATION-01 ca PLANNED_NOT_STARTED este înlocuită de acest sync.
+- Statusul consemnat corect pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS.
+- Etapa generică PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 nu mai trebuie tratată ca simplu PLANNED_NOT_STARTED fără sub-etapă explicită.
+- Etapa validată acum este PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A = VALIDATED_ON_MAIN_WITH_OBSERVATIONS.
+- Etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01B = PLANNED_NOT_STARTED.
+
+## PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A status sync
+
 ```text
-Orice mențiune anterioară din documentație care lăsa PRE_LOT-CLASSIFICATION-01 ca PLANNED_NOT_STARTED este înlocuită de acest sync.
-Statusul consemnat corect pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS.
-Etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 = PLANNED_NOT_STARTED.
+micro-stage: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A-STATUS-SYNC
+status: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+scope: documentation sync only
+product-stage claim: none
+release claim: none
+```
+
+Purpose for this sync:
+
+- record that PR #156 was merged into `main`;
+- record merge commit `9a846059cd8f3f2e187a6900371d8423866cf4b0`;
+- record official post-merge validation on `main` through TraceAI Diagnostics run `25740123511`;
+- record official artifact `TraceAI-Diagnostics / 6946653348`;
+- record digest `sha256:f2dd0db87ea9cfcfd7ba15a982e2d169ee44353ad4e15d2113b01642fc8aa5a3`;
+- record that `pytest-output.txt = 266 passed in 2.64s`;
+- record that `reference_comparison.md = PASS`;
+- record that `reference_comparison.json = PASS`;
+- record that `real_audit_checklist_report.docx` was present/generated;
+- record that `real_audit_checklist_ui.json` was present/generated and valid JSON;
+- record the prudent audit checklist result `PASS_WITH_OBSERVATIONS`;
+- record that Data Quality remains `WARNING`, with `8 warnings / 8 issues / 0 errors / 4 of 4 sources found`.
+
+Recorded evidence for this sync:
+
+```text
+PR #156: merged on main
+merge commit: 9a846059cd8f3f2e187a6900371d8423866cf4b0
+TraceAI Diagnostics: 25740123511
+branch: main
+head sha: 9a846059cd8f3f2e187a6900371d8423866cf4b0
+Tests and diagnostic report: completed / success
+Smoke pytest: completed / skipped
+artifact TraceAI-Diagnostics / 6946653348: generated and inspected
+digest: sha256:f2dd0db87ea9cfcfd7ba15a982e2d169ee44353ad4e15d2113b01642fc8aa5a3
+pytest-output.txt: 266 passed in 2.64s
+reference_comparison.md: PASS
+reference_comparison.json: PASS
+real_audit_checklist_report.docx: present/generated
+real_audit_checklist_ui.json: present/generated and valid JSON
+audit checklist result: PASS_WITH_OBSERVATIONS
+Data Quality: WARNING
+warnings / issues / errors / sources found: 8 / 8 / 0 / 4 of 4
+scope: internal engine/rules primitives for future PRE_LOT multi-lot PRD/WMS split validated on main
+```
+
+Validated boundary for this sync:
+
+```text
+PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A = VALIDATED_ON_MAIN_WITH_OBSERVATIONS.
+Această etapă validează doar primitive interne engine/rules pentru viitorul split PRD/WMS.
+Validează exact-token detection pentru `multi_lot_different`.
+Validează internal PRD candidate extraction când lotul auditat apare ca token exact în `PRE_LOT`.
+Validează WMS finished-good confirmation primitive prin exact `code + lot`.
+Validează doar statusurile interne conservative `confirmed` / `needs_review`.
+Nu validează public `multi_lot_different` support.
+Nu validează complete PRE_LOT support.
+Nu validează WMS reconciliation complet.
+Nu validează quantity split per lot.
+Nu validează public wiring.
+Nu validează JSON contract.
+Nu validează UI / DOCX messaging.
+Nu validează verdict / status logic.
+Nu validează Data Quality rules.
+Nu validează `report.lot_traceability`.
+Nu pornește `01B`.
+Nu este DONE.
+Nu este release.
+Nu este production-ready.
+Nu este daily-use.
+```
+
+Next planned stage retained after this sync:
+
+```text
+PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01B = PLANNED_NOT_STARTED
 ```
