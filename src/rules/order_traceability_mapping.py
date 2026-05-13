@@ -169,6 +169,8 @@ def build_payload(
 
 def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list[SourceRow]:
     rows: list[SourceRow] = []
+    normalized_code = normalize_match_value(product_code)
+    normalized_lot = normalize_match_value(product_lot)
     for table in getattr(dataset, "tables", []):
         if table.source_key != "production":
             continue
@@ -177,12 +179,46 @@ def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list
             original_values = dict(getattr(row, "original_values", {}) or {})
             merged = dict(values)
             merged.update(original_values)
-            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != normalize_match_value(product_code):
+            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != normalized_code:
                 continue
             if not pre_lot_matches_input(value_by_alias(merged, "pre_lot", "PRE_LOT"), product_lot):
                 continue
             rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values, dict(getattr(row, "code_lot_hints", {}) or {})))
-    return rows
+    if rows:
+        return rows
+
+    from src.rules.pre_lot_multi_lot_prd_wms_split import (
+        _confirmed_multi_lot_prd_order_numbers,
+        _multi_lot_different_has_exact_token,
+    )
+
+    confirmed_orders = _confirmed_multi_lot_prd_order_numbers(dataset, product_code, product_lot)
+    confirmed_order_keys = {
+        normalize_match_value(order_number)
+        for order_number in confirmed_orders
+        if normalize_match_value(order_number)
+    }
+    if not confirmed_order_keys:
+        return []
+
+    fallback_rows: list[SourceRow] = []
+    for table in getattr(dataset, "tables", []):
+        if table.source_key != "production":
+            continue
+        for row in table.rows:
+            values = dict(row.values)
+            original_values = dict(getattr(row, "original_values", {}) or {})
+            merged = dict(values)
+            merged.update(original_values)
+            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != normalized_code:
+                continue
+            order_number = normalize_match_value(value_by_alias(merged, "numar_comanda", "Numar Comanda"))
+            if order_number not in confirmed_order_keys:
+                continue
+            if not _multi_lot_different_has_exact_token(value_by_alias(merged, "pre_lot", "PRE_LOT"), normalized_lot):
+                continue
+            fallback_rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values, dict(getattr(row, "code_lot_hints", {}) or {})))
+    return fallback_rows
 
 
 def list_source_rows(dataset: Any, source_key: str) -> list[SourceRow]:
