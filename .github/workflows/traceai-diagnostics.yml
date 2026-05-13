@@ -198,30 +198,31 @@ jobs:
             return $false
           }
 
-          function Find-PreferredRootFile($files, $searchRoots, $names) {
+          function Get-SourceRootCandidates($files, $searchRoots) {
+            $matches = @()
             foreach ($searchRoot in $searchRoots) {
-              foreach ($name in $names) {
-                $match = $files | Where-Object {
-                  $_.Name -ieq $name -and
-                  $_.FullName.StartsWith($searchRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
-                  $_.FullName -notlike "*\\diagnostics\\unzipped-sources\\*"
-                } | Sort-Object FullName | Select-Object -First 1
-                if ($match) { return $match.FullName }
+              $matches += $files | Where-Object {
+                $_.FullName.StartsWith($searchRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
+                $_.FullName -notlike "*\\diagnostics\\unzipped-sources\\*"
               }
             }
-            return ""
+            return $matches | Sort-Object FullName -Unique
+          }
+
+          function Get-UnzippedSourceCandidates($files) {
+            return $files | Where-Object { $_.FullName -like "*\\diagnostics\\unzipped-sources\\*" } | Sort-Object FullName -Unique
+          }
+
+          function Find-PreferredRootFile($files, $searchRoots, $names) {
+            $rootCandidates = Get-SourceRootCandidates $files $searchRoots
+            return Find-FirstFile $rootCandidates $names
           }
 
           function Find-PatternMatches($files, $searchRoots, $patterns) {
+            $rootCandidates = Get-SourceRootCandidates $files $searchRoots
             $matches = @()
-            foreach ($searchRoot in $searchRoots) {
-              foreach ($pattern in $patterns) {
-                $matches += $files | Where-Object {
-                  $_.Name -like $pattern -and
-                  $_.FullName.StartsWith($searchRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
-                  $_.FullName -notlike "*\\diagnostics\\unzipped-sources\\*"
-                }
-              }
+            foreach ($pattern in $patterns) {
+              $matches += $rootCandidates | Where-Object { $_.Name -like $pattern }
             }
             return $matches | Sort-Object FullName -Unique
           }
@@ -269,14 +270,21 @@ jobs:
           $foundFiles = $foundFiles | Sort-Object FullName -Unique
           $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found-after-unzip.txt -Encoding UTF8
 
+          $unzippedSourceFiles = Get-UnzippedSourceCandidates $foundFiles
+
           $wms = Find-PreferredRootFile $foundFiles $searchRoots @("trasabilitate_wms.csv")
           $wmsFallbackSelected = $false
           if (-not $wms) {
-            $wms = Find-FirstFile ($foundFiles | Where-Object { $_.FullName -like "*\\diagnostics\\unzipped-sources\\*" }) @("trasabilitate_wms.csv")
+            $wms = Find-FirstFile $unzippedSourceFiles @("trasabilitate_wms.csv")
             $wmsFallbackSelected = [bool]$wms
           }
 
-          $prd = Find-FirstFile $foundFiles @("rapoarte productie.csv", "raport productie nou.CSV", "raport_productie.csv", "rapoarte_productie.csv")
+          $prd = Find-PreferredRootFile $foundFiles $searchRoots @("rapoarte productie.csv", "raport productie nou.CSV", "raport_productie.csv", "rapoarte_productie.csv")
+          $prdFallbackSelected = $false
+          if (-not $prd) {
+            $prd = Find-FirstFile $unzippedSourceFiles @("rapoarte productie.csv", "raport productie nou.CSV", "raport_productie.csv", "rapoarte_productie.csv")
+            $prdFallbackSelected = [bool]$prd
+          }
 
           $nomenclator = Find-PreferredRootFile $foundFiles $searchRoots @("nomenclator.xlsx", "nomenclator1.xlsx")
           $nomenclatorSelectionNote = ""
@@ -292,7 +300,12 @@ jobs:
             }
           }
 
-          $stock = Find-FirstFile $foundFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
+          $stock = Find-PreferredRootFile $foundFiles $searchRoots @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
+          $stockFallbackSelected = $false
+          if (-not $stock) {
+            $stock = Find-FirstFile $unzippedSourceFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
+            $stockFallbackSelected = [bool]$stock
+          }
 
           $normalized = ""
           $sourceInfo = @()
@@ -309,21 +322,36 @@ jobs:
               $sourceInfo += "WMS fallback selected from ZIP extraction because no top-level/source-root CSV was found."
             }
             $sourceInfo += "PRD: $prd"
+            if ($prdFallbackSelected) {
+              $sourceInfo += "PRD fallback selected from ZIP extraction because no top-level/source-root CSV was found."
+            }
             $sourceInfo += "Nomenclator: $nomenclator"
             if ($nomenclatorSelectionNote) {
               $sourceInfo += $nomenclatorSelectionNote
             }
             $sourceInfo += "Stock: $stock"
+            if ($stockFallbackSelected) {
+              $sourceInfo += "Stock fallback selected from ZIP extraction because no top-level/source-root XLSX was found."
+            }
             $sourceInfo += "Normalized source directory: $normalized"
           } else {
             $sourceInfo += "No complete source set found after recursive search and ZIP extraction."
             $sourceInfo += "WMS: $wms"
+            if ($wmsFallbackSelected) {
+              $sourceInfo += "WMS fallback selected from ZIP extraction because no top-level/source-root CSV was found."
+            }
             $sourceInfo += "PRD: $prd"
+            if ($prdFallbackSelected) {
+              $sourceInfo += "PRD fallback selected from ZIP extraction because no top-level/source-root CSV was found."
+            }
             $sourceInfo += "Nomenclator: $nomenclator"
             if ($nomenclatorSelectionNote) {
               $sourceInfo += $nomenclatorSelectionNote
             }
             $sourceInfo += "Stock: $stock"
+            if ($stockFallbackSelected) {
+              $sourceInfo += "Stock fallback selected from ZIP extraction because no top-level/source-root XLSX was found."
+            }
           }
           $sourceInfo | Set-Content -Path diagnostics\source-directory.txt -Encoding UTF8
           "selected=$normalized" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
