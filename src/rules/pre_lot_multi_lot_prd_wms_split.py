@@ -62,6 +62,13 @@ class WmsFinishedGoodConfirmation:
     confirmations: tuple[WmsQuantityConfirmation, ...]
 
 
+@dataclass(frozen=True)
+class InternalMultiLotPrdCandidateSelection:
+    candidate: PreLotPrdCandidate
+    wms_confirmation: WmsFinishedGoodConfirmation
+    status: str
+
+
 def _multi_lot_different_has_exact_token(pre_lot_value: object, audited_lot: object) -> bool:
     normalized_audited_lot = normalize_match_value(audited_lot)
     if not normalized_audited_lot:
@@ -204,3 +211,38 @@ def _confirm_finished_good_wms_quantity(dataset: Any, product_code: object, audi
         has_exact_confirmation=has_exact_confirmation,
         confirmations=confirmation_rows,
     )
+
+
+def _select_internal_multi_lot_prd_candidates(dataset: Any, product_code: object, audited_lot: object) -> tuple[InternalMultiLotPrdCandidateSelection, ...]:
+    candidates = _extract_multi_lot_prd_candidates(dataset, product_code, audited_lot)
+    if not candidates:
+        return ()
+
+    confirmation = _confirm_finished_good_wms_quantity(dataset, product_code, audited_lot)
+    return tuple(
+        InternalMultiLotPrdCandidateSelection(
+            candidate=candidate,
+            wms_confirmation=confirmation,
+            status=confirmation.status,
+        )
+        for candidate in candidates
+    )
+
+
+def _confirmed_multi_lot_prd_order_numbers(dataset: Any, product_code: object, audited_lot: object) -> tuple[str, ...]:
+    selections = _select_internal_multi_lot_prd_candidates(dataset, product_code, audited_lot)
+    if not selections:
+        return ()
+
+    confirmed_order_numbers: list[str] = []
+    seen_orders: set[str] = set()
+    for selection in selections:
+        if selection.status != CONFIRMED:
+            continue
+        order_number = str(selection.candidate.order_number).strip()
+        normalized_order = normalize_match_value(order_number)
+        if not normalized_order or normalized_order in seen_orders:
+            continue
+        seen_orders.add(normalized_order)
+        confirmed_order_numbers.append(order_number)
+    return tuple(confirmed_order_numbers)
