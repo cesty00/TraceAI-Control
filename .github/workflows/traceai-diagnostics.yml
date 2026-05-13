@@ -195,6 +195,7 @@ jobs:
             "raport_productie.csv",
             "rapoarte_productie.csv",
             "nomenclator.xlsx",
+            "nomenclator1.xlsx",
             "stoc la moment original.xlsx",
             "stoc_la_moment_original.xlsx"
           )
@@ -220,7 +221,7 @@ jobs:
 
           $wms = Find-FirstFile $foundFiles @("trasabilitate_wms.csv")
           $prd = Find-FirstFile $foundFiles @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")
-          $nomenclator = Find-FirstFile $foundFiles @("nomenclator.xlsx")
+          $nomenclator = Find-FirstFile $foundFiles @("nomenclator.xlsx", "nomenclator1.xlsx")
           $stock = Find-FirstFile $foundFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
 
           $normalized = ""
