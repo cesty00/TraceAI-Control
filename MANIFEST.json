@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-05-13T10:20:25.334065Z",
+  "purpose": "PR158 targeted multi-lot diagnostic source set",
+  "target_code": "DS099904006",
+  "target_lot": "131.26C1",
+  "target_orders": [
+    "0032183_AE"
+  ],
+  "prd_rows_selected": 8,
+  "wms_rows_selected": 1129,
+  "component_pairs_selected_from_prd": [
+    {
+      "code": "10002",
+      "lot": "260506"
+    },
+    {
+      "code": "20020",
+      "lot": "12.02.26"
+    },
+    {
+      "code": "40003",
+      "lot": "31.03.26"
+    },
+    {
+      "code": "40021",
+      "lot": "260430"
+    },
+    {
+      "code": "50012",
+      "lot": "260507"
+    },
+    {
+      "code": "60001",
+      "lot": "260423"
+    },
+    {
+      "code": "ds099904468",
+      "lot": "050526-d2"
+    }
+  ],
+  "filenames_expected_by_workflow": [
+    "trasabilitate_wms.csv",
+    "rapoarte productie.csv",
+    "nomenclator.xlsx",
+    "stoc la moment original.xlsx"
+  ],
+  "notes": [
+    "raport productie nou.CSV was renamed to rapoarte productie.csv for workflow discovery.",
+    "nomenclator.xlsx and stoc la moment original.xlsx were copied unchanged because they are small enough.",
+    "trasabilitate_wms.csv was filtered to target order/code-lot/component lot rows to avoid uploading the 108MB raw WMS file."
+  ]
+}
