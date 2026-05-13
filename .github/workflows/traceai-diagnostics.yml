@@ -184,6 +184,31 @@ jobs:
             return ""
           }
 
+          function Find-PreferredWmsFile($files, $searchRoots) {
+            foreach ($searchRoot in $searchRoots) {
+              $match = $files |
+                Where-Object {
+                  $_.Name -eq "trasabilitate_wms.csv" -and
+                  $_.FullName.StartsWith($searchRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
+                  $_.FullName -notlike "*\\diagnostics\\unzipped-sources\\*"
+                } |
+                Sort-Object FullName |
+                Select-Object -First 1
+              if ($match) { return $match.FullName }
+            }
+
+            $topLevelFallback = $files |
+              Where-Object {
+                $_.Name -eq "trasabilitate_wms.csv" -and
+                $_.FullName -notlike "*\\diagnostics\\unzipped-sources\\*"
+              } |
+              Sort-Object FullName |
+              Select-Object -First 1
+            if ($topLevelFallback) { return $topLevelFallback.FullName }
+
+            return Find-FirstFile $files @("trasabilitate_wms.csv")
+          }
+
           $searchRoots = @($root)
           if ($manual -and (Test-Path $manual)) { $searchRoots = @((Resolve-Path $manual).Path) + $searchRoots }
           $searchRoots = $searchRoots | Select-Object -Unique
@@ -219,7 +244,7 @@ jobs:
           $foundFiles = $foundFiles | Sort-Object FullName -Unique
           $foundFiles | Select-Object FullName, DirectoryName, Name | Format-Table -AutoSize | Out-String | Set-Content -Path diagnostics\source-files-found-after-unzip.txt -Encoding UTF8
 
-          $wms = Find-FirstFile $foundFiles @("trasabilitate_wms.csv")
+          $wms = Find-PreferredWmsFile $foundFiles $searchRoots
           $prd = Find-FirstFile $foundFiles @("rapoarte productie.csv", "raport_productie.csv", "rapoarte_productie.csv")
           $nomenclator = Find-FirstFile $foundFiles @("nomenclator.xlsx", "nomenclator1.xlsx")
           $stock = Find-FirstFile $foundFiles @("stoc la moment original.xlsx", "stoc_la_moment_original.xlsx")
