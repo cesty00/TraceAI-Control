@@ -179,7 +179,11 @@ def extract_wms_reference(path: Path, result: ReferenceResult) -> None:
 
 
 def extract_prd_reference(path: Path, result: ReferenceResult, nomenclator: dict[str, NomenclatorItem]) -> None:
-    rows = [row for row in read_csv_dicts(path) if clean(row.get("PRE_Cod Articol")) == result.code and clean(row.get("PRE_LOT")) == result.lot]
+    rows = [
+        row
+        for row in read_csv_dicts(path)
+        if clean(row.get("PRE_Cod Articol")) == result.code and lot_matches_target(clean(row.get("PRE_LOT")), result.lot)
+    ]
     result.prd_rows = len(rows)
     production_by_order: dict[tuple[str, str], dict[str, str]] = {}
     components: dict[tuple[str, str, str, str], dict[str, object]] = {}
@@ -287,6 +291,28 @@ def first_existing(mapping: dict[str, str], keys: Iterable[str]) -> str | None:
         if key in mapping:
             return mapping[key]
     return None
+
+
+def lot_matches_target(candidate_lot: str, target_lot: str) -> bool:
+    if not candidate_lot or not target_lot:
+        return False
+    if candidate_lot == target_lot:
+        return True
+    return target_lot in extract_lot_tokens(candidate_lot)
+
+
+def extract_lot_tokens(value: str) -> list[str]:
+    tokens: list[str] = []
+    for part in value.split(","):
+        token = clean(part)
+        if not token:
+            continue
+        quantity_marker = token.casefold().find("(cant:")
+        if quantity_marker != -1:
+            token = token[:quantity_marker].strip()
+        if token:
+            tokens.append(token)
+    return tokens
 
 
 def read_csv_dicts(path: Path) -> list[dict[str, str]]:
