@@ -76,8 +76,9 @@ def build_source_specific_rows(result: Any) -> dict[str, list[ReportRowPayload]]
 def matching_prd_rows(result: Any) -> list[SourceRow]:
     code = normalize_match_value(result.core.selection.input_code)
     lot = normalize_match_value(result.core.selection.input_lot)
+    dataset = result.core.normalized_dataset
     rows: list[SourceRow] = []
-    for table in getattr(result.core.normalized_dataset, "tables", []):
+    for table in getattr(dataset, "tables", []):
         if table.source_key != "production":
             continue
         for row in table.rows:
@@ -90,7 +91,41 @@ def matching_prd_rows(result: Any) -> list[SourceRow]:
             if not pre_lot_matches_input(value_by_alias(merged, "pre_lot", "PRE_LOT"), lot):
                 continue
             rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values))
-    return rows
+    if rows:
+        return rows
+
+    from src.rules.pre_lot_multi_lot_prd_wms_split import (
+        _confirmed_multi_lot_prd_order_numbers,
+        _multi_lot_different_has_exact_token,
+    )
+
+    confirmed_orders = _confirmed_multi_lot_prd_order_numbers(dataset, result.core.selection.input_code, result.core.selection.input_lot)
+    confirmed_order_keys = {
+        normalize_match_value(order_number)
+        for order_number in confirmed_orders
+        if normalize_match_value(order_number)
+    }
+    if not confirmed_order_keys:
+        return []
+
+    fallback_rows: list[SourceRow] = []
+    for table in getattr(dataset, "tables", []):
+        if table.source_key != "production":
+            continue
+        for row in table.rows:
+            values = dict(row.values)
+            original_values = dict(getattr(row, "original_values", {}) or {})
+            merged = dict(values)
+            merged.update(original_values)
+            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != code:
+                continue
+            order_number = normalize_match_value(value_by_alias(merged, "numar_comanda", "Numar Comanda"))
+            if order_number not in confirmed_order_keys:
+                continue
+            if not _multi_lot_different_has_exact_token(value_by_alias(merged, "pre_lot", "PRE_LOT"), lot):
+                continue
+            fallback_rows.append(SourceRow(table.source_key, table.source_name, table.sheet_name, row.row_number, values, original_values))
+    return fallback_rows
 
 
 def build_prd_production_rows(records: list[Any]) -> list[ReportRowPayload]:
