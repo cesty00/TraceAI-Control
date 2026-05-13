@@ -1005,8 +1005,66 @@ nu schimbă UI / DOCX / JSON / verdict / Data Quality / WMS
 
 Notă de supersedare pentru planificare:
 
+- orice mențiune anterioară care lăsa PRE_LOT-CLASSIFICATION-01 la PLANNED_NOT_STARTED este înlocuită de acest sync
+- statusul corect consemnat pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+- etapa generică PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 nu mai trebuie tratată ca simplu PLANNED_NOT_STARTED fără sub-etapă explicită
+- statusul corect consemnat acum este PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A = VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+- etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01B = PLANNED_NOT_STARTED
+
+## PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A status
+
+`PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A` este consemnat în acest sync strict ca validare oficială pe `main`, cu `PASS_WITH_OBSERVATIONS`, pentru primitive interne engine/rules care pregătesc viitorul split PRD/WMS pentru cazurile multi-lot din `PRE_LOT`.
+
+Starea consemnată pentru acest sync este:
+
 ```text
-orice mențiune anterioară care lăsa PRE_LOT-CLASSIFICATION-01 la PLANNED_NOT_STARTED este înlocuită de acest sync
-statusul corect consemnat pentru PRE_LOT-CLASSIFICATION-01 este VALIDATED_ON_MAIN_WITH_OBSERVATIONS
-etapa următoare rămâne doar planificată: PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01 = PLANNED_NOT_STARTED
+status recomandat: VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+PR #156 merged on main
+merge commit: 9a846059cd8f3f2e187a6900371d8423866cf4b0
+TraceAI Diagnostics run: 25740123511
+artifact: TraceAI-Diagnostics / 6946653348
+digest: sha256:f2dd0db87ea9cfcfd7ba15a982e2d169ee44353ad4e15d2113b01642fc8aa5a3
+branch: main
+head sha: 9a846059cd8f3f2e187a6900371d8423866cf4b0
+Tests and diagnostic report = completed / success
+Smoke pytest = completed / skipped
+pytest-output.txt = 266 passed in 2.64s
+reference_comparison.md = PASS
+reference_comparison.json = PASS
+real_audit_checklist_report.docx present/generated
+real_audit_checklist_ui.json present/generated and valid JSON
+audit checklist result = PASS_WITH_OBSERVATIONS
+Data Quality = WARNING, 8 warnings / 8 issues / 0 errors / 4 of 4 sources found
+```
+
+Boundary validat explicit pentru această consemnare:
+
+```text
+PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01A = VALIDATED_ON_MAIN_WITH_OBSERVATIONS
+această etapă validează doar primitive interne engine/rules
+validează exact-token detection pentru `multi_lot_different`
+validează internal PRD candidate extraction când lotul auditat apare ca token exact în `PRE_LOT`
+validează WMS finished-good confirmation primitive prin exact `code + lot`
+validează doar statusuri interne conservative `confirmed` / `needs_review`
+nu validează public `multi_lot_different` support
+nu validează complete PRE_LOT support
+nu validează WMS reconciliation complet
+nu validează quantity split per lot
+nu validează public wiring
+nu validează JSON contract
+nu validează UI/DOCX messaging
+nu validează verdict/status logic
+nu validează Data Quality rules
+nu validează `report.lot_traceability`
+nu pornește `01B`
+nu este DONE
+nu este release
+nu este production-ready
+nu este daily-use
+```
+
+Etapa următoare rămâne doar planificată:
+
+```text
+PRE_LOT-MULTI-LOT-PRD-WMS-SPLIT-01B = PLANNED_NOT_STARTED
 ```
