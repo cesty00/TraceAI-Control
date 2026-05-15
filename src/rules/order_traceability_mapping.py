@@ -169,6 +169,7 @@ def build_payload(
 
 def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list[SourceRow]:
     rows: list[SourceRow] = []
+    normalized_code = normalize_match_value(product_code)
     for table in getattr(dataset, "tables", []):
         if table.source_key != "production":
             continue
@@ -177,7 +178,7 @@ def matching_prd_rows(dataset: Any, product_code: str, product_lot: str) -> list
             original_values = dict(getattr(row, "original_values", {}) or {})
             merged = dict(values)
             merged.update(original_values)
-            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != normalize_match_value(product_code):
+            if normalize_match_value(value_by_alias(merged, "pre_cod_articol", "PRE_Cod Articol")) != normalized_code:
                 continue
             if not pre_lot_matches_input(value_by_alias(merged, "pre_lot", "PRE_LOT"), product_lot):
                 continue
