@@ -76,8 +76,9 @@ def build_source_specific_rows(result: Any) -> dict[str, list[ReportRowPayload]]
 def matching_prd_rows(result: Any) -> list[SourceRow]:
     code = normalize_match_value(result.core.selection.input_code)
     lot = normalize_match_value(result.core.selection.input_lot)
+    dataset = result.core.normalized_dataset
     rows: list[SourceRow] = []
-    for table in getattr(result.core.normalized_dataset, "tables", []):
+    for table in getattr(dataset, "tables", []):
         if table.source_key != "production":
             continue
         for row in table.rows:
